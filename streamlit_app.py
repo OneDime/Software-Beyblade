@@ -13,46 +13,23 @@ st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* --- TAB AGGIUNGI (INTOCCABILE - FIX CENTRATURA) --- */
-    .add-container, .add-container [data-testid="stVerticalBlock"] { 
-        text-align: center !important; 
-        align-items: center !important; 
-        display: flex;
-        flex-direction: column;
-    }
+    /* --- TAB AGGIUNGI (INTOCCABILE) --- */
+    .add-container [data-testid="stVerticalBlock"] { text-align: center; align-items: center; }
     .add-container div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
         border-radius: 12px !important;
         margin-bottom: 25px !important;
         padding: 15px !important;
-        width: 100%;
     }
-    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 8px; text-align: center; width: 100%; }
+    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
     .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 2px; text-align: center; width: 100%; display: block; }
-    
-    /* Forza centratura specifica per le immagini e i bottoni solo in add-container */
-    .add-container [data-testid="stImage"], .add-container button {
-        margin-left: auto !important;
-        margin-right: auto !important;
-    }
 
     /* --- TAB INVENTARIO (SINISTRA) --- */
     [data-testid="stExpander"] [data-testid="stVerticalBlock"] { text-align: left !important; align-items: flex-start !important; }
     .inv-row-container { text-align: left !important; display: flex !important; flex-direction: column !important; align-items: flex-start !important; width: 100%; }
     .inv-row-container button { text-align: left !important; justify-content: flex-start !important; width: 100% !important; padding-left: 10px !important; background: transparent !important; border: none !important; }
     
-    /* --- DECK BUILDER: CENTRATURA IMMAGINI --- */
-    /* Usiamo un selettore che punta solo alle immagini dentro gli expander del deck builder */
-    .deck-slot-container [data-testid="stImage"] img {
-        display: block !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-    }
-    .deck-slot-container [data-testid="stImage"] {
-        text-align: center !important;
-    }
-
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; }
     div.stButton > button[key^="del_deck_"] { background-color: #991b1b !important; color: white !important; border: none !important; }
     </style>
@@ -111,7 +88,7 @@ df, global_img_map = load_db()
 # =========================
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI (INTOCCABILE - FIX RIPRISTINATO) ---
+# --- TAB 1: AGGIUNGI (INTOCCABILE) ---
 with tab1:
     st.markdown('<div class="add-container">', unsafe_allow_html=True)
     search_q = st.text_input("Cerca...", "").lower()
@@ -182,12 +159,12 @@ with tab3:
                 
                 slot_is_open = (st.session_state.focus['deck_idx'] == d_idx and st.session_state.focus['slot_idx'] == s_idx)
                 
-                st.markdown('<div class="deck-slot-container">', unsafe_allow_html=True)
                 with st.expander(titolo_slot.upper(), expanded=slot_is_open):
                     def set_focus(di=d_idx, si=s_idx): st.session_state.focus = {"deck_idx": di, "slot_idx": si}
                     tipo = st.selectbox("Sistema", tipologie, key=f"d{d_idx}_s{s_idx}_type", on_change=set_focus)
                     is_theory = "Theory" in tipo
 
+                    # Form Selectbox classiche
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         st.selectbox("Blade", get_options("blade", is_theory), key=slot_keys["b"], on_change=set_focus)
                         st.selectbox("Ratchet", get_options("ratchet", is_theory), key=slot_keys["r"], on_change=set_focus)
@@ -207,6 +184,7 @@ with tab3:
                         st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=slot_keys["ab"], on_change=set_focus)
                         st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=slot_keys["rib"], on_change=set_focus)
 
+                    # --- SEZIONE IMMAGINI CENTRATE (Layout a 3 colonne) ---
                     st.write("")
                     for k_id in slot_keys.values():
                         valore = st.session_state.get(k_id, "-")
@@ -215,8 +193,9 @@ with tab3:
                             if url_comp:
                                 img_obj = get_img(url_comp)
                                 if img_obj:
-                                    st.image(img_obj, width=100)
-                st.markdown('</div>', unsafe_allow_html=True)
+                                    # Usiamo le colonne per forzare la centratura senza CSS globale
+                                    _, mid_col, _ = st.columns([1, 2, 1])
+                                    mid_col.image(img_obj, width=100)
 
             st.markdown("<br>", unsafe_allow_html=True)
             if not deck['editing']:
