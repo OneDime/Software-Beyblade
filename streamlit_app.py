@@ -5,7 +5,7 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & CSS TABELLE
+# CONFIGURAZIONE & STILE
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -13,46 +13,31 @@ st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* INTESTAZIONI EXPANDER SCURE */
+    /* INTESTAZIONI EXPANDER SCURE (INVENTARIO) */
     div[data-testid="stExpander"] {
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
     }
     div[data-testid="stExpander"] summary { background-color: #1e293b !important; }
-    div[data-testid="stExpander"] summary p { color: #cbd5e1 !important; font-weight: bold; }
+    div[data-testid="stExpander"] summary p { color: #cbd5e1 !important; }
 
-    /* STILE TABELLE */
-    .table-container {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 10px;
-    }
-    .table-container td {
-        vertical-align: middle;
+    /* STILE TABELLE E CENTRATURA */
+    .centered-cell {
         text-align: center;
-        padding: 8px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
     }
     
-    /* Tabella componenti: allineamento specifico */
-    .comp-table td:first-child {
-        text-align: right; /* Nome componente a destra verso il centro */
-        width: 70%;
-        padding-right: 15px;
-    }
-    .comp-table td:last-child {
-        text-align: left; /* Tasto a sinistra verso il centro */
-        width: 30%;
-    }
-
-    /* Immagine centrata */
-    .beyblade-img {
-        width: 150px;
-        height: auto;
+    [data-testid="stImage"] img {
         display: block;
-        margin: 0 auto;
+        margin-left: auto;
+        margin-right: auto;
+        width: 180px !important;
     }
 
-    /* Bottoni scuri */
+    /* BOTTONI */
     button {
         background-color: #334155 !important;
         color: #f1f5f9 !important;
@@ -61,7 +46,9 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# ... (Funzioni load_db e get_img identiche) ...
+# =========================
+# FUNZIONI CORE
+# =========================
 @st.cache_data
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame()
@@ -70,14 +57,21 @@ def load_db():
     return df
 
 @st.cache_resource
-def get_img(url, size=(150, 150)):
+def get_img(url, size=(180, 180)):
     if not url or url == "n/a": return None
     h = hashlib.md5(url.encode()).hexdigest()
     path = os.path.join("images", f"{h}.png")
     if os.path.exists(path):
-        img = Image.open(path); img.thumbnail(size)
+        img = Image.open(path)
+        img.thumbnail(size)
         return img
     return None
+
+# INIZIALIZZAZIONE SESSION STATE (Fix per AttributeError)
+if 'inventario' not in st.session_state:
+    st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
+if 'decks' not in st.session_state:
+    st.session_state.decks = []
 
 df = load_db()
 
@@ -92,21 +86,16 @@ with tab_add:
 
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            # --- PRIMA TABELLA: NOME E IMMAGINE ---
-            st.markdown(f"""
-                <table class="table-container">
-                    <tr><td><h3 style="color:#60a5fa; margin:0;">{row['name'].upper()}</h3></td></tr>
-                </table>
-            """, unsafe_allow_html=True)
+            # --- TABELLA 1: NOME E IMMAGINE (CENTRATI) ---
+            st.markdown(f"<h3 style='text-align:center; color:#60a5fa; margin-bottom:0;'>{row['name'].upper()}</h3>", unsafe_allow_html=True)
             
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
             if img:
-                st.image(img) # Streamlit centra già se impostato nel CSS sopra
-
-            # --- SECONDA TABELLA: COMPONENTI + TASTI ---
-            # Nota: Streamlit non permette bottoni dentro HTML puro facilmente, 
-            # quindi usiamo le colonne per simulare la tabella con centratura verticale.
-            st.write("") 
+                st.image(img)
+            
+            st.write("---")
+            
+            # --- TABELLA 2: COMPONENTI (CENTRATURA SIMULATA) ---
             comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"), 
                      ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"), 
                      ("ratchet_integrated_bit", "ratchet_integrated_bit")]
@@ -114,20 +103,21 @@ with tab_add:
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    c1, c2 = st.columns([0.7, 0.3])
-                    # Usiamo markdown per centrare verticalmente il testo nella cella "invisibile"
-                    c1.markdown(f"<div style='text-align:right; padding-top:8px;'>{val}</div>", unsafe_allow_html=True)
+                    # Usiamo 2 colonne: la prima allineata a destra, la seconda a sinistra
+                    # Questo crea l'effetto di una tabella centrata al centro della card
+                    c1, c2 = st.columns([0.65, 0.35])
+                    c1.markdown(f"<div style='text-align:right; padding-top:5px;'>{val}</div>", unsafe_allow_html=True)
                     if c2.button("＋", key=f"add_{i}_{field}"):
                         st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
                         st.toast(f"Aggiunto {val}")
 
-            # --- TASTO AGGIUNGI TUTTO ---
+            # --- TASTO AGGIUNGI TUTTO (LARGO QUANTO CARD) ---
             st.write("")
             if st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True):
                 for f, k in comps:
                     if row[f] and row[f] != "n/a":
                         st.session_state.inventario[k][row[f]] = st.session_state.inventario[k].get(row[f], 0) + 1
-                st.toast("Set aggiunto")
+                st.toast(f"Set {row['name']} aggiunto!")
 
 with tab_inv:
     st.header("Inventario")
