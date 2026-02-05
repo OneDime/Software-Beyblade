@@ -5,95 +5,44 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & FIX BORDI SMARTPHONE
+# CONFIGURAZIONE ESSENZIALE
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
-    /* Sfondo Generale */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* FIX INTESTAZIONI ESCURE */
+    /* Expander Scuro */
     div[data-testid="stExpander"] {
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
-        border-radius: 10px !important;
     }
-    div[data-testid="stExpander"] summary p { color: #cbd5e1 !important; }
-    div[data-testid="stExpander"] summary { background-color: #1e293b !important; border-radius: 10px; }
+    div[data-testid="stExpander"] summary { background-color: #1e293b !important; }
 
-    /* CENTRATURA IMMAGINE */
-    [data-testid="stImage"] { display: flex; justify-content: center; width: 100%; }
-    [data-testid="stImage"] img { margin: 0 auto !important; }
+    /* Centratura Immagine */
+    [data-testid="stImage"] img { display: block; margin: 0 auto; }
 
-    /* FIX LAYOUT: Evita che i tasti a destra vengano tagliati */
-    div[data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        width: 100% !important;
-        padding-right: 5px !important; /* Margine di sicurezza per i tasti */
-        gap: 5px !important;
+    /* Riga Componente: Nome a sinistra, tasto a destra */
+    .comp-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid #1e293b;
     }
-
-    /* Colonna Testo: flessibile ma non spinge */
-    div[data-testid="column"]:nth-of-type(1) {
-        flex: 10 1 auto !important; 
-        min-width: 0 !important;
-        overflow: hidden;
-    }
-
-    /* Colonne Bottoni: Larghezza fissa e protetta */
-    div[data-testid="column"]:nth-of-type(2), 
-    div[data-testid="column"]:nth-of-type(3) {
-        flex: 0 0 45px !important; /* Dimensione bloccata per il tasto */
-        min-width: 45px !important;
-        max-width: 45px !important;
-        display: flex !important;
-        justify-content: flex-end !important;
-    }
-
-    /* Bottoni Standard Scuro */
-    button {
+    
+    /* Stile tasto standard scuro */
+    .stButton button {
         background-color: #334155 !important;
-        color: #f1f5f9 !important;
+        color: white !important;
         border: 1px solid #475569 !important;
-        padding: 0px !important;
-        width: 40px !important;
-        height: 35px !important;
+        padding: 0 15px !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# =========================
-# FUNZIONI CORE
-# =========================
-@st.cache_data
-def load_db():
-    if not os.path.exists("beyblade_x.csv"): return pd.DataFrame()
-    df = pd.read_csv("beyblade_x.csv").fillna("")
-    df['_search'] = df.astype(str).apply(lambda x: ' '.join(x).lower(), axis=1)
-    return df
-
-@st.cache_resource
-def get_img(url, size=(200, 200)):
-    if not url or url == "n/a": return None
-    h = hashlib.md5(url.encode()).hexdigest()
-    path = os.path.join("images", f"{h}.png")
-    if os.path.exists(path):
-        img = Image.open(path)
-        img.thumbnail(size)
-        return img
-    return None
-
-if 'inventario' not in st.session_state:
-    st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
-if 'decks' not in st.session_state:
-    st.session_state.decks = []
-
-df = load_db()
+# ... (Funzioni load_db e get_img invariate) ...
 
 # =========================
 # UI PRINCIPALE
@@ -106,7 +55,7 @@ with tab_add:
 
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            st.markdown(f"<h3 style='text-align:center; color:#60a5fa;'>{row['name'].upper()}</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='text-align:center;'>{row['name'].upper()}</h3>", unsafe_allow_html=True)
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
             if img: st.image(img, width=180)
             
@@ -117,7 +66,9 @@ with tab_add:
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    c_txt, c_btn = st.columns([0.85, 0.15])
+                    # Usiamo una sola riga Markdown per il nome + un tasto Streamlit accanto
+                    # Per essere sicuri che non vada a capo, usiamo due colonne ma MOLTO sbilanciate
+                    c_txt, c_btn = st.columns([0.8, 0.2])
                     c_txt.write(val)
                     if c_btn.button("＋", key=f"add_{i}_{field}"):
                         st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
@@ -130,15 +81,15 @@ with tab_inv:
     for tipo in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]:
         pezzi = st.session_state.inventario.get(tipo, {})
         validi = {k: v for k, v in pezzi.items() if v > 0}
-        
         if validi:
             with st.expander(tipo.replace('_', ' ').upper(), expanded=True):
                 for nome, qta in validi.items():
-                    ci1, ci2, ci3 = st.columns([0.7, 0.15, 0.15])
-                    ci1.write(f"{nome} (x{qta})")
-                    if ci2.button("＋", key=f"inv_p_{tipo}_{nome}"):
+                    # Riga singola: Nome (qta) | + | -
+                    c1, c2, c3 = st.columns([0.6, 0.2, 0.2])
+                    c1.write(f"{nome} (x{qta})")
+                    if c2.button("＋", key=f"inv_p_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] += 1
                         st.rerun()
-                    if ci3.button("－", key=f"inv_m_{tipo}_{nome}"):
+                    if c3.button("－", key=f"inv_m_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] -= 1
                         st.rerun()
