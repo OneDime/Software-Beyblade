@@ -5,7 +5,7 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE (FIX CARD E TASTI LARGHI)
+# CONFIGURAZIONE & STILE (CENTRATURA E LAYOUT)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -14,55 +14,60 @@ st.markdown("""
     /* Sfondo Grigio-Blu molto scuro */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* Centratura forzata */
+    /* Centratura forzata di tutti gli elementi interni */
     [data-testid="stVerticalBlock"] {
         text-align: center;
         align-items: center;
     }
 
-    /* CARD: Bordo visibile e separazione */
+    /* CARD: Bordo rinforzato e distanziamento */
     div[data-testid="stVerticalBlockBorderWrapper"] {
-        border: 1px solid #334155 !important;
+        border: 2px solid #334155 !important;
         background-color: #1e293b !important;
         border-radius: 15px !important;
-        margin-bottom: 25px !important;
-        padding: 15px !important;
+        margin-bottom: 30px !important;
+        padding: 20px !important;
     }
 
     /* Titolo Beyblade Centrato */
     .bey-name { 
         font-weight: bold; 
-        font-size: 1.3rem; 
+        font-size: 1.4rem; 
         color: #60a5fa; 
         text-transform: uppercase;
-        margin: 10px 0;
+        margin-bottom: 10px;
         text-align: center;
     }
 
     /* Nomi Componenti Centrati */
     .comp-name {
-        font-size: 1rem;
+        font-size: 1.1rem;
         color: #cbd5e1;
-        margin-top: 20px;
-        margin-bottom: 8px;
+        margin-top: 25px;
+        margin-bottom: 10px;
         text-align: center;
         width: 100%;
         display: block;
     }
 
-    /* BOTTONI LARGI AL 100% (FORZATO) */
+    /* BOTTONI LARGHI AL 100% (FORZATO) */
     div.stButton > button {
         width: 100% !important;
         display: block !important;
         background-color: #334155 !important;
         color: white !important;
         border: 1px solid #475569 !important;
-        height: 50px !important; /* Più alto per facilitare il touch su smartphone */
+        height: 55px !important;
         font-size: 1.2rem !important;
-        margin-bottom: 10px !important;
+        border-radius: 8px !important;
+    }
+
+    /* Tasto Aggiungi Tutto specifico (colore leggermente diverso se vuoi evidenziarlo) */
+    div.stButton > button[kind="secondary"] {
+        border-color: #60a5fa !important;
     }
     
-    /* Fix immagine centrata */
+    /* Centratura Immagini */
     [data-testid="stImage"] img {
         display: block;
         margin: 0 auto;
@@ -70,9 +75,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# =========================
-# FUNZIONI CORE
-# =========================
+# ... (Funzioni load_db e get_img rimangono invariate) ...
 @st.cache_data
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame()
@@ -106,7 +109,6 @@ with tab1:
     filtered = df[df['_search'].str.contains(search_q)] if search_q else df.head(3)
 
     for i, (_, row) in enumerate(filtered.iterrows()):
-        # Container con bordo per creare la card
         with st.container(border=True):
             # 1. NOME CENTRATO
             st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
@@ -116,9 +118,7 @@ with tab1:
             if img:
                 st.image(img, width=180)
             
-            st.markdown("<hr style='border-top: 1px solid #334155; width: 100%;'>", unsafe_allow_html=True)
-
-            # 3. COMPONENTI: Nome + Tasto "+" (Largo)
+            # 3. TASTO AGGIUNGI TUTTO (Ora sotto l'immagine)
             components = [
                 ("lock_chip", "lock_bit"),
                 ("blade", "blade"),
@@ -129,22 +129,21 @@ with tab1:
                 ("ratchet_integrated_bit", "ratchet_integrated_bit")
             ]
 
-            for comp_key, inv_key in components:
-                val = row[comp_key]
-                if val and val != "n/a":
-                    # Visualizziamo il nome della componente centrato
-                    st.markdown(f"<div class='comp-name'>{val}</div>", unsafe_allow_html=True)
-                    # Pulsante "+" forzato a larghezza intera dal CSS
-                    if st.button("＋", key=f"btn_{i}_{comp_key}"):
-                        add_to_inv(inv_key, val)
-                        st.toast(f"Aggiunto: {val}")
-
-            st.markdown("<br>", unsafe_allow_html=True)
-
-            # 4. TASTO AGGIUNGI TUTTO
+            st.write("") # Spazio estetico
             if st.button("Aggiungi tutto", key=f"all_{i}"):
                 for comp_key, inv_key in components:
                     val = row[comp_key]
                     if val and val != "n/a":
                         add_to_inv(inv_key, val)
                 st.toast(f"Set {row['name']} aggiunto!")
+
+            st.markdown("<hr style='border-top: 1px solid #475569; width: 100%; margin: 20px 0;'>", unsafe_allow_html=True)
+
+            # 4. COMPONENTI SINGOLI
+            for comp_key, inv_key in components:
+                val = row[comp_key]
+                if val and val != "n/a":
+                    st.markdown(f"<div class='comp-name'>{val}</div>", unsafe_allow_html=True)
+                    if st.button("＋", key=f"btn_{i}_{comp_key}"):
+                        add_to_inv(inv_key, val)
+                        st.toast(f"Aggiunto: {val}")
