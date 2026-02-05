@@ -5,63 +5,75 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE "HARD-FIX"
+# CONFIGURAZIONE & STILE "ULTIMATUM"
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
-    /* Sfondo e centratura generale */
+    /* Sfondo Generale */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* FIX INTESTAZIONI BIANCHE: Forza il colore su TUTTI i livelli dell'expander */
-    .streamlit-expanderHeader, .streamlit-expanderHeader p, .streamlit-expanderHeader span, 
-    div[data-testid="stExpander"] details summary p {
+    /* FIX INTESTAZIONI BIANCHE (Expander/Deck/Inventario) */
+    /* Questo colpisce direttamente il contenitore del titolo che vedi bianco */
+    div[data-testid="stExpander"] {
         background-color: #1e293b !important;
-        color: #f1f5f9 !important;
-        font-weight: bold !important;
+        border: 1px solid #334155 !important;
+        border-radius: 10px !important;
+        margin-bottom: 10px !important;
     }
     
-    /* Centratura titolo e immagine */
-    .bey-title { text-align: center; color: #60a5fa; font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; }
-    [data-testid="stImage"] > img { display: block; margin: 0 auto !important; }
-
-    /* RIGA COMPONENTE: Flexbox per forzare l'affiancamento su mobile */
-    .flex-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        max-width: 400px;
-        margin: 0 auto 8px auto; /* Centra la riga nella card */
-        padding: 5px 10px;
-        background: rgba(255,255,255,0.05);
-        border-radius: 8px;
+    /* Forza il testo dell'intestazione a essere grigio chiaro e non bianco accecante */
+    div[data-testid="stExpander"] summary p {
+        color: #cbd5e1 !important;
+        font-weight: 600 !important;
     }
-    .flex-text { color: #f1f5f9; font-size: 0.95rem; flex-grow: 1; text-align: left; }
 
-    /* BOTTONI: Piccoli e coerenti */
-    button, [data-testid="stBaseButton-secondary"] {
+    /* Rende lo sfondo dell'intestazione scuro invece che bianco */
+    div[data-testid="stExpander"] summary {
         background-color: #1e293b !important;
+        border-radius: 10px !important;
+    }
+
+    /* FIX TAB AGGIUNGI & INVENTARIO: Forza affiancamento */
+    [data-testid="column"] {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        width: auto !important;
+        min-width: 0px !important;
+    }
+
+    /* Impedisce ai bottoni di andare a capo su mobile */
+    div[data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+
+    /* Centratura Immagini */
+    [data-testid="stImage"] img {
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    /* Stile Bottoni Piccolo (Stile Officina) */
+    button {
+        background-color: #334155 !important;
         color: #f1f5f9 !important;
-        border: 1px solid #3b82f6 !important;
-        padding: 0px 12px !important;
-        min-height: 32px !important;
+        border: 1px solid #475569 !important;
+        padding: 0px 8px !important;
+        height: 30px !important;
+        line-height: 1 !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# Funzione per generare la riga con il tasto accanto (senza usare st.columns)
-def riga_componente(nome, chiave_pulsante, label_pulsante="＋"):
-    # Usiamo st.columns ma forziamo il CSS per non farli andare a capo
-    c1, c2 = st.columns([0.8, 0.2])
-    with c1:
-        st.markdown(f"<div style='padding-top:5px; text-align:left;'>{nome}</div>", unsafe_allow_html=True)
-    with c2:
-        return st.button(label_pulsante, key=chiave_pulsante)
-
 # =========================
-# LOGICA DATI
+# FUNZIONI CORE
 # =========================
 @st.cache_data
 def load_db():
@@ -91,12 +103,12 @@ st.sidebar.title("🔧 Officina X")
 utente = st.sidebar.selectbox("Utente", ["Antonio", "Andrea", "Fabio"])
 
 # =========================
-# UI TABS
+# UI PRINCIPALE
 # =========================
 tab_add, tab_inv, tab_deck = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 with tab_add:
-    search_q = st.text_input("Cerca...", key="search_main")
+    search_q = st.text_input("Cerca beyblade o componenti...", key="search_main")
     
     filtered = df
     if len(search_q) >= 2:
@@ -106,46 +118,39 @@ with tab_add:
 
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            st.markdown(f"<div class='bey-title'>{row['name'].upper()}</div>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='text-align:center; color:#60a5fa;'>{row['name'].upper()}</h3>", unsafe_allow_html=True)
             
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
-            if img:
-                st.image(img, width=200)
+            if img: st.image(img, width=200)
             
             comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"), 
                      ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"), 
                      ("ratchet_integrated_bit", "ratchet_integrated_bit")]
             
-            st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    # Forza l'affiancamento ignorando il wrap di Streamlit
-                    col1, col2 = st.columns([0.8, 0.2])
-                    col1.markdown(f"<div style='text-align:left; font-size:0.9rem; padding-top:6px;'>{val}</div>", unsafe_allow_html=True)
-                    if col2.button("＋", key=f"add_{i}_{field}"):
+                    # Layout Forzato: Tasto fisso accanto al nome
+                    col_txt, col_btn = st.columns([0.8, 0.2])
+                    col_txt.markdown(f"<div style='text-align:left; font-size:0.9rem;'>{val}</div>", unsafe_allow_html=True)
+                    if col_btn.button("＋", key=f"add_{i}_{field}"):
                         st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
                         st.toast(f"Aggiunto {val}")
 
-            st.write("")
-            if st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True):
-                for f, k in comps:
-                    if row[f] and row[f] != "n/a":
-                        st.session_state.inventario[k][row[f]] = st.session_state.inventario[k].get(row[f], 0) + 1
-                st.toast("Beyblade aggiunto!")
+            st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True)
 
 with tab_inv:
-    st.header(f"Inventario di {utente}")
+    st.header(f"Inventario: {utente}")
     for tipo in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]:
         pezzi = st.session_state.inventario.get(tipo, {})
         validi = {k: v for k, v in pezzi.items() if v > 0}
         
         if validi:
+            # L'intestazione di questo expander ora dovrebbe essere scura grazie al CSS sopra
             with st.expander(tipo.replace('_', ' ').upper(), expanded=True):
                 for nome, qta in validi.items():
-                    # Layout orizzontale forzato per inventario
                     c1, c2, c3 = st.columns([0.6, 0.2, 0.2])
-                    c1.markdown(f"<div style='text-align:left; padding-top:6px;'>{nome} (x{qta})</div>", unsafe_allow_html=True)
+                    c1.markdown(f"<div style='text-align:left;'>{nome} (x{qta})</div>", unsafe_allow_html=True)
                     if c2.button("＋", key=f"inv_p_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] += 1
                         st.rerun()
@@ -159,10 +164,10 @@ with tab_deck:
         st.session_state.decks.append({"name": f"Deck {len(st.session_state.decks)+1}"})
 
     for d_idx, deck in enumerate(st.session_state.decks):
+        # Anche questa intestazione sarà scura
         with st.expander(f"📂 {deck['name']}", expanded=True):
             for b_idx in range(3):
-                st.markdown(f"<div style='text-align:center; font-weight:bold; padding:10px;'>BEYBLADE {b_idx+1}</div>", unsafe_allow_html=True)
-                
+                st.markdown(f"**BEYBLADE {b_idx+1}**")
                 f1, f2, f3 = st.columns(3)
                 v_cx = f1.checkbox("CX", key=f"cx_{d_idx}_{b_idx}")
                 v_rib = f2.checkbox("RIB", key=f"rib_{d_idx}_{b_idx}")
@@ -175,18 +180,15 @@ with tab_deck:
                 else: parts += [("Ratchet", "ratchet", "ratchet_image"), ("Bit", "bit", "bit_image")]
 
                 for label, db_key, img_db_key in parts:
-                    if v_th: 
-                        opts = [""] + sorted(df[db_key].unique().tolist())
+                    if v_th: opts = [""] + sorted(df[db_key].unique().tolist())
                     else:
                         inv_k = "lock_bit" if db_key == "lock_chip" else db_key
-                        inv_data = st.session_state.inventario.get(inv_k, {})
-                        opts = [""] + sorted([k for k, v in inv_data.items() if v > 0])
+                        opts = [""] + sorted([k for k, v in st.session_state.inventario.get(inv_k, {}).items() if v > 0])
                     
-                    # Layout Deck: Selettore a sinistra, immagine a destra
-                    cd1, cd2 = st.columns([0.75, 0.25])
-                    scelta = cd1.selectbox(label, opts, key=f"dk_{d_idx}_{b_idx}_{db_key}")
+                    c_sel, c_img = st.columns([0.75, 0.25])
+                    scelta = c_sel.selectbox(label, opts, key=f"dk_{d_idx}_{b_idx}_{db_key}")
                     if scelta:
                         img_url = df[df[db_key] == scelta][img_db_key].values
                         if len(img_url) > 0:
                             p_img = get_img(img_url[0], size=(80, 80))
-                            if p_img: cd2.image(p_img)
+                            if p_img: c_img.image(p_img)
