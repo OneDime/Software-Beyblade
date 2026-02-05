@@ -78,6 +78,10 @@ if 'deck_name' not in st.session_state:
 if 'editing_name' not in st.session_state:
     st.session_state.editing_name = False
 
+# Inizializziamo una memoria per le selezioni per costruire il titolo dinamicamente
+if 'deck_selections' not in st.session_state:
+    st.session_state.deck_selections = {i: {} for i in range(3)}
+
 df = load_db()
 
 # =========================
@@ -135,7 +139,6 @@ with tab2:
 
 # --- TAB 3: DECK BUILDER ---
 with tab3:
-    # 1. Expander Generale del Deck (Senza "(3 slot)")
     with st.expander(f"{st.session_state.deck_name.upper()}", expanded=True):
         
         def get_options(cat, theory=False):
@@ -152,32 +155,48 @@ with tab3:
         tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", 
                      "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
 
-        # 2. Expander singoli per ogni Slot
         for idx in range(3):
-            with st.expander(f"SLOT {idx+1}", expanded=False):
+            # Costruzione titolo dinamico
+            sels = st.session_state.deck_selections[idx]
+            # Filtriamo i valori "-" o None per costruire il nome
+            nome_parti = [v for v in sels.values() if v and v != "-"]
+            titolo_slot = " ".join(nome_parti) if nome_parti else f"SLOT {idx+1}"
+            
+            with st.expander(titolo_slot.upper(), expanded=False):
                 tipo = st.selectbox("Sistema", tipologie, key=f"type_{idx}")
                 is_theory = "Theory" in tipo
                 
-                if "BX/UX" in tipo and "+RIB" not in tipo:
-                    st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
-                    st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
-                    st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
-                elif "CX" in tipo and "+RIB" not in tipo:
-                    st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
-                    st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
-                    st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
-                    st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
-                    st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
-                elif "BX/UX+RIB" in tipo:
-                    st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
-                    st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
-                elif "CX+RIB" in tipo:
-                    st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
-                    st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
-                    st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
-                    st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
+                # Resettiamo i campi che non appartengono al sistema per evitare nomi sporchi
+                current_sels = {}
 
-        # 3. Sezione Modifica Nome spostata in fondo
+                if "BX/UX" in tipo and "+RIB" not in tipo:
+                    current_sels['b'] = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
+                    current_sels['r'] = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
+                    current_sels['bi'] = st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
+                
+                elif "CX" in tipo and "+RIB" not in tipo:
+                    current_sels['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
+                    current_sels['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
+                    current_sels['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
+                    current_sels['r'] = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
+                    current_sels['bi'] = st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
+                
+                elif "BX/UX+RIB" in tipo:
+                    current_sels['b'] = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
+                    current_sels['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
+
+                elif "CX+RIB" in tipo:
+                    current_sels['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
+                    current_sels['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
+                    current_sels['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
+                    current_sels['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
+                
+                # Aggiorniamo lo stato e forziamo il refresh se il nome cambia
+                if st.session_state.deck_selections[idx] != current_sels:
+                    st.session_state.deck_selections[idx] = current_sels
+                    st.rerun()
+
+        # 3. Sezione Modifica Nome
         st.markdown("<br>", unsafe_allow_html=True)
         if not st.session_state.editing_name:
             if st.button("📝 Modifica Nome Deck"):
