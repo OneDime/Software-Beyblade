@@ -35,10 +35,8 @@ st.markdown("""
         display: flex !important;
         flex-direction: column !important;
         align-items: flex-start !important;
-        justify-content: flex-start !important;
         width: 100%;
     }
-    /* Forza allineamento bottoni inventario */
     .inv-row-container button {
         text-align: left !important;
         justify-content: flex-start !important;
@@ -49,6 +47,13 @@ st.markdown("""
     }
     
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; }
+
+    /* Bottone Elimina (Rosso) */
+    div.stButton > button[key^="del_deck_"] {
+        background-color: #991b1b !important;
+        color: white !important;
+        border: none !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -81,12 +86,12 @@ def add_to_inv(tipo, nome, delta=1):
 # Inizializzazione Session State
 if 'inventario' not in st.session_state:
     st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
-if 'deck_name' not in st.session_state:
-    st.session_state.deck_name = "IL MIO DECK"
-if 'editing_name' not in st.session_state:
-    st.session_state.editing_name = False
-if 'last_opened_slot' not in st.session_state:
-    st.session_state.last_opened_slot = None
+
+if 'decks' not in st.session_state:
+    st.session_state.decks = [{"name": "IL MIO DECK", "editing": False}]
+
+if 'focus' not in st.session_state:
+    st.session_state.focus = {"deck_idx": 0, "slot_idx": None}
 
 df = load_db()
 
@@ -123,7 +128,7 @@ with tab1:
                         st.toast(f"Aggiunto: {val}")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- TAB 2: INVENTARIO (SINISTRA) ---
+# --- TAB 2: INVENTARIO ---
 with tab2:
     modo = st.radio("Modo", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     operazione = 1 if "Aggiungi" in modo else -1
@@ -143,69 +148,82 @@ with tab2:
 
 # --- TAB 3: DECK BUILDER ---
 with tab3:
-    with st.expander(f"{st.session_state.deck_name.upper()}", expanded=True):
-        
-        def get_options(cat, theory=False):
-            if theory:
-                csv_map = {"lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade",
-                           "assist_blade": "assist_blade", "ratchet": "ratchet", "bit": "bit",
-                           "ratchet_integrated_bit": "ratchet_integrated_bit"}
-                col_name = csv_map.get(cat, cat)
-                opts = df[col_name].unique().tolist()
-                return ["-"] + sorted([x for x in opts if x and x != "n/a"])
-            else:
-                return ["-"] + sorted(list(st.session_state.inventario[cat].keys()))
-
-        tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
-
-        for idx in range(3):
-            # Recuperiamo i dati correnti per il titolo
-            vals = [st.session_state.get(f"{k}_{idx}", "-") for k in ["lb", "mb", "ab", "b", "r", "bi", "rib"]]
-            parti = [p for p in vals if p and p != "-"]
-            titolo_slot = " ".join(parti) if parti else f"SLOT {idx+1}"
+    # Renderizziamo tutti i deck salvati
+    for d_idx, deck in enumerate(st.session_state.decks):
+        with st.expander(deck['name'].upper(), expanded=(st.session_state.focus['deck_idx'] == d_idx)):
             
-            # Persistenza dell'expander: se hai interagito con questo slot, rimane aperto
-            is_open = st.session_state.last_opened_slot == idx
-            
-            with st.expander(titolo_slot.upper(), expanded=is_open):
-                # Se l'utente tocca un widget qui dentro, questo slot diventa il "last_opened"
-                tipo = st.selectbox("Sistema", tipologie, key=f"type_{idx}", on_change=lambda i=idx: st.session_state.update({"last_opened_slot": i}))
-                is_theory = "Theory" in tipo
+            def get_options(cat, theory=False):
+                if theory:
+                    csv_map = {"lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade",
+                               "assist_blade": "assist_blade", "ratchet": "ratchet", "bit": "bit",
+                               "ratchet_integrated_bit": "ratchet_integrated_bit"}
+                    col_name = csv_map.get(cat, cat)
+                    opts = df[col_name].unique().tolist()
+                    return ["-"] + sorted([x for x in opts if x and x != "n/a"])
+                else:
+                    return ["-"] + sorted(list(st.session_state.inventario[cat].keys()))
+
+            tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
+
+            for s_idx in range(3):
+                # Generazione titolo dinamico per lo slot
+                keys = ["lb", "mb", "ab", "b", "r", "bi", "rib"]
+                vals = [st.session_state.get(f"d{d_idx}_s{s_idx}_{k}", "-") for k in keys]
+                parti = [p for p in vals if p and p != "-"]
+                titolo_slot = " ".join(parti) if parti else f"SLOT {s_idx+1}"
                 
-                # Helper per le selectbox che aggiornano il focus
-                def on_val_change(i=idx): st.session_state.last_opened_slot = i
+                # Mantiene lo slot aperto se è l'ultimo usato
+                slot_is_open = (st.session_state.focus['deck_idx'] == d_idx and st.session_state.focus['slot_idx'] == s_idx)
+                
+                with st.expander(titolo_slot.upper(), expanded=slot_is_open):
+                    def set_focus(di=d_idx, si=s_idx):
+                        st.session_state.focus = {"deck_idx": di, "slot_idx": si}
 
-                if "BX/UX" in tipo and "+RIB" not in tipo:
-                    st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}", on_change=on_val_change)
-                    st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}", on_change=on_val_change)
-                    st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}", on_change=on_val_change)
-                elif "CX" in tipo and "+RIB" not in tipo:
-                    st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}", on_change=on_val_change)
-                    st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}", on_change=on_val_change)
-                    st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}", on_change=on_val_change)
-                    st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}", on_change=on_val_change)
-                    st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}", on_change=on_val_change)
-                elif "BX/UX+RIB" in tipo:
-                    st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}", on_change=on_val_change)
-                    st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}", on_change=on_val_change)
-                elif "CX+RIB" in tipo:
-                    st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}", on_change=on_val_change)
-                    st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}", on_change=on_val_change)
-                    st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}", on_change=on_val_change)
-                    st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}", on_change=on_val_change)
+                    tipo = st.selectbox("Sistema", tipologie, key=f"d{d_idx}_s{s_idx}_type", on_change=set_focus)
+                    is_theory = "Theory" in tipo
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        if not st.session_state.editing_name:
-            if st.button("📝 Modifica Nome Deck"):
-                st.session_state.editing_name = True
-                st.rerun()
-        else:
-            new_name = st.text_input("Nuovo nome:", st.session_state.deck_name)
-            col_save, col_cancel = st.columns([1, 1])
-            if col_save.button("Salva"):
-                st.session_state.deck_name = new_name
-                st.session_state.editing_name = False
-                st.rerun()
-            if col_cancel.button("Annulla"):
-                st.session_state.editing_name = False
-                st.rerun()
+                    if "BX/UX" in tipo and "+RIB" not in tipo:
+                        st.selectbox("Blade", get_options("blade", is_theory), key=f"d{d_idx}_s{s_idx}_b", on_change=set_focus)
+                        st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"d{d_idx}_s{s_idx}_r", on_change=set_focus)
+                        st.selectbox("Bit", get_options("bit", is_theory), key=f"d{d_idx}_s{s_idx}_bi", on_change=set_focus)
+                    elif "CX" in tipo and "+RIB" not in tipo:
+                        st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"d{d_idx}_s{s_idx}_lb", on_change=set_focus)
+                        st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"d{d_idx}_s{s_idx}_mb", on_change=set_focus)
+                        st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"d{d_idx}_s{s_idx}_ab", on_change=set_focus)
+                        st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"d{d_idx}_s{s_idx}_r", on_change=set_focus)
+                        st.selectbox("Bit", get_options("bit", is_theory), key=f"d{d_idx}_s{s_idx}_bi", on_change=set_focus)
+                    elif "BX/UX+RIB" in tipo:
+                        st.selectbox("Blade", get_options("blade", is_theory), key=f"d{d_idx}_s{s_idx}_b", on_change=set_focus)
+                        st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"d{d_idx}_s{s_idx}_rib", on_change=set_focus)
+                    elif "CX+RIB" in tipo:
+                        st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"d{d_idx}_s{s_idx}_lb", on_change=set_focus)
+                        st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"d{d_idx}_s{s_idx}_mb", on_change=set_focus)
+                        st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"d{d_idx}_s{s_idx}_ab", on_change=set_focus)
+                        st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"d{d_idx}_s{s_idx}_rib", on_change=set_focus)
+
+            # Sezione Modifica / Elimina in fondo a ogni deck
+            st.markdown("<br>", unsafe_allow_html=True)
+            if not deck['editing']:
+                col_btn1, col_btn2 = st.columns([1, 1])
+                if col_btn1.button("📝 Modifica Nome", key=f"edit_btn_{d_idx}"):
+                    st.session_state.decks[d_idx]['editing'] = True
+                    st.rerun()
+                if col_btn2.button("🗑️ Elimina Deck", key=f"del_deck_{d_idx}"):
+                    st.session_state.decks.pop(d_idx)
+                    st.rerun()
+            else:
+                new_name = st.text_input("Nuovo nome:", deck['name'], key=f"input_{d_idx}")
+                c1, c2 = st.columns([1, 1])
+                if c1.button("Salva", key=f"save_{d_idx}"):
+                    st.session_state.decks[d_idx]['name'] = new_name
+                    st.session_state.decks[d_idx]['editing'] = False
+                    st.rerun()
+                if c2.button("Annulla", key=f"cancel_{d_idx}"):
+                    st.session_state.decks[d_idx]['editing'] = False
+                    st.rerun()
+
+    # Tasto per aggiungere un nuovo deck in fondo a tutto
+    st.write("---")
+    if st.button("➕ NUOVO DECK"):
+        st.session_state.decks.append({"name": f"NUOVO DECK {len(st.session_state.decks)+1}", "editing": False})
+        st.rerun()
