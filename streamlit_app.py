@@ -14,9 +14,11 @@ st.markdown("""
     /* Sfondo Grigio-Blu molto scuro */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* Centratura forzata */
-    [data-testid="stVerticalBlock"] {
+    /* Centratura forzata per Tab Aggiungi */
+    .centered-content {
         text-align: center;
+        display: flex;
+        flex-direction: column;
         align-items: center;
     }
 
@@ -30,7 +32,12 @@ st.markdown("""
     }
 
     .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
-    .comp-name { font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 2px; text-align: center; }
+    
+    /* Nome componenti per Tab Aggiungi (Centrato) */
+    .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 2px; text-align: center; width: 100%; display: block; }
+
+    /* Nome componenti per Tab Inventario (Allineato a sinistra) */
+    .comp-name-left { font-size: 1.1rem; color: #f1f5f9; margin-top: 5px; margin-bottom: 5px; text-align: left; width: 100%; display: block; }
 
     /* TASTI: Proporzionati al testo, larghi 1.5x e alti 30px */
     div[data-testid="stButton"] {
@@ -62,8 +69,12 @@ st.markdown("""
         white-space: nowrap !important;
     }
 
-    /* Riduzione spazio tra gli elementi */
-    .stMarkdown { margin-bottom: -10px !important; }
+    /* Stile Expander */
+    .stExpander {
+        border: 1px solid #334155 !important;
+        background-color: #1e293b !important;
+        margin-bottom: 10px !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -90,7 +101,6 @@ def add_to_inv(tipo, nome):
             st.session_state.inventario[tipo][nome] = 0
         st.session_state.inventario[tipo][nome] += 1
 
-# Inizializzazione Inventario
 if 'inventario' not in st.session_state:
     st.session_state.inventario = {
         "lock_bit": {}, "blade": {}, "main_blade": {}, 
@@ -115,7 +125,11 @@ with tab1:
             st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
             
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
-            if img: st.image(img, width=150)
+            if img:
+                # Forza centratura immagine
+                cols = st.columns([1, 2, 1])
+                with cols[1]:
+                    st.image(img, use_container_width=True)
             
             components = [
                 ("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
@@ -134,12 +148,12 @@ with tab1:
             for ck, ik in components:
                 val = row[ck]
                 if val and val != "n/a":
-                    st.markdown(f"<div class='comp-name'>{val}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
                     if st.button("＋", key=f"btn_{i}_{ck}"):
                         add_to_inv(ik, val)
                         st.toast(f"Aggiunto: {val}")
 
-# --- TAB 2: INVENTARIO (VERSIONE PULITA) ---
+# --- TAB 2: INVENTARIO (RETRAIBILE & SINISTRA) ---
 with tab2:
     # Controllo se l'inventario ha dati
     has_content = False
@@ -154,15 +168,14 @@ with tab2:
         for categoria, pezzi in st.session_state.inventario.items():
             pezzi_validi = {n: q for n, q in pezzi.items() if q > 0}
             if pezzi_validi:
-                with st.container(border=True):
-                    # Titolo Categoria meno invasivo
-                    st.markdown(f"<div style='color: #60a5fa; font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;'>{categoria.replace('_', ' ').upper()}</div>", unsafe_allow_html=True)
-                    
+                # Nome categoria formattato bene
+                cat_label = categoria.replace('_', ' ').upper()
+                
+                # Tab retraibile (Expander)
+                with st.expander(f"📦 {cat_label}", expanded=False):
                     for nome, qta in pezzi_validi.items():
-                        # Formato richiesto: Nome xQuantità
-                        st.markdown(f"<div class='comp-name'>{nome} x{qta}</div>", unsafe_allow_html=True)
-                    
-                    st.write("") # Padding fondo card
+                        # Allineamento a sinistra e formato richiesto
+                        st.markdown(f"<div class='comp-name-left'>{nome} x{qta}</div>", unsafe_allow_html=True)
 
 # --- TAB 3: DECK BUILDER ---
 with tab3:
