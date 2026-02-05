@@ -5,15 +5,16 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & FIX LAYOUT
+# CONFIGURAZIONE & FIX RADICALE
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
+# CSS mirato solo a quello che hai chiesto: centratura e intestazioni scure
 st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* FIX INTESTAZIONI: Sfondo scuro per Expander */
+    /* FIX INTESTAZIONI: Devono essere scure */
     div[data-testid="stExpander"] {
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
@@ -22,34 +23,17 @@ st.markdown("""
     div[data-testid="stExpander"] summary p { color: #f1f5f9 !important; }
 
     /* CENTRATURA IMMAGINE */
-    [data-testid="stImage"] { display: flex; justify-content: center; }
+    [data-testid="stImage"] { display: flex; justify-content: center; width: 100%; }
     [data-testid="stImage"] img { margin: 0 auto !important; }
 
-    /* FIX ORIZZONTALE: Impedisce ai tasti di uscire a destra */
-    div[data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        width: 100% !important;
+    /* TABELLA COMPONENTI: Forza l'allineamento orizzontale */
+    .comp-table {
+        width: 100%;
+        border-collapse: collapse;
     }
-
-    /* Forza la colonna del tasto a restare visibile senza sforare */
-    div[data-testid="column"]:nth-of-type(2), div[data-testid="column"]:nth-of-type(3) {
-        flex: 0 1 auto !important;
-        min-width: 50px !important;
-    }
-    
-    /* La colonna del testo prende tutto lo spazio rimanente ma non spinge */
-    div[data-testid="column"]:nth-of-type(1) {
-        flex: 1 1 auto !important;
-        overflow: hidden;
-    }
-
-    /* Ripristino bottoni standard (rimossa ogni modifica colore non richiesta) */
-    .stButton button {
-        width: auto !important;
-        min-width: 40px !important;
+    .comp-table td {
+        vertical-align: middle;
+        padding: 5px 0;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -93,29 +77,27 @@ with tab_add:
 
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            # 1. Nome Beyblade Centrato
             st.markdown(f"<h3 style='text-align:center;'>{row['name'].upper()}</h3>", unsafe_allow_html=True)
             
-            # 2. Immagine Centrata
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
             if img:
                 st.image(img)
             
-            # 3. Componenti con tasto accanto
             comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"), 
                      ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"), 
                      ("ratchet_integrated_bit", "ratchet_integrated_bit")]
             
+            # USIAMO LE COLONNE MA CON LOGICA DIVERSA PER EVITARE SPOSTAMENTI
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    c1, c2 = st.columns([0.8, 0.2])
-                    c1.markdown(f"<div style='padding-top:8px;'>{val}</div>", unsafe_allow_html=True)
+                    # Layout super-protetto: colonna larghissima per il testo, strettissima per il tasto
+                    c1, c2 = st.columns([0.85, 0.15])
+                    c1.write(val)
                     if c2.button("＋", key=f"add_{i}_{field}"):
                         st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
                         st.toast(f"Aggiunto {val}")
 
-            # 4. Aggiungi tutto (Bottone standard largo)
             st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True)
 
 with tab_inv:
@@ -127,9 +109,9 @@ with tab_inv:
         if validi:
             with st.expander(tipo.replace('_', ' ').upper(), expanded=True):
                 for nome, qta in validi.items():
-                    # Layout: Nome | + | -
+                    # Qui mettiamo 3 colonne: Nome, +, -
                     ci1, ci2, ci3 = st.columns([0.7, 0.15, 0.15])
-                    ci1.markdown(f"<div style='padding-top:8px;'>{nome} (x{qta})</div>", unsafe_allow_html=True)
+                    ci1.write(f"{nome} (x{qta})")
                     if ci2.button("＋", key=f"inv_p_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] += 1
                         st.rerun()
