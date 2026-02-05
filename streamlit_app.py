@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import hashlib
 import os
-import json
 from PIL import Image
 
 # =========================
@@ -10,17 +9,28 @@ from PIL import Image
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
-# CSS per rimpicciolire card, immagini e testi
+# CSS Custom per card, bordi e layout
 st.markdown("""
     <style>
-    .stApp { background-color: #f0f2f6; }
+    .stApp { background-color: #f8fafc; }
+    /* Card stile Tab Aggiungi */
     .bey-card { 
-        background-color: white; padding: 10px; border-radius: 10px; 
-        border: 1px solid #ddd; margin-bottom: 10px; font-size: 0.8rem;
+        background-color: white; 
+        padding: 15px; 
+        border-radius: 12px; 
+        border: 1px solid #e2e8f0; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+        text-align: center;
     }
-    .bey-name { font-weight: bold; font-size: 0.9rem; color: #1e3a8a; }
-    .stButton>button { width: 100%; padding: 0px; font-size: 0.7rem; }
-    [data-testid="stExpander"] { border: 1px solid #e2e8f0; }
+    .bey-name { font-weight: bold; font-size: 1rem; color: #1e293b; margin-bottom: 8px; }
+    .comp-text { font-size: 0.85rem; color: #64748b; line-height: 1.2; }
+    
+    /* Bottoni compatti */
+    .stButton>button { border-radius: 8px; font-size: 0.8rem; }
+    
+    /* Ottimizzazione spazio Deck */
+    [data-testid="stExpander"] { border: 1px solid #cbd5e1; background: white; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -28,129 +38,160 @@ CSV_FILE = "beyblade_x.csv"
 IMAGES_DIR = "images"
 
 # =========================
-# GESTIONE MEMORIA (SESSION STATE)
-# =========================
-if 'inventario' not in st.session_state:
-    st.session_state.inventario = {
-        "lock_bit": {}, "blade": {}, "main_blade": {}, "assist_blade": {},
-        "ratchet": {}, "ratchet_integrated_bit": {}, "bit": {}
-    }
-if 'decks' not in st.session_state:
-    st.session_state.decks = []
-
-# =========================
-# FUNZIONI UTILI
+# FUNZIONI OTTIMIZZATE
 # =========================
 @st.cache_data
 def load_db():
     if not os.path.exists(CSV_FILE): return pd.DataFrame()
     df = pd.read_csv(CSV_FILE).fillna("")
-    # Creiamo una colonna di ricerca invisibile
     df['_search'] = df.astype(str).apply(lambda x: ' '.join(x).lower(), axis=1)
     return df
 
-def get_img(url):
+@st.cache_resource
+def get_img(url, size=(100, 100)):
     if not url or url == "n/a": return None
     h = hashlib.md5(url.encode()).hexdigest()
     path = os.path.join(IMAGES_DIR, f"{h}.png")
-    if os.path.exists(path): return Image.open(path)
+    if os.path.exists(path):
+        img = Image.open(path)
+        img.thumbnail(size)
+        return img
     return None
 
 def add_to_inv(tipo, nome):
     if nome and nome != "n/a":
         st.session_state.inventario[tipo][nome] = st.session_state.inventario[tipo].get(nome, 0) + 1
 
+# Inizializzazione Session State
+if 'inventario' not in st.session_state:
+    st.session_state.inventario = {
+        "lock_bit": {}, "blade": {}, "main_blade": {}, "assist_blade": {},
+        "ratchet": {}, "bit": {}, "ratchet_integrated_bit": {}
+    }
+if 'decks' not in st.session_state:
+    st.session_state.decks = []
+
 df = load_db()
 
 # =========================
-# SIDEBAR
+# UI SIDEBAR
 # =========================
 st.sidebar.title("🔧 Officina X")
 utente = st.sidebar.selectbox("Utente", ["Antonio", "Andrea", "Fabio"])
-st.sidebar.divider()
-if st.sidebar.button("💾 Salva Dati Online"):
-    st.sidebar.info("Connessione a Google Sheets in corso...")
 
 # =========================
-# UI PRINCIPALE
+# TAB PRINCIPALI
 # =========================
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: RICERCA E AGGIUNGI ---
+# --- TAB 1: AGGIUNGI ---
 with tab1:
-    search_q = st.text_input("Cerca nel database (es. Aero, Dran, Flat...)", "").lower()
-    
+    search_q = st.text_input("Cerca...", "").lower()
     filtered = df[df['_search'].str.contains(search_q)] if search_q else df
     
-    # Griglia compatta a 4 colonne per smartphone/web
-    cols = st.columns(4)
+    # 2 colonne per cellulare, 4 per desktop
+    n_cols = 2 if st.columns(2) else 4 
+    cols = st.columns(2 if search_q else 2) # Forza 2 colonne per ordine cellulare
+    
     for i, (_, row) in enumerate(filtered.iterrows()):
-        with cols[i % 4]:
-            with st.container():
-                st.markdown(f"<div class='bey-card'><div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
-                img = get_img(row['blade_image'] or row['beyblade_page_image'])
-                if img: st.image(img, width=80)
-                
-                # Componenti elencate (Punto 2)
-                comp_list = []
-                for k, label in [("lock_chip", "LB"), ("blade", "Bl"), ("ratchet", "Ra"), ("bit", "Bi")]:
-                    if row[k] and row[k] != "n/a": comp_list.append(f"**{label}:** {row[k]}")
-                st.markdown("<br>".join(comp_list), unsafe_allow_html=True)
-                
-                if st.button("➕", key=f"add_{i}"):
-                    # Aggiunta intelligente di tutte le parti presenti
-                    for k in ["lock_chip", "blade", "main_blade", "assist_blade", "ratchet", "ratchet_integrated_bit", "bit"]:
-                        key_inv = "lock_bit" if k == "lock_chip" else k
-                        if row[k] and row[k] != "n/a": add_to_inv(key_inv, row[k])
-                    st.toast(f"{row['name']} aggiunto!")
-                st.markdown("</div>", unsafe_allow_html=True)
+        col_idx = i % 2
+        with cols[col_idx]:
+            st.markdown(f"""<div class='bey-card'>
+                <div class='bey-name'>{row['name']}</div>""", unsafe_allow_html=True)
+            
+            img = get_img(row['blade_image'] or row['beyblade_page_image'])
+            if img: st.image(img, use_container_width=False, width=120)
+            
+            # Elenco componenti con tasto "+" singolo (Punto Aggiungi)
+            comps = [
+                ("lock_chip", "lock_bit"), ("blade", "blade"), 
+                ("main_blade", "main_blade"), ("assist_blade", "assist_blade"),
+                ("ratchet", "ratchet"), ("bit", "bit"), 
+                ("ratchet_integrated_bit", "ratchet_integrated_bit")
+            ]
+            
+            for field, inv_key in comps:
+                nome_pezzo = row[field]
+                if nome_pezzo and nome_pezzo != "n/a":
+                    c_text, c_btn = st.columns([4, 1])
+                    c_text.markdown(f"<div class='comp-text'>{nome_pezzo}</div>", unsafe_allow_html=True)
+                    if c_btn.button("＋", key=f"add_{inv_key}_{i}"):
+                        add_to_inv(inv_key, nome_pezzo)
+                        st.toast(f"Aggiunto: {nome_pezzo}")
+            
+            st.divider()
+            if st.button(f"Aggiungi Tutto", key=f"all_{i}"):
+                for field, inv_key in comps:
+                    add_to_inv(inv_key, row[field])
+                st.toast("Intero Beyblade aggiunto!")
+            st.markdown("</div>", unsafe_allow_html=True)
 
 # --- TAB 2: INVENTARIO ---
 with tab2:
-    st.header(f"Magazzino di {utente}")
-    inv_cols = st.columns(3)
-    tipi = list(st.session_state.inventario.keys())
-    for idx, tipo in enumerate(tipi):
-        with inv_cols[idx % 3]:
-            st.subheader(tipo.replace("_", " ").title())
-            for nome, qta in st.session_state.inventario[tipo].items():
-                st.write(f"**{qta}x** {nome}")
+    st.header(f"Inventario di {utente}")
+    # Ordine richiesto (Punto Inventario)
+    ordine_inv = ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]
+    
+    for tipo in ordine_inv:
+        pezzi = st.session_state.inventario[tipo]
+        if pezzi:
+            with st.expander(f"{tipo.replace('_', ' ').title()}", expanded=True):
+                for nome, qta in pezzi.items():
+                    st.write(f"**{qta}x** {nome}")
 
 # --- TAB 3: DECK BUILDER ---
 with tab3:
-    col_t, col_b = st.columns([2, 1])
-    col_t.header(f"Deck di {utente}")
-    if col_b.button("➕ Nuovo Deck"):
-        st.session_state.decks.append({"name": f"Deck {len(st.session_state.decks)+1}", "beys": [{}, {}, {}]})
+    header_col, btn_col = st.columns([3, 1])
+    header_col.header(f"Deck di {utente}")
+    if btn_col.button("➕ Nuovo Deck"):
+        st.session_state.decks.append({"name": f"Deck {len(st.session_state.decks)+1}"})
 
     for d_idx, deck in enumerate(st.session_state.decks):
         with st.expander(f"📂 {deck['name']}", expanded=True):
             b_cols = st.columns(3)
             for b_idx in range(3):
                 with b_cols[b_idx]:
-                    st.markdown(f"**Beyblade {b_idx+1}**")
+                    st.markdown(f"**Bey {b_idx+1}**")
                     
-                    # Flags (Punto 6)
-                    c1, c2, c3 = st.columns(3)
-                    cx = c1.checkbox("CX", key=f"cx_{d_idx}_{b_idx}")
-                    rib = c2.checkbox("RIB", key=f"rib_{d_idx}_{b_idx}")
-                    theory = c3.checkbox("TH", key=f"th_{d_idx}_{b_idx}", help="Usa tutto il DB")
+                    # Flags su una riga (Punto Deck)
+                    f1, f2, f3 = st.columns(3)
+                    cx = f1.checkbox("CX", key=f"cx_{d_idx}_{b_idx}")
+                    rib = f2.checkbox("RIB", key=f"rib_{d_idx}_{b_idx}")
+                    theory = f3.checkbox("Theory", key=f"th_{d_idx}_{b_idx}")
                     
-                    def get_options(key):
-                        if theory: return sorted(df[key].unique().tolist())
-                        inv_key = "lock_bit" if key == "lock_chip" else key
-                        return sorted(list(st.session_state.inventario.get(inv_key, {}).keys()))
+                    def select_part(label, key, img_key):
+                        # Filtro opzioni
+                        if theory:
+                            opts = sorted(df[key].unique().tolist())
+                        else:
+                            inv_k = "lock_bit" if key == "lock_chip" else key
+                            opts = sorted(list(st.session_state.inventario[inv_k].keys()))
+                        
+                        if not opts: opts = [""]
+                        
+                        sel = st.selectbox(label, opts, key=f"sel_{key}_{d_idx}_{b_idx}")
+                        
+                        # Mostra immagine (Punto Deck Immagini)
+                        if sel:
+                            img_url = df[df[key] == sel][img_key].values
+                            if len(img_url) > 0:
+                                p_img = get_img(img_url[0], size=(80, 80))
+                                if p_img: st.image(p_img, width=70)
+                        return sel
 
-                    # Logica campi dinamici
                     if cx:
-                        st.selectbox("Lock Bit", get_options("lock_chip"), key=f"lb_{d_idx}_{b_idx}")
-                        st.selectbox("Main Blade", get_options("main_blade"), key=f"mb_{d_idx}_{b_idx}")
-                        st.selectbox("Assist Blade", get_options("assist_blade"), key=f"ab_{d_idx}_{b_idx}")
+                        select_part("Lock Bit", "lock_chip", "lock_chip_image")
+                        select_part("Main Blade", "main_blade", "main_blade_image")
+                        select_part("Assist Blade", "assist_blade", "assist_blade_image")
                     else:
-                        st.selectbox("Blade", get_options("blade"), key=f"bl_{d_idx}_{b_idx}")
+                        select_part("Blade", "blade", "blade_image")
                     
                     if rib:
-                        st.selectbox("R.I.B.", get_options("ratchet_integrated_bit"), key=f"ri_{d_idx}_{b_idx}")
+                        select_part("R.I.B.", "ratchet_integrated_bit", "ratchet_integrated_bit_image")
                     else:
-                        st.selectbox("Ratchet", get_options("ratchet"), key=f"ra_{d_idx}_{b_idx}")
-                        st.selectbox("Bit", get_options("bit"), key=f"bi_{d_idx}_{b_idx}")
+                        select_part("Ratchet", "ratchet", "ratchet_image")
+                        select_part("Bit", "bit", "bit_image")
+
+    st.divider()
+    if st.button("💾 SALVA TUTTI I DATI ONLINE"):
+        st.success("Pronto per il collegamento finale a Google Sheets!")
