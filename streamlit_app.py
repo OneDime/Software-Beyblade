@@ -5,62 +5,60 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & FIX COLORI SMARTPHONE
+# CONFIGURAZIONE & STILE DEFINITIVO
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
-    /* Sfondo generale scuro */
+    /* Sfondo e Testi Generali */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* FIX TESTI: Forza grigio chiaro su tab e label */
-    .stTabs [data-baseweb="tab-list"] button p, 
-    label p, .stMarkdown p, .stSelectbox p { 
-        color: #f1f5f9 !important; 
+    /* Forza centratura di TUTTI i blocchi nel container */
+    [data-testid="stVerticalBlock"] {
+        align-items: center !important;
+        text-align: center !important;
     }
 
-    /* FIX BOTTONI: Devono essere scuri con testo bianco su ogni dispositivo */
+    /* Testi Tab e Label chiari */
+    .stTabs [data-baseweb="tab-list"] button p, label p, .stMarkdown p {
+        color: #f1f5f9 !important;
+    }
+
+    /* BOTTONI: Scuri su ogni dispositivo */
     button, [data-testid="stBaseButton-secondary"] {
         background-color: #1e293b !important;
         color: #f1f5f9 !important;
         border: 1px solid #3b82f6 !important;
-        border-radius: 8px !important;
     }
 
-    /* Centratura totale dei widget nel container */
-    [data-testid="stVerticalBlock"] > div {
+    /* RIGA COMPONENTE: Flexbox per tenere tutto sulla stessa linea */
+    .comp-container {
         display: flex;
-        flex-direction: column;
-        align-items: center;
         justify-content: center;
-        text-align: center;
-    }
-
-    /* Forza l'allineamento orizzontale dei componenti (Nome + Bottone) */
-    .comp-box {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
         align-items: center;
         width: 100%;
-        max-width: 350px;
-        background: #0f172a;
-        padding: 10px;
-        border-radius: 10px;
         margin: 5px 0;
     }
     
-    /* Fix per evitare che le immagini vadano sotto nei selectbox del deck */
+    /* Impedisce ai bottoni di Streamlit di forzare il wrap su mobile */
     [data-testid="column"] {
-        display: flex !important;
-        align-items: center !important;
+        width: fit-content !important;
+        flex: unset !important;
+        min-width: unset !important;
+    }
+
+    /* Centratura immagini */
+    [data-testid="stImage"] img {
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
     }
     </style>
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA DATI
+# FUNZIONI CORE
 # =========================
 @st.cache_data
 def load_db():
@@ -90,12 +88,12 @@ st.sidebar.title("🔧 Officina X")
 utente = st.sidebar.selectbox("Utente", ["Antonio", "Andrea", "Fabio"])
 
 # =========================
-# UI PRINCIPALE
+# TABS
 # =========================
 tab_add, tab_inv, tab_deck = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 with tab_add:
-    search_q = st.text_input("Cerca...", placeholder="Inserisci nome o componente")
+    search_q = st.text_input("Cerca...", key="search_bar")
     
     filtered = df
     if len(search_q) >= 2:
@@ -104,9 +102,9 @@ with tab_add:
         filtered = df.head(3)
 
     for i, (_, row) in enumerate(filtered.iterrows()):
-        # USO DI ST.CONTAINER CON BORDO: Risolve il problema della "forma vuota"
         with st.container(border=True):
-            st.subheader(row["name"].upper())
+            # Centratura Titolo e Immagine
+            st.markdown(f"### {row['name'].upper()}")
             
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
             if img:
@@ -119,10 +117,10 @@ with tab_add:
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    # Layout Nome + Bottone centrato e scuro
-                    c_txt, c_btn = st.columns([0.8, 0.2])
-                    c_txt.markdown(f"**{val}**")
-                    if c_btn.button("＋", key=f"btn_add_{i}_{field}"):
+                    # Layout super-stretto per forzare l'affiancamento
+                    c1, c2 = st.columns([0.85, 0.15])
+                    c1.markdown(f"<div style='text-align: right; padding-top: 5px;'>{val}</div>", unsafe_allow_html=True)
+                    if c2.button("＋", key=f"add_{i}_{field}"):
                         st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
                         st.toast(f"Aggiunto {val}")
 
@@ -134,12 +132,15 @@ with tab_add:
                 st.toast("Beyblade aggiunto!")
 
 with tab_inv:
-    st.header(f"Inventario: {utente}")
+    st.header(f"Inventario di {utente}")
+    # Fix Logica Inventario per evitare IndexError
     for tipo in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]:
-        pezzi = {k: v for k, v in st.session_state.inventario.get(tipo, {}).items() if v > 0}
-        if pezzi:
+        pezzi = st.session_state.inventario.get(tipo, {})
+        validi = {k: v for k, v in pezzi.items() if v > 0}
+        
+        if validi:
             with st.expander(tipo.replace('_', ' ').upper(), expanded=True):
-                for nome, qta in pezzi.items():
+                for nome, qta in validi.items():
                     c1, c2, c3 = st.columns([0.6, 0.2, 0.2])
                     c1.write(f"{nome} (x{qta})")
                     if c2.button("＋", key=f"p_{tipo}_{nome}"):
@@ -150,8 +151,8 @@ with tab_inv:
                         st.rerun()
 
 with tab_deck:
-    st.header(f"Deck Builder: {utente}")
-    if st.button("➕ Crea Nuovo Deck", use_container_width=True):
+    st.header(f"Deck Builder")
+    if st.button("➕ Nuovo Deck", use_container_width=True):
         st.session_state.decks.append({"name": f"Deck {len(st.session_state.decks)+1}"})
 
     for d_idx, deck in enumerate(st.session_state.decks):
@@ -170,14 +171,16 @@ with tab_deck:
                 else: parts += [("Ratchet", "ratchet", "ratchet_image"), ("Bit", "bit", "bit_image")]
 
                 for label, db_key, img_db_key in parts:
-                    if v_th: opts = [""] + sorted(df[db_key].unique().tolist())
+                    # Fix logica opzioni: correzione IndexError
+                    if v_th: 
+                        opts = [""] + sorted(df[db_key].unique().tolist())
                     else:
                         inv_k = "lock_bit" if db_key == "lock_chip" else db_key
-                        opts = [""] + sorted(list(st.session_state.inventario.get(inv_k, {}).items())) # Fix opzioni inventario
-                        opts = [o[0] for o in opts if o[1] > 0]
+                        inv_data = st.session_state.inventario.get(inv_k, {})
+                        opts = [""] + sorted([k for k, v in inv_data.items() if v > 0])
                     
-                    c_sel, c_img = st.columns([0.7, 0.3])
-                    scelta = c_sel.selectbox(label, [""] + opts, key=f"dk_{d_idx}_{b_idx}_{db_key}")
+                    c_sel, c_img = st.columns([0.75, 0.25])
+                    scelta = c_sel.selectbox(label, opts, key=f"dk_{d_idx}_{b_idx}_{db_key}")
                     if scelta:
                         img_url = df[df[db_key] == scelta][img_db_key].values
                         if len(img_url) > 0:
