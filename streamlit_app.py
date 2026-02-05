@@ -5,47 +5,40 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & FIX MOBILE
+# CONFIGURAZIONE & RIPRISTINO STILE
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
-    /* Sfondo e Colori Base */
+    /* Sfondo Generale */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* Expander: Sfondo scuro e scritte chiare */
+    /* RIPRISTINO INTESTAZIONI SCURE (Expander) */
     div[data-testid="stExpander"] {
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
     }
+    div[data-testid="stExpander"] summary { background-color: #1e293b !important; }
     div[data-testid="stExpander"] summary p { color: #cbd5e1 !important; }
 
     /* Centratura Immagini */
     [data-testid="stImage"] img { display: block; margin: 0 auto; }
 
-    /* FIX LAYOUT: Impedisce ai tasti di uscire o essere tagliati */
-    [data-testid="column"] {
-        display: flex !important;
-        align-items: center !important;
-    }
-    
-    /* Blocca la colonna del tasto a una dimensione fissa e sicura */
-    div[data-testid="column"]:nth-of-type(2), 
-    div[data-testid="column"]:nth-of-type(3) {
-        min-width: 50px !important;
-        max-width: 50px !important;
-        justify-content: center !important;
+    /* FIX LAYOUT RIGA: Nome a sinistra, Tasto a destra */
+    .custom-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 10px;
     }
 
-    /* Tasti standard scuri */
-    .stButton button {
+    /* Stile Bottoni Scuro */
+    button {
         background-color: #334155 !important;
-        color: white !important;
+        color: #f1f5f9 !important;
         border: 1px solid #475569 !important;
-        width: 40px !important;
-        height: 35px !important;
-        padding: 0 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -55,8 +48,7 @@ st.markdown("""
 # =========================
 @st.cache_data
 def load_db():
-    if not os.path.exists("beyblade_x.csv"): 
-        return pd.DataFrame(columns=['name', 'blade_image', 'beyblade_page_image', 'lock_chip', 'blade', 'main_blade', 'assist_blade', 'ratchet', 'bit', 'ratchet_integrated_bit', '_search'])
+    if not os.path.exists("beyblade_x.csv"): return pd.DataFrame()
     df = pd.read_csv("beyblade_x.csv").fillna("")
     df['_search'] = df.astype(str).apply(lambda x: ' '.join(x).lower(), axis=1)
     return df
@@ -72,11 +64,8 @@ def get_img(url, size=(200, 200)):
         return img
     return None
 
-# Inizializzazione dati
 if 'inventario' not in st.session_state:
     st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
-if 'decks' not in st.session_state:
-    st.session_state.decks = []
 
 df = load_db()
 
@@ -87,7 +76,6 @@ tab_add, tab_inv, tab_deck = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 
 
 with tab_add:
     search_q = st.text_input("Cerca...", key="search_main")
-    # Qui il fix per il NameError: df è definito sopra
     filtered = df[df['_search'].str.contains(search_q.lower())].head(3) if len(search_q) >= 2 else df.head(3)
 
     for i, (_, row) in enumerate(filtered.iterrows()):
@@ -103,14 +91,20 @@ with tab_add:
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    # Layout super-stabile: il testo occupa l'80%, il tasto il 20% fisso
-                    c_txt, c_btn = st.columns([0.8, 0.2])
-                    c_txt.write(val)
-                    if c_btn.button("＋", key=f"add_{i}_{field}"):
+                    # Layout Forzato: Nome | Spazio | Bottone
+                    c1, c2 = st.columns([0.8, 0.2])
+                    c1.markdown(f"<div style='padding-top:5px;'>{val}</div>", unsafe_allow_html=True)
+                    if c2.button("＋", key=f"add_{i}_{field}"):
                         st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
                         st.toast(f"Aggiunto {val}")
 
-            st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True)
+            # Ripristinato il tasto "Aggiungi tutto" a piena larghezza
+            if st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True):
+                for field, inv_key in comps:
+                    val = row[field]
+                    if val and val != "n/a":
+                        st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
+                st.toast(f"Aggiunti tutti i componenti di {row['name']}")
 
 with tab_inv:
     st.header("Inventario")
@@ -118,16 +112,14 @@ with tab_inv:
         pezzi = st.session_state.inventario.get(tipo, {})
         validi = {k: v for k, v in pezzi.items() if v > 0}
         if validi:
+            # Qui le intestazioni sono di nuovo scure
             with st.expander(tipo.replace('_', ' ').upper(), expanded=True):
                 for nome, qta in validi.items():
-                    # Qui usiamo 3 colonne: Nome | + | -
-                    ci1, ci2, ci3 = st.columns([0.6, 0.2, 0.2])
-                    ci1.write(f"{nome} (x{qta})")
-                    if ci2.button("＋", key=f"inv_p_{tipo}_{nome}"):
+                    c1, c2, c3 = st.columns([0.6, 0.2, 0.2])
+                    c1.write(f"{nome} (x{qta})")
+                    if c2.button("＋", key=f"inv_p_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] += 1
                         st.rerun()
-                    if ci3.button("－", key=f"inv_m_{tipo}_{nome}"):
+                    if ci3 := c3.button("－", key=f"inv_m_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] -= 1
                         st.rerun()
-
-# Il Deck Builder rimane come lo avevi lasciato, ma ora eredita lo stile scuro degli expander.
