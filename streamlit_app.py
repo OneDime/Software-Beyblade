@@ -11,24 +11,35 @@ st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
 <style>
-.stApp { background-color: #0f172a; color: #f1f5f9; }
-
-/* CARD */
-[data-testid="stContainer"] {
-    background-color: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 12px;
-    padding: 14px;
+.stApp {
+    background-color: #0f172a;
+    color: #f1f5f9;
 }
 
-/* NOME CENTRATO */
+/* CARD */
+div[data-testid="stContainer"] {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+}
+
+/* CENTRATORE ASSOLUTO */
+.center {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* TITOLO */
 .bey-title {
     text-align: center;
     color: #60a5fa;
-    margin-bottom: 6px;
+    margin: 4px 0 6px 0;
 }
 
-/* IMMAGINE CENTRATA */
+/* IMMAGINE */
 .bey-img {
     display: flex;
     justify-content: center;
@@ -39,15 +50,16 @@ st.markdown("""
 }
 
 /* RIGA COMPONENTE */
-.comp-row {
+.comp-line {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 10px;
     margin: 6px 0;
 }
 
-.comp-name {
+/* TESTO COMPONENTE */
+.comp-text {
     flex: 1;
     text-align: left;
     white-space: nowrap;
@@ -55,14 +67,14 @@ st.markdown("""
     text-overflow: ellipsis;
 }
 
-/* BOTTONE + PICCOLO */
+/* BOTTONE + MICRO */
 .comp-btn button {
-    width: 38px !important;
-    min-width: 38px !important;
+    width: 36px !important;
+    min-width: 36px !important;
     padding: 0 !important;
 }
 
-/* BOTTONI GENERALI */
+/* BOTTONI */
 .stButton button {
     background-color: #334155 !important;
     color: #f1f5f9 !important;
@@ -116,7 +128,7 @@ if "inventario" not in st.session_state:
 tab_add, tab_inv, tab_deck = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 # =========================
-# TAB AGGIUNGI (MOBILE FIX DEFINITIVO)
+# TAB AGGIUNGI (FIX REALE MOBILE)
 # =========================
 with tab_add:
     search_q = st.text_input("Cerca...", key="search_main")
@@ -125,13 +137,13 @@ with tab_add:
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container():
 
-            # NOME
+            # NOME (CENTRATO REALE)
             st.markdown(
-                f"<h3 class='bey-title'>{row['name'].upper()}</h3>",
+                f"<div class='center'><h3 class='bey-title'>{row['name'].upper()}</h3></div>",
                 unsafe_allow_html=True
             )
 
-            # IMMAGINE
+            # IMMAGINE (CENTRATA REALE)
             img = get_img(row["blade_image"] or row["beyblade_page_image"])
             if img:
                 st.markdown("<div class='bey-img'>", unsafe_allow_html=True)
@@ -140,7 +152,7 @@ with tab_add:
 
             st.divider()
 
-            # COMPONENTI
+            # COMPONENTI (RIGA BLOCCATA)
             comps = [
                 ("lock_chip", "lock_bit"),
                 ("blade", "blade"),
@@ -154,13 +166,17 @@ with tab_add:
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    col_text, col_btn = st.columns([0.85, 0.15])
-                    with col_text:
+
+                    # CONTENITORE FLEX
+                    left, right = st.columns([1, 0.0001])
+
+                    with left:
                         st.markdown(
-                            f"<div class='comp-row'><div class='comp-name'>{val}</div></div>",
+                            f"<div class='comp-line'><div class='comp-text'>{val}</div></div>",
                             unsafe_allow_html=True
                         )
-                    with col_btn:
+
+                    with right:
                         st.markdown("<div class='comp-btn'>", unsafe_allow_html=True)
                         if st.button("＋", key=f"add_{i}_{field}"):
                             inv = st.session_state.inventario[inv_key]
