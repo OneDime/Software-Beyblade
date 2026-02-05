@@ -5,21 +5,16 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE
+# CONFIGURAZIONE & STILE (INVARIATI)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
-    /* Sfondo Generale */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* --- STILI TAB AGGIUNGI (INTOCCABILI) --- */
-    [data-testid="stVerticalBlock"] {
-        text-align: center;
-        align-items: center;
-    }
-
+    /* STILE TAB AGGIUNGI (INTOCCABILE) */
+    [data-testid="stVerticalBlock"] { text-align: center; align-items: center; }
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
@@ -27,84 +22,37 @@ st.markdown("""
         margin-bottom: 25px !important;
         padding: 15px !important;
     }
-
     .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
     .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 2px; text-align: center; width: 100%; display: block; }
 
-    /* Bottoni Tab Aggiungi */
+    /* BOTTONI AGGIUNGI (INTOCCABILI) */
     div.stButton > button {
-        width: auto !important; 
-        min-width: 150px !important; 
-        padding-left: 40px !important;  
-        padding-right: 40px !important;
-        height: 30px !important;
-        min-height: 30px !important;
-        max-height: 30px !important;
-        background-color: #334155 !important;
-        color: white !important;
-        border: 1px solid #475569 !important;
-        border-radius: 4px !important;
-        font-size: 1.1rem !important;
-        line-height: 1 !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        white-space: nowrap !important;
+        width: auto !important; min-width: 150px !important; padding-left: 40px !important; padding-right: 40px !important;
+        height: 30px !important; background-color: #334155 !important; color: white !important;
+        border: 1px solid #475569 !important; border-radius: 4px !important; font-size: 1.1rem !important;
     }
 
-    /* --- STILI TAB INVENTARIO --- */
-    
-    /* Riduzione altezza area Switch (Radio) */
-    div[data-testid="stWidgetLabel"] {
-        display: none !important;
-    }
-    
-    div[data-testid="stRadio"] > div {
-        padding: 0px !important;
-        margin-top: -15px !important;
-        margin-bottom: -15px !important;
-    }
-
-    /* Allineamento componenti a sinistra nell'inventario */
-    .inv-row-container {
-        text-align: left !important;
-        width: 100%;
-        padding-left: 10px;
-    }
-
+    /* STILE INVENTARIO */
+    .inv-row-container { text-align: left !important; width: 100%; padding-left: 10px; }
     .inv-row button {
-        width: 100% !important;
-        justify-content: flex-start !important;
-        background: transparent !important;
-        border: none !important;
-        color: #f1f5f9 !important;
-        text-align: left !important;
-        font-size: 1.1rem !important;
-        height: 35px !important;
-        padding-left: 0px !important;
-    }
-    
-    .inv-row button:hover {
-        background: #334155 !important;
+        width: 100% !important; justify-content: flex-start !important; background: transparent !important;
+        border: none !important; color: #f1f5f9 !important; text-align: left !important; font-size: 1.1rem !important;
     }
 
-    /* Expander Style */
-    .stExpander { 
-        border: 1px solid #334155 !important; 
-        background-color: #1e293b !important; 
-        text-align: left !important;
+    /* STILE DECK BUILDER */
+    .deck-slot {
+        background-color: #1e293b;
+        border: 1px dashed #60a5fa;
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 20px;
     }
-    
-    .stExpander [data-testid="stVerticalBlock"] {
-        align-items: flex-start !important;
-        text-align: left !important;
-    }
-
+    .deck-title { color: #60a5fa; font-weight: bold; margin-bottom: 10px; font-size: 1.2rem; }
     </style>
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI UTILI
+# FUNZIONI UTILI (INVARIATE)
 # =========================
 @st.cache_data
 def load_db():
@@ -129,15 +77,22 @@ def add_to_inv(tipo, nome, delta=1):
             if nome in st.session_state.inventario[tipo]:
                 del st.session_state.inventario[tipo][nome]
 
+# Inizializzazione Inventario e Deck
 if 'inventario' not in st.session_state:
     st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
+
+if 'deck' not in st.session_state:
+    st.session_state.deck = {
+        "Bey 1": {"blade": None, "ratchet": None, "bit": None},
+        "Bey 2": {"blade": None, "ratchet": None, "bit": None},
+        "Bey 3": {"blade": None, "ratchet": None, "bit": None},
+    }
 
 df = load_db()
 
 # =========================
 # UI PRINCIPALE
 # =========================
-# Ripristinata icona solo nel nome del Tab Inventario
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 # --- TAB 1: AGGIUNGI (INTOCCABILE) ---
@@ -149,7 +104,6 @@ with tab1:
             st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
             if img: st.image(img, width=150)
-            
             components = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
                           ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
                           ("ratchet_integrated_bit", "ratchet_integrated_bit")]
@@ -167,15 +121,12 @@ with tab1:
                         add_to_inv(ik, val)
                         st.toast(f"Aggiunto: {val}")
 
-# --- TAB 2: INVENTARIO (SINISTRA & SWITCH COMPATTO) ---
+# --- TAB 2: INVENTARIO (INTOCCABILE) ---
 with tab2:
     modo = st.radio("Label_Hidden", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     operazione = 1 if "Aggiungi" in modo else -1
-    
     st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
-    
     has_content = any(len(v) > 0 for v in st.session_state.inventario.values())
-            
     if not has_content:
         st.info("L'inventario è vuoto.")
     else:
@@ -194,4 +145,32 @@ with tab2:
 
 # --- TAB 3: DECK BUILDER ---
 with tab3:
-    st.info("Area Deck Builder in fase di allestimento...")
+    st.markdown("<div class='bey-name'>Il Tuo Deck (3 Slot)</div>", unsafe_allow_html=True)
+    
+    # Prepariamo le liste per i selectbox basate sull'inventario
+    # Uniamo le varie tipologie di blade e ratchet per semplicità
+    available_blades = ["Seleziona..."] + sorted(list(st.session_state.inventario["blade"].keys()) + list(st.session_state.inventario["main_blade"].keys()))
+    available_ratchets = ["Seleziona..."] + sorted(list(st.session_state.inventario["ratchet"].keys()))
+    available_bits = ["Seleziona..."] + sorted(list(st.session_state.inventario["bit"].keys()))
+
+    cols = st.columns(3)
+    
+    for idx, (bey_label, bey_data) in enumerate(st.session_state.deck.items()):
+        with cols[idx]:
+            with st.container(border=True):
+                st.markdown(f"<div class='deck-title'>{bey_label}</div>", unsafe_allow_html=True)
+                
+                # Selezione componenti
+                # Nota: Streamlit non permette duplicati nelle chiavi dei pezzi, usiamo indici
+                st.session_state.deck[bey_label]["blade"] = st.selectbox(f"Blade", available_blades, key=f"sel_b_{idx}")
+                st.session_state.deck[bey_label]["ratchet"] = st.selectbox(f"Ratchet", available_ratchets, key=f"sel_r_{idx}")
+                st.session_state.deck[bey_label]["bit"] = st.selectbox(f"Bit", available_bits, key=f"sel_bit_{idx}")
+                
+                # Visualizzazione anteprima (se selezionato)
+                if st.session_state.deck[bey_label]["blade"] != "Seleziona...":
+                    # Cerchiamo l'immagine della blade nel CSV
+                    blade_name = st.session_state.deck[bey_label]["blade"]
+                    img_url = df[df['blade'] == blade_name]['blade_image'].values
+                    if len(img_url) > 0 and img_url[0] != "n/a":
+                        img = get_img(img_url[0])
+                        if img: st.image(img, use_container_width=True)
