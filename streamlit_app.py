@@ -9,46 +9,93 @@ from PIL import Image
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
+# CSS RIGIDO E ISOLATO
 st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* --- PERIMETRO 1: AGGIUNGI (CENTRATO) --- */
-    .tab-aggiungi [data-testid="stVerticalBlock"] { 
+    /* --- TAB 1: AGGIUNGI (FORCE CENTER) --- */
+    /* Usiamo l'ID generato da Streamlit per la prima tab per isolare il CSS */
+    #tabs-bui3-tab-0 [data-testid="stVerticalBlock"] { 
         text-align: center !important; 
         align-items: center !important; 
     }
-    .tab-aggiungi div[data-testid="stVerticalBlockBorderWrapper"] {
+    
+    .bey-name { 
+        font-weight: bold !important; 
+        font-size: 1.4rem !important; 
+        color: #60a5fa !important; 
+        text-transform: uppercase !important; 
+        margin-bottom: 8px !important; 
+        text-align: center !important; 
+        display: block !important;
+    }
+    
+    .comp-name-centered { 
+        font-size: 1.1rem !important; 
+        color: #cbd5e1 !important; 
+        margin-top: 5px !important; 
+        margin-bottom: 2px !important; 
+        text-align: center !important; 
+        width: 100% !important; 
+        display: block !important; 
+    }
+
+    /* Pulsanti Tab Aggiungi */
+    #tabs-bui3-tab-0 button {
+        width: auto !important; 
+        min-width: 150px !important; 
+        padding-left: 40px !important; 
+        padding-right: 40px !important;
+        height: 30px !important; 
+        background-color: #334155 !important; 
+        color: white !important;
+        border: 1px solid #475569 !important; 
+        border-radius: 4px !important; 
+        font-size: 1.1rem !important;
+        margin: 0 auto !important;
+    }
+
+    /* Box Beyblade */
+    #tabs-bui3-tab-0 [data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
         border-radius: 12px !important;
         margin-bottom: 25px !important;
         padding: 15px !important;
     }
-    .tab-aggiungi .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
-    .tab-aggiungi .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 2px; text-align: center; width: 100%; display: block; }
-    .tab-aggiungi div.stButton > button {
-        width: auto !important; min-width: 150px !important; padding-left: 40px !important; padding-right: 40px !important;
-        height: 30px !important; background-color: #334155 !important; color: white !important;
-        border: 1px solid #475569 !important; border-radius: 4px !important; font-size: 1.1rem !important;
+
+    /* --- TAB 2: INVENTARIO (FORCE LEFT) --- */
+    #tabs-bui3-tab-1 [data-testid="stVerticalBlock"] { 
+        text-align: left !important; 
+        align-items: flex-start !important; 
+    }
+    
+    #tabs-bui3-tab-1 [data-testid="stExpander"] { 
+        text-align: left !important; 
+    }
+    
+    #tabs-bui3-tab-1 button {
+        width: 100% !important; 
+        justify-content: flex-start !important; 
+        background: transparent !important; 
+        border: none !important; 
+        color: #f1f5f9 !important; 
+        text-align: left !important;
+        padding-left: 10px !important;
     }
 
-    /* --- PERIMETRO 2: INVENTARIO (SINISTRA) --- */
-    .tab-inventario .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; }
-    .tab-inventario .inv-row-container { text-align: left !important; width: 100%; padding-left: 10px; }
-    .tab-inventario div.stButton > button {
-        width: 100% !important; justify-content: flex-start !important; 
-        background: transparent !important; border: none !important; 
-        color: #f1f5f9 !important; text-align: left !important; font-size: 1.1rem !important;
+    /* --- TAB 3: DECK BUILDER --- */
+    #tabs-bui3-tab-2 [data-testid="stExpander"] { 
+        border: 1px solid #334155 !important; 
+        background-color: #1e293b !important; 
+        text-align: left !important; 
     }
-
-    /* --- PERIMETRO 3: DECK BUILDER (PERSONALIZZABILE) --- */
-    .tab-builder .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; }
     </style>
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI UTILI
+# FUNZIONI & LOGICA
 # =========================
 @st.cache_data
 def load_db():
@@ -70,29 +117,23 @@ def add_to_inv(tipo, nome, delta=1):
             st.session_state.inventario[tipo][nome] = 0
         st.session_state.inventario[tipo][nome] += delta
         if st.session_state.inventario[tipo][nome] <= 0:
-            if nome in st.session_state.inventario[tipo]:
-                del st.session_state.inventario[tipo][nome]
+            if nome in st.session_state.inventario[tipo]: del st.session_state.inventario[tipo][nome]
 
-# Inizializzazione Stati
+# Inizializzazione
 if 'inventario' not in st.session_state:
     st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
-if 'deck_name' not in st.session_state:
-    st.session_state.deck_name = "IL MIO DECK"
-if 'editing_name' not in st.session_state:
-    st.session_state.editing_name = False
-if 'deck_selections' not in st.session_state:
-    st.session_state.deck_selections = {i: {} for i in range(3)}
+if 'deck_name' not in st.session_state: st.session_state.deck_name = "IL MIO DECK"
+if 'editing_name' not in st.session_state: st.session_state.editing_name = False
+if 'deck_selections' not in st.session_state: st.session_state.deck_selections = {i: {} for i in range(3)}
 
 df = load_db()
 
 # =========================
-# UI PRINCIPALE
+# UI
 # =========================
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI (ISOLATA) ---
 with tab1:
-    st.markdown('<div class="tab-aggiungi">', unsafe_allow_html=True)
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df[df['_search'].str.contains(search_q)] if search_q else df.head(3)
     for i, (_, row) in enumerate(filtered.iterrows()):
@@ -116,35 +157,19 @@ with tab1:
                     if st.button("＋", key=f"btn_{i}_{ck}"):
                         add_to_inv(ik, val)
                         st.toast(f"Aggiunto: {val}")
-    st.markdown('</div>', unsafe_allow_html=True)
 
-# --- TAB 2: INVENTARIO (ISOLATA) ---
 with tab2:
-    st.markdown('<div class="tab-inventario">', unsafe_allow_html=True)
-    modo = st.radio("Label_Hidden", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
+    modo = st.radio("Label", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     operazione = 1 if "Aggiungi" in modo else -1
-    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
-    has_content = any(len(v) > 0 for v in st.session_state.inventario.values())
-    if not has_content:
-        st.info("L'inventario è vuoto.")
-    else:
-        for categoria, pezzi in st.session_state.inventario.items():
-            if pezzi:
-                cat_label = categoria.replace('_', ' ').upper()
-                with st.expander(cat_label, expanded=False):
-                    st.markdown('<div class="inv-row-container">', unsafe_allow_html=True)
-                    for nome, qta in pezzi.items():
-                        if st.button(f"{nome} x{qta}", key=f"inv_{categoria}_{nome}"):
-                            add_to_inv(categoria, nome, operazione)
-                            st.rerun()
-                    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    for categoria, pezzi in st.session_state.inventario.items():
+        if pezzi:
+            with st.expander(categoria.replace('_', ' ').upper(), expanded=False):
+                for nome, qta in pezzi.items():
+                    if st.button(f"{nome} x{qta}", key=f"inv_{categoria}_{nome}"):
+                        add_to_inv(categoria, nome, operazione); st.rerun()
 
-# --- TAB 3: DECK BUILDER (ISOLATA) ---
 with tab3:
-    st.markdown('<div class="tab-builder">', unsafe_allow_html=True)
     with st.expander(f"{st.session_state.deck_name.upper()}", expanded=True):
-        
         def get_options(cat, theory=False):
             if theory:
                 csv_map = {"lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade",
@@ -153,54 +178,14 @@ with tab3:
                 col_name = csv_map.get(cat, cat)
                 opts = df[col_name].unique().tolist()
                 return ["-"] + sorted([x for x in opts if x and x != "n/a"])
-            else:
-                return ["-"] + sorted(list(st.session_state.inventario[cat].keys()))
+            return ["-"] + sorted(list(st.session_state.inventario[cat].keys()))
 
         tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
-
         for idx in range(3):
             sels = st.session_state.deck_selections[idx]
             nome_parti = [v for v in sels.values() if v and v != "-"]
             titolo_slot = " ".join(nome_parti) if nome_parti else f"SLOT {idx+1}"
-            
-            with st.expander(titolo_slot.upper(), expanded=False):
+            with st.expander(titolo_slot.upper()):
                 tipo = st.selectbox("Sistema", tipologie, key=f"type_{idx}")
                 is_theory = "Theory" in tipo
-                
-                current_sels = {}
-                if "BX/UX" in tipo and "+RIB" not in tipo:
-                    current_sels['b'] = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
-                    current_sels['r'] = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
-                    current_sels['bi'] = st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
-                elif "CX" in tipo and "+RIB" not in tipo:
-                    current_sels['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
-                    current_sels['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
-                    current_sels['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
-                    current_sels['r'] = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
-                    current_sels['bi'] = st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
-                elif "BX/UX+RIB" in tipo:
-                    current_sels['b'] = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
-                    current_sels['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
-                elif "CX+RIB" in tipo:
-                    current_sels['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
-                    current_sels['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
-                    current_sels['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
-                    current_sels['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
-
-                if st.session_state.deck_selections[idx] != current_sels:
-                    st.session_state.deck_selections[idx] = current_sels
-                    st.rerun()
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        if not st.session_state.editing_name:
-            if st.button("📝 Modifica Nome Deck"):
-                st.session_state.editing_name = True; st.rerun()
-        else:
-            new_name = st.text_input("Nuovo nome:", st.session_state.deck_name)
-            c1, c2 = st.columns([1, 1])
-            if c1[0].button("Salva"):
-                st.session_state.deck_name = new_name
-                st.session_state.editing_name = False; st.rerun()
-            if c2[0].button("Annulla"):
-                st.session_state.editing_name = False; st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+                # Qui andrà la logica selectbox e immagini una volta confermato il layout
