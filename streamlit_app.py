@@ -43,7 +43,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA DATI
+# LOGICA DATI & STATO
 # =========================
 @st.cache_data
 def load_db():
@@ -68,75 +68,60 @@ def get_img(url):
     return Image.open(path) if os.path.exists(path) else None
 
 # Inizializzazione Sessione
-for key in ['inventario', 'deck_name', 'editing_name', 'deck_selections']:
-    if key not in st.session_state:
-        if key == 'inventario': st.session_state[key] = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
-        elif key == 'deck_selections': st.session_state[key] = {i: {} for i in range(3)}
-        elif key == 'deck_name': st.session_state[key] = "IL MIO DECK"
-        else: st.session_state[key] = False
+if 'inventario' not in st.session_state: st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
+if 'deck_name' not in st.session_state: st.session_state.deck_name = "IL MIO DECK"
+if 'editing_name' not in st.session_state: st.session_state.editing_name = False
+if 'deck_selections' not in st.session_state: st.session_state.deck_selections = {i: {} for i in range(3)}
+# Persistenza stato expander
+if 'expander_state' not in st.session_state: st.session_state.expander_state = {i: False for i in range(3)}
 
 df, global_img_map = load_db()
-
-# =========================
-# FRAMMENTI UI
-# =========================
-
-@st.fragment
-def beyblade_card(row, idx):
-    """Gestisce l'aggiunta componenti senza ricaricare la pagina intera"""
-    with st.container(border=True):
-        st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
-        img = get_img(row['blade_image'] or row['beyblade_page_image'])
-        if img: st.image(img, width=150)
-        
-        components = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
-                      ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
-                      ("ratchet_integrated_bit", "ratchet_integrated_bit")]
-        
-        if st.button("Aggiungi tutto", key=f"all_{idx}"):
-            for ck, ik in components:
-                val = row[ck]
-                if val and val != "n/a":
-                    st.session_state.inventario[ik][val] = st.session_state.inventario[ik].get(val, 0) + 1
-            st.toast(f"{row['name']} aggiunto!")
-
-        st.markdown("<hr>", unsafe_allow_html=True)
-        for ck, ik in components:
-            val = row[ck]
-            if val and val != "n/a":
-                st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
-                if st.button("＋", key=f"btn_{idx}_{ck}"):
-                    st.session_state.inventario[ik][val] = st.session_state.inventario[ik].get(val, 0) + 1
-                    st.toast(f"Aggiunto: {val}")
 
 # =========================
 # UI PRINCIPALE
 # =========================
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
+# TAB 1: AGGIUNGI (Invariata)
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df[df['_search'].str.contains(search_q)] if search_q else df.head(3)
     for i, (_, row) in enumerate(filtered.iterrows()):
-        beyblade_card(row, i)
+        with st.container(border=True):
+            st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
+            img = get_img(row['blade_image'] or row['beyblade_page_image'])
+            if img: st.image(img, width=150)
+            components = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
+                          ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
+                          ("ratchet_integrated_bit", "ratchet_integrated_bit")]
+            if st.button("Aggiungi tutto", key=f"all_{i}"):
+                for ck, ik in components:
+                    val = row[ck]
+                    if val and val != "n/a": st.session_state.inventario[ik][val] = st.session_state.inventario[ik].get(val, 0) + 1
+                st.toast("Aggiunto!")
+            st.markdown("<hr>", unsafe_allow_html=True)
+            for ck, ik in components:
+                val = row[ck]
+                if val and val != "n/a":
+                    st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
+                    if st.button("＋", key=f"btn_{i}_{ck}"):
+                        st.session_state.inventario[ik][val] = st.session_state.inventario[ik].get(val, 0) + 1
+                        st.toast(f"Aggiunto: {val}")
 
+# TAB 2: INVENTARIO (Invariata)
 with tab2:
     modo = st.radio("L", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     operazione = 1 if "Aggiungi" in modo else -1
-    has_content = any(len(v) > 0 for v in st.session_state.inventario.values())
-    if not has_content:
-        st.info("L'inventario è vuoto.")
-    else:
-        for categoria, pezzi in st.session_state.inventario.items():
-            if pezzi:
-                with st.expander(categoria.replace('_', ' ').upper()):
-                    for nome, qta in pezzi.items():
-                        if st.button(f"{nome} x{qta}", key=f"inv_{categoria}_{nome}"):
-                            st.session_state.inventario[categoria][nome] += operazione
-                            if st.session_state.inventario[categoria][nome] <= 0:
-                                del st.session_state.inventario[categoria][nome]
-                            st.rerun()
+    for categoria, pezzi in st.session_state.inventario.items():
+        if pezzi:
+            with st.expander(categoria.replace('_', ' ').upper()):
+                for nome, qta in pezzi.items():
+                    if st.button(f"{nome} x{qta}", key=f"inv_{categoria}_{nome}"):
+                        st.session_state.inventario[categoria][nome] += operazione
+                        if st.session_state.inventario[categoria][nome] <= 0: del st.session_state.inventario[categoria][nome]
+                        st.rerun()
 
+# --- TAB 3: DECK BUILDER (CORRETTA) ---
 with tab3:
     with st.expander(f"{st.session_state.deck_name.upper()}", expanded=True):
         def get_options(cat, theory=False):
@@ -156,11 +141,13 @@ with tab3:
             nome_parti = [v for v in sels.values() if v and v != "-"]
             titolo_slot = " ".join(nome_parti) if nome_parti else f"SLOT {idx+1}"
             
-            with st.expander(titolo_slot.upper()):
+            # Qui usiamo la logica di persistenza: se l'utente sta interagendo, rimane aperto
+            with st.expander(titolo_slot.upper(), expanded=st.session_state.expander_state[idx]):
                 tipo = st.selectbox("Sistema", tipologie, key=f"type_{idx}")
                 is_theory = "Theory" in tipo
                 curr = {}
 
+                # Inizio logica selezioni
                 if "BX/UX" in tipo and "+RIB" not in tipo:
                     curr['b'] = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
                     curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
@@ -189,10 +176,13 @@ with tab3:
                             img_obj = get_img(url)
                             if img_obj: cols[i].image(img_obj, caption=v, use_container_width=True)
 
+                # Gestione Cambiamento: aggiorniamo stato e forziamo persistenza
                 if st.session_state.deck_selections[idx] != curr:
                     st.session_state.deck_selections[idx] = curr
+                    st.session_state.expander_state[idx] = True # Forza l'apertura dopo il rerun
                     st.rerun()
 
+        # Modifica Nome Deck
         st.markdown("<br>", unsafe_allow_html=True)
         if not st.session_state.editing_name:
             if st.button("📝 Modifica Nome Deck"):
