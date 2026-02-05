@@ -5,87 +5,72 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE (FIX TOTALE LARGHEZZA)
+# CONFIGURAZIONE & STILE (LARGHEZZA MASSIMA)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
-    /* Sfondo Grigio-Blu molto scuro */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* Centratura forzata */
     [data-testid="stVerticalBlock"] {
         text-align: center;
         align-items: center;
     }
 
-    /* CARD: Bordo e distanziamento */
+    /* CARD */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
         border-radius: 12px !important;
         margin-bottom: 25px !important;
-        padding: 15px !important;
+        padding: 10px !important;
     }
 
-    /* Titolo Beyblade Centrato */
-    .bey-name { 
-        font-weight: bold; 
-        font-size: 1.4rem; 
-        color: #60a5fa; 
-        text-transform: uppercase;
-        margin-bottom: 8px;
-        text-align: center;
-    }
+    /* TITOLO E NOMI */
+    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; }
+    .comp-name { font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 2px; text-align: center; width: 100%; display: block; }
 
-    /* Nomi Componenti Centrati */
-    .comp-name {
-        font-size: 1.1rem;
-        color: #cbd5e1;
-        margin-top: 7px;
-        margin-bottom: 2px;
-        text-align: center;
-        width: 100%;
-        display: block;
-    }
-
-    /* FIX DEFINITIVO LARGHEZZA E ALTEZZA */
-    /* Colpiamo il contenitore del bottone per forzarlo al 100% */
+    /* FIX DEFINITIVO: Tasto largo e sottile */
     div[data-testid="stButton"] {
         width: 100% !important;
+        margin: 0px !important;
+        padding: 0px !important;
     }
 
     div.stButton > button {
-        width: 100% !important;
+        /* Larghezza: invece di 150% che uscirebbe dallo schermo, 
+           usiamo 100% ma eliminiamo ogni margine interno */
+        width: 100% !important; 
         min-width: 100% !important;
-        display: block !important;
+        
+        /* Altezza: la blocchiamo a un valore fisso basso (30px) 
+           perché il 100% in altezza su un bottone è ambiguo */
+        height: 30px !important;
+        min-height: 30px !important;
+        max-height: 30px !important;
+
         background-color: #334155 !important;
         color: white !important;
         border: 1px solid #475569 !important;
-        
-        /* Altezza 30px reale */
-        height: 30px !important; 
-        min-height: 30px !important;
-        max-height: 30px !important;
+        border-radius: 4px !important;
         
         font-size: 1.1rem !important;
-        border-radius: 4px !important;
+        line-height: 1 !important;
         padding: 0px !important;
-        line-height: 1 !important; /* Riduce lo spazio interno del testo */
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
     }
-    
-    /* Centratura Immagini */
-    [data-testid="stImage"] img {
-        display: block;
-        margin: 0 auto;
+
+    /* Rimuove lo spazio che Streamlit mette tra i bottoni */
+    [data-testid="stVerticalBlock"] > div {
+        gap: 0rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# =========================
-# FUNZIONI CORE
-# =========================
+# ... (Funzioni load_db e get_img invariate) ...
 @st.cache_data
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame()
@@ -115,7 +100,7 @@ df = load_db()
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 with tab1:
-    search_q = st.text_input("Cerca nel database...", "").lower()
+    search_q = st.text_input("Cerca...", "").lower()
     filtered = df[df['_search'].str.contains(search_q)] if search_q else df.head(3)
 
     for i, (_, row) in enumerate(filtered.iterrows()):
@@ -123,35 +108,27 @@ with tab1:
             st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
             
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
-            if img:
-                st.image(img, width=150)
+            if img: st.image(img, width=150)
             
             components = [
-                ("lock_chip", "lock_bit"),
-                ("blade", "blade"),
-                ("main_blade", "main_blade"),
-                ("assist_blade", "assist_blade"),
-                ("ratchet", "ratchet"),
-                ("bit", "bit"),
+                ("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
+                ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
                 ("ratchet_integrated_bit", "ratchet_integrated_bit")
             ]
 
-            st.write("") 
-            # TASTO AGGIUNGI TUTTO
+            # AGGIUNGI TUTTO
             if st.button("Aggiungi tutto", key=f"all_{i}"):
-                for comp_key, inv_key in components:
-                    val = row[comp_key]
-                    if val and val != "n/a":
-                        add_to_inv(inv_key, val)
-                st.toast(f"Set {row['name']} aggiunto!")
+                for ck, ik in components:
+                    if row[ck] and row[ck] != "n/a": add_to_inv(ik, row[ck])
+                st.toast(f"Set aggiunto!")
 
-            st.markdown("<hr style='border-top: 1px solid #475569; width: 100%; margin: 10px 0;'>", unsafe_allow_html=True)
+            st.markdown("<hr style='border-top: 1px solid #475569; margin: 10px 0;'>", unsafe_allow_html=True)
 
             # TASTI SINGOLI
-            for comp_key, inv_key in components:
-                val = row[comp_key]
+            for ck, ik in components:
+                val = row[ck]
                 if val and val != "n/a":
                     st.markdown(f"<div class='comp-name'>{val}</div>", unsafe_allow_html=True)
-                    if st.button("＋", key=f"btn_{i}_{comp_key}"):
-                        add_to_inv(inv_key, val)
+                    if st.button("＋", key=f"btn_{i}_{ck}"):
+                        add_to_inv(ik, val)
                         st.toast(f"Aggiunto: {val}")
