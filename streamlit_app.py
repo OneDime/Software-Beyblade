@@ -5,7 +5,7 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE (FIX ALTEZZA TASTI)
+# CONFIGURAZIONE & STILE (TASTI COMPATTI 30PX)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -24,42 +24,44 @@ st.markdown("""
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
-        border-radius: 15px !important;
-        margin-bottom: 30px !important;
-        padding: 20px !important;
+        border-radius: 12px !important;
+        margin-bottom: 25px !important;
+        padding: 15px !important;
     }
 
     /* Titolo Beyblade Centrato */
     .bey-name { 
         font-weight: bold; 
-        font-size: 1.4rem; 
+        font-size: 1.3rem; 
         color: #60a5fa; 
         text-transform: uppercase;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         text-align: center;
     }
 
     /* Nomi Componenti Centrati */
     .comp-name {
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         color: #cbd5e1;
-        margin-top: 20px;
-        margin-bottom: 8px;
+        margin-top: 12px;
+        margin-bottom: 4px;
         text-align: center;
         width: 100%;
         display: block;
     }
 
-    /* BOTTONI LARGHI AL 100% - Altezza 45px come richiesto */
+    /* BOTTONI LARGHI AL 100% - Altezza 30px */
     div.stButton > button {
         width: 100% !important;
         display: block !important;
         background-color: #334155 !important;
         color: white !important;
         border: 1px solid #475569 !important;
-        height: 45px !important; /* Ridotto da 55px */
-        font-size: 1.1rem !important;
-        border-radius: 8px !important;
+        height: 30px !important; /* Ridotto a 30px come richiesto */
+        font-size: 0.9rem !important;
+        border-radius: 4px !important;
+        line-height: 1 !important;
+        padding: 0 !important;
     }
     
     /* Centratura Immagini */
@@ -113,9 +115,9 @@ with tab1:
             # 2. IMMAGINE CENTRATA
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
             if img:
-                st.image(img, width=180)
+                st.image(img, width=150)
             
-            # 3. TASTO AGGIUNGI TUTTO
+            # 3. TASTO AGGIUNGI TUTTO (30px)
             components = [
                 ("lock_chip", "lock_bit"),
                 ("blade", "blade"),
@@ -134,9 +136,9 @@ with tab1:
                         add_to_inv(inv_key, val)
                 st.toast(f"Set {row['name']} aggiunto!")
 
-            st.markdown("<hr style='border-top: 1px solid #475569; width: 100%; margin: 15px 0;'>", unsafe_allow_html=True)
+            st.markdown("<hr style='border-top: 1px solid #475569; width: 100%; margin: 12px 0;'>", unsafe_allow_html=True)
 
-            # 4. COMPONENTI SINGOLI
+            # 4. COMPONENTI SINGOLI (Tasti 30px)
             for comp_key, inv_key in components:
                 val = row[comp_key]
                 if val and val != "n/a":
