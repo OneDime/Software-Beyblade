@@ -5,7 +5,7 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE DEFINITIVO
+# CONFIGURAZIONE & STILE CSS AVANZATO
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -14,44 +14,51 @@ st.markdown("""
     /* Sfondo e Testi Generali */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* Forza centratura di TUTTI i blocchi nel container */
-    [data-testid="stVerticalBlock"] {
-        align-items: center !important;
-        text-align: center !important;
-    }
-
-    /* Testi Tab e Label chiari */
+    /* Forza centratura del titolo e dell'immagine */
+    .centered-title { text-align: center; color: #60a5fa; font-weight: bold; margin-bottom: 10px; }
+    
+    /* FIX TESTI TAB E LABEL: Grigio chiarissimo */
     .stTabs [data-baseweb="tab-list"] button p, label p, .stMarkdown p {
         color: #f1f5f9 !important;
     }
 
-    /* BOTTONI: Scuri su ogni dispositivo */
+    /* FIX EXPANDER (Intestazioni Inventario e Deck) */
+    .streamlit-expanderHeader {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+        border: 1px solid #3b82f6 !important;
+        border-radius: 8px !important;
+    }
+    .streamlit-expanderHeader p { color: #f1f5f9 !important; font-weight: bold; }
+
+    /* BOTTONI: Scuri con bordo blu */
     button, [data-testid="stBaseButton-secondary"] {
         background-color: #1e293b !important;
         color: #f1f5f9 !important;
         border: 1px solid #3b82f6 !important;
     }
 
-    /* RIGA COMPONENTE: Flexbox per tenere tutto sulla stessa linea */
-    .comp-container {
+    /* CONTENITORE RIGA COMPONENTE (Per Aggiungi e Inventario) */
+    .custom-row {
         display: flex;
-        justify-content: center;
+        flex-direction: row;
         align-items: center;
+        justify-content: center;
+        gap: 15px;
         width: 100%;
-        margin: 5px 0;
+        margin: 8px 0;
     }
-    
-    /* Impedisce ai bottoni di Streamlit di forzare il wrap su mobile */
-    [data-testid="column"] {
-        width: fit-content !important;
-        flex: unset !important;
-        min-width: unset !important;
+
+    .comp-text {
+        color: #e2e8f0;
+        font-size: 1rem;
+        min-width: 120px;
+        text-align: right;
     }
 
     /* Centratura immagini */
     [data-testid="stImage"] img {
-        margin-left: auto;
-        margin-right: auto;
+        margin: 0 auto !important;
         display: block;
     }
     </style>
@@ -103,8 +110,7 @@ with tab_add:
 
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            # Centratura Titolo e Immagine
-            st.markdown(f"### {row['name'].upper()}")
+            st.markdown(f"<h3 class='centered-title'>{row['name'].upper()}</h3>", unsafe_allow_html=True)
             
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
             if img:
@@ -117,12 +123,14 @@ with tab_add:
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    # Layout super-stretto per forzare l'affiancamento
-                    c1, c2 = st.columns([0.85, 0.15])
-                    c1.markdown(f"<div style='text-align: right; padding-top: 5px;'>{val}</div>", unsafe_allow_html=True)
-                    if c2.button("＋", key=f"add_{i}_{field}"):
-                        st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
-                        st.toast(f"Aggiunto {val}")
+                    # Usiamo una riga "mista" per mantenere l'allineamento
+                    c_txt, c_btn = st.columns([0.7, 0.3])
+                    with c_txt:
+                        st.markdown(f"<div style='text-align: right; padding-top: 5px; color: #f1f5f9;'>{val}</div>", unsafe_allow_html=True)
+                    with c_btn:
+                        if st.button("＋", key=f"add_{i}_{field}"):
+                            st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
+                            st.toast(f"Aggiunto {val}")
 
             st.write("")
             if st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True):
@@ -133,7 +141,6 @@ with tab_add:
 
 with tab_inv:
     st.header(f"Inventario di {utente}")
-    # Fix Logica Inventario per evitare IndexError
     for tipo in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]:
         pezzi = st.session_state.inventario.get(tipo, {})
         validi = {k: v for k, v in pezzi.items() if v > 0}
@@ -141,12 +148,18 @@ with tab_inv:
         if validi:
             with st.expander(tipo.replace('_', ' ').upper(), expanded=True):
                 for nome, qta in validi.items():
-                    c1, c2, c3 = st.columns([0.6, 0.2, 0.2])
-                    c1.write(f"{nome} (x{qta})")
-                    if c2.button("＋", key=f"p_{tipo}_{nome}"):
+                    # Forza tutto sulla stessa riga con Flexbox HTML
+                    st.markdown(f"""
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: #0f172a; padding: 10px; border-radius: 8px;">
+                        <div style="color: #f1f5f9;">{nome} (x{qta})</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    c_p, c_m = st.columns(2)
+                    if c_p.button("＋", key=f"p_{tipo}_{nome}", use_container_width=True):
                         st.session_state.inventario[tipo][nome] += 1
                         st.rerun()
-                    if c3.button("－", key=f"m_{tipo}_{nome}"):
+                    if c_m.button("－", key=f"m_{tipo}_{nome}", use_container_width=True):
                         st.session_state.inventario[tipo][nome] -= 1
                         st.rerun()
 
@@ -158,7 +171,9 @@ with tab_deck:
     for d_idx, deck in enumerate(st.session_state.decks):
         with st.expander(f"📂 {deck['name']}", expanded=True):
             for b_idx in range(3):
-                st.markdown(f"**BEYBLADE {b_idx+1}**")
+                st.markdown(f"<div style='text-align: center; font-weight: bold; margin-top: 10px;'>BEYBLADE {b_idx+1}</div>", unsafe_allow_html=True)
+                
+                # Flag
                 f1, f2, f3 = st.columns(3)
                 v_cx = f1.checkbox("CX", key=f"cx_{d_idx}_{b_idx}")
                 v_rib = f2.checkbox("RIB", key=f"rib_{d_idx}_{b_idx}")
@@ -171,7 +186,6 @@ with tab_deck:
                 else: parts += [("Ratchet", "ratchet", "ratchet_image"), ("Bit", "bit", "bit_image")]
 
                 for label, db_key, img_db_key in parts:
-                    # Fix logica opzioni: correzione IndexError
                     if v_th: 
                         opts = [""] + sorted(df[db_key].unique().tolist())
                     else:
@@ -179,10 +193,10 @@ with tab_deck:
                         inv_data = st.session_state.inventario.get(inv_k, {})
                         opts = [""] + sorted([k for k, v in inv_data.items() if v > 0])
                     
-                    c_sel, c_img = st.columns([0.75, 0.25])
-                    scelta = c_sel.selectbox(label, opts, key=f"dk_{d_idx}_{b_idx}_{db_key}")
+                    # Centratura selettore + immagine
+                    scelta = st.selectbox(label, opts, key=f"dk_{d_idx}_{b_idx}_{db_key}")
                     if scelta:
                         img_url = df[df[db_key] == scelta][img_db_key].values
                         if len(img_url) > 0:
-                            p_img = get_img(img_url[0], size=(80, 80))
-                            if p_img: c_img.image(p_img)
+                            p_img = get_img(img_url[0], size=(100, 100))
+                            if p_img: st.image(p_img, width=100)
