@@ -5,7 +5,7 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE "NO-OVERFLOW"
+# CONFIGURAZIONE & STILE "MOBILE-FIRST"
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -13,45 +13,45 @@ st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* FIX INTESTAZIONI: Finalmente scure */
+    /* FIX INTESTAZIONI: Finalmente scure e leggibili */
     div[data-testid="stExpander"] {
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
-        border-radius: 10px !important;
     }
-    div[data-testid="stExpander"] summary { background-color: #1e293b !important; }
-    div[data-testid="stExpander"] summary p { color: #cbd5e1 !important; }
+    div[data-testid="stExpander"] summary p { color: #cbd5e1 !important; font-weight: bold; }
 
-    /* FIX CENTRATURA IMMAGINE: Più aggressivo */
-    [data-testid="stImage"] {
-        display: flex !important;
-        justify-content: center !important;
-        width: 100% !important;
-    }
-    [data-testid="stImage"] img {
-        margin: 0 auto !important;
+    /* FIX CENTRATURA IMMAGINE */
+    [data-testid="stImage"] { text-align: center !important; display: flex !important; justify-content: center !important; }
+    [data-testid="stImage"] img { margin: 0 auto !important; border-radius: 10px; }
+
+    /* FIX RIGHE COMPONENTI: Impedisce sovrapposizioni */
+    .comp-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 5px 0;
+        border-bottom: 1px solid #1e293b;
     }
 
-    /* FIX OVERFLOW TASTI: Blocca la larghezza delle colonne */
-    [data-testid="column"] {
-        min-width: 0px !important;
-        flex-basis: auto !important;
+    /* Forza i bottoni a non allargarsi e non sovrapporsi */
+    div[data-testid="column"] {
+        width: fit-content !important;
+        flex: unset !important;
+        min-width: unset !important;
     }
     
-    /* Forza il contenitore orizzontale a non uscire dallo schermo */
-    [data-testid="stHorizontalBlock"] {
-        gap: 0.5rem !important;
-        width: 100% !important;
-        overflow: hidden !important;
+    /* Spaziatura tra i bottoni + e - nell'inventario */
+    div[data-testid="stHorizontalBlock"] {
+        align-items: center !important;
+        gap: 10px !important;
     }
 
-    /* Stile Bottoni */
     button {
         background-color: #1e293b !important;
-        color: #f1f5f9 !important;
         border: 1px solid #3b82f6 !important;
-        padding: 0px 5px !important;
-        width: 100% !important; /* Fa sì che il bottone riempia la sua piccola colonna */
+        color: white !important;
+        padding: 2px 15px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -104,9 +104,10 @@ with tab_add:
         with st.container(border=True):
             st.markdown(f"<h3 style='text-align:center;'>{row['name'].upper()}</h3>", unsafe_allow_html=True)
             
+            # Centratura immagine corretta
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
             if img:
-                st.image(img, width=180) # Centrata dal nuovo CSS
+                st.image(img, width=180)
             
             comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"), 
                      ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"), 
@@ -115,20 +116,19 @@ with tab_add:
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    # Usiamo una proporzione che lascia pochissimo spazio al tasto per non farlo uscire
-                    c1, c2 = st.columns([0.85, 0.15])
-                    c1.markdown(f"<div style='font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;'>{val}</div>", unsafe_allow_html=True)
-                    if c2.button("＋", key=f"add_{i}_{field}"):
+                    # Layout con colonne sbilanciate per evitare sovrapposizioni
+                    c_txt, c_btn = st.columns([0.8, 0.2])
+                    c_txt.markdown(f"<div style='padding-top:8px;'>{val}</div>", unsafe_allow_html=True)
+                    if c_btn.button("＋", key=f"add_{i}_{field}"):
                         st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
                         st.toast(f"Aggiunto {val}")
 
             st.write("")
-            # FIX AGGIUNGI TUTTO: Tolto l'HTML che lo rompeva
             if st.button("Aggiungi tutto", key=f"btn_all_{i}", use_container_width=True):
                 for f, k in comps:
                     if row[f] and row[f] != "n/a":
                         st.session_state.inventario[k][row[f]] = st.session_state.inventario[k].get(row[f], 0) + 1
-                st.toast(f"Aggiunto {row['name']}!")
+                st.toast("Beyblade aggiunto!")
 
 with tab_inv:
     st.header(f"Inventario")
@@ -139,9 +139,10 @@ with tab_inv:
         if validi:
             with st.expander(tipo.replace('_', ' ').upper(), expanded=True):
                 for nome, qta in validi.items():
-                    # FIX OVERFLOW INVENTARIO: 3 colonne con proporzioni fisse
-                    ci1, ci2, ci3 = st.columns([0.7, 0.15, 0.15])
-                    ci1.markdown(f"<div style='font-size:0.85rem;'>{nome} (x{qta})</div>", unsafe_allow_html=True)
+                    # Layout Inventario: Nome | + | - 
+                    # Usiamo colonne molto piccole per i tasti per tenerli vicini tra loro e a destra
+                    ci1, ci2, ci3 = st.columns([0.6, 0.2, 0.2])
+                    ci1.markdown(f"<div style='padding-top:8px;'>{nome} (x{qta})</div>", unsafe_allow_html=True)
                     if ci2.button("＋", key=f"inv_p_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] += 1
                         st.rerun()
@@ -150,6 +151,7 @@ with tab_inv:
                         st.rerun()
 
 with tab_deck:
+    # (Logica Deck Builder invariata ma ora beneficia dei fix CSS generali)
     st.header(f"Deck Builder")
     if st.button("➕ Nuovo Deck", use_container_width=True):
         st.session_state.decks.append({"name": f"Deck {len(st.session_state.decks)+1}"})
@@ -157,7 +159,7 @@ with tab_deck:
     for d_idx, deck in enumerate(st.session_state.decks):
         with st.expander(f"📂 {deck['name']}", expanded=True):
             for b_idx in range(3):
-                st.markdown(f"<div style='text-align:center; padding:5px;'><b>BEY {b_idx+1}</b></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align:center;'><b>BEY {b_idx+1}</b></div>", unsafe_allow_html=True)
                 f1, f2, f3 = st.columns(3)
                 v_cx = f1.checkbox("CX", key=f"cx_{d_idx}_{b_idx}")
                 v_rib = f2.checkbox("RIB", key=f"rib_{d_idx}_{b_idx}")
@@ -175,7 +177,6 @@ with tab_deck:
                         inv_k = "lock_bit" if db_key == "lock_chip" else db_key
                         opts = [""] + sorted([k for k, v in st.session_state.inventario.get(inv_k, {}).items() if v > 0])
                     
-                    # Layout Deck con immagine accanto
                     cd1, cd2 = st.columns([0.8, 0.2])
                     scelta = cd1.selectbox(label, opts, key=f"dk_{d_idx}_{b_idx}_{db_key}")
                     if scelta:
