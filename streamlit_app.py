@@ -5,50 +5,54 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & FIX DEFINITIVI
+# CONFIGURAZIONE & CSS TABELLE
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
-    /* Sfondo Generale */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* FIX INTESTAZIONI: Finalmente scure come richiesto */
+    /* INTESTAZIONI EXPANDER SCURE */
     div[data-testid="stExpander"] {
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
     }
-    /* Colore testo e sfondo della barra dell'expander */
-    div[data-testid="stExpander"] summary {
-        background-color: #1e293b !important;
-        color: #cbd5e1 !important;
-    }
-    /* Forza il colore del testo dentro l'intestazione */
-    div[data-testid="stExpander"] summary p {
-        color: #cbd5e1 !important;
-    }
+    div[data-testid="stExpander"] summary { background-color: #1e293b !important; }
+    div[data-testid="stExpander"] summary p { color: #cbd5e1 !important; font-weight: bold; }
 
-    /* CENTRATURA E DIMENSIONE IMMAGINE */
-    [data-testid="stImage"] {
-        display: flex;
-        justify-content: center;
-    }
-    [data-testid="stImage"] img {
-        width: 150px !important; /* Dimensione controllata */
-        height: auto;
-    }
-
-    /* CENTRATURA TITOLO */
-    .centered-title {
-        text-align: center;
+    /* STILE TABELLE */
+    .table-container {
         width: 100%;
-        color: #60a5fa;
-        text-transform: uppercase;
+        border-collapse: collapse;
         margin-bottom: 10px;
     }
+    .table-container td {
+        vertical-align: middle;
+        text-align: center;
+        padding: 8px;
+    }
+    
+    /* Tabella componenti: allineamento specifico */
+    .comp-table td:first-child {
+        text-align: right; /* Nome componente a destra verso il centro */
+        width: 70%;
+        padding-right: 15px;
+    }
+    .comp-table td:last-child {
+        text-align: left; /* Tasto a sinistra verso il centro */
+        width: 30%;
+    }
 
-    /* BOTTONI STANDARD */
+    /* Immagine centrata */
+    .beyblade-img {
+        width: 150px;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+    }
+
+    /* Bottoni scuri */
     button {
         background-color: #334155 !important;
         color: #f1f5f9 !important;
@@ -57,9 +61,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# =========================
-# FUNZIONI CORE
-# =========================
+# ... (Funzioni load_db e get_img identiche) ...
 @st.cache_data
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame()
@@ -73,13 +75,9 @@ def get_img(url, size=(150, 150)):
     h = hashlib.md5(url.encode()).hexdigest()
     path = os.path.join("images", f"{h}.png")
     if os.path.exists(path):
-        img = Image.open(path)
-        img.thumbnail(size)
+        img = Image.open(path); img.thumbnail(size)
         return img
     return None
-
-if 'inventario' not in st.session_state:
-    st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
 
 df = load_db()
 
@@ -94,17 +92,21 @@ with tab_add:
 
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            # 1. Nome Beyblade Centrato
-            st.markdown(f"<h3 class='centered-title'>{row['name']}</h3>", unsafe_allow_html=True)
+            # --- PRIMA TABELLA: NOME E IMMAGINE ---
+            st.markdown(f"""
+                <table class="table-container">
+                    <tr><td><h3 style="color:#60a5fa; margin:0;">{row['name'].upper()}</h3></td></tr>
+                </table>
+            """, unsafe_allow_html=True)
             
-            # 2. Immagine Beyblade Centrata e Piccola
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
             if img:
-                st.image(img)
-            
-            st.write("") # Spazio minimo
-            
-            # 3. Componenti con tasto accanto
+                st.image(img) # Streamlit centra già se impostato nel CSS sopra
+
+            # --- SECONDA TABELLA: COMPONENTI + TASTI ---
+            # Nota: Streamlit non permette bottoni dentro HTML puro facilmente, 
+            # quindi usiamo le colonne per simulare la tabella con centratura verticale.
+            st.write("") 
             comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"), 
                      ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"), 
                      ("ratchet_integrated_bit", "ratchet_integrated_bit")]
@@ -112,15 +114,16 @@ with tab_add:
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    # Layout: Testo a sinistra (85%), Tasto a destra (15%)
-                    c_txt, c_btn = st.columns([0.85, 0.15])
-                    c_txt.write(val)
-                    if c_btn.button("＋", key=f"add_{i}_{field}"):
+                    c1, c2 = st.columns([0.7, 0.3])
+                    # Usiamo markdown per centrare verticalmente il testo nella cella "invisibile"
+                    c1.markdown(f"<div style='text-align:right; padding-top:8px;'>{val}</div>", unsafe_allow_html=True)
+                    if c2.button("＋", key=f"add_{i}_{field}"):
                         st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
                         st.toast(f"Aggiunto {val}")
 
-            # 4. Aggiungi tutto (Piena larghezza)
-            if st.button("Aggiungi tutto", key=f"all_btn_{i}", use_container_width=True):
+            # --- TASTO AGGIUNGI TUTTO ---
+            st.write("")
+            if st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True):
                 for f, k in comps:
                     if row[f] and row[f] != "n/a":
                         st.session_state.inventario[k][row[f]] = st.session_state.inventario[k].get(row[f], 0) + 1
@@ -132,7 +135,6 @@ with tab_inv:
         pezzi = st.session_state.inventario.get(tipo, {})
         validi = {k: v for k, v in pezzi.items() if v > 0}
         if validi:
-            # Intestazione scura forzata via CSS sopra
             with st.expander(tipo.replace('_', ' ').upper(), expanded=True):
                 for nome, qta in validi.items():
                     ci1, ci2, ci3 = st.columns([0.6, 0.2, 0.2])
