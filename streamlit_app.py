@@ -43,7 +43,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA DATI
+# LOGICA DATI & IMMAGINI
 # =========================
 @st.cache_data
 def load_db():
@@ -61,11 +61,16 @@ def load_db():
     df['_search'] = df.astype(str).apply(lambda x: ' '.join(x).lower(), axis=1)
     return df, img_map
 
-def get_img(url):
+def get_img(url, size=(100, 100)):
+    """Carica e forza il ridimensionamento fisico dell'immagine"""
     if not url or url == "n/a": return None
     h = hashlib.md5(url.encode()).hexdigest()
     path = os.path.join("images", f"{h}.png")
-    return Image.open(path) if os.path.exists(path) else None
+    if os.path.exists(path):
+        img = Image.open(path)
+        # Forza il ridimensionamento a 100x100 usando l'algoritmo Lanczos per alta qualità
+        return img.resize(size, Image.Resampling.LANCZOS)
+    return None
 
 # Inizializzazione Sessione
 if 'inventario' not in st.session_state: st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
@@ -81,18 +86,21 @@ df, global_img_map = load_db()
 # =========================
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# TAB 1: AGGIUNGI (Intoccabile)
+# TAB 1: AGGIUNGI (Invariata)
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df[df['_search'].str.contains(search_q)] if search_q else df.head(3)
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
             st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
-            img = get_img(row['blade_image'] or row['beyblade_page_image'])
-            if img: st.image(img, width=150)
+            # Qui usiamo una dimensione più grande per l'anteprima principale (150px)
+            img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
+            if img: st.image(img)
+            
             components = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
                           ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
                           ("ratchet_integrated_bit", "ratchet_integrated_bit")]
+            
             if st.button("Aggiungi tutto", key=f"all_{i}"):
                 for ck, ik in components:
                     val = row[ck]
@@ -107,7 +115,7 @@ with tab1:
                         st.session_state.inventario[ik][val] = st.session_state.inventario[ik].get(val, 0) + 1
                         st.toast(f"Aggiunto: {val}")
 
-# TAB 2: INVENTARIO (Intoccabile)
+# TAB 2: INVENTARIO (Invariata)
 with tab2:
     modo = st.radio("L", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     operazione = 1 if "Aggiungi" in modo else -1
@@ -165,23 +173,25 @@ with tab3:
                     curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
                     curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
 
-                # Visualizzazione Immagini (Forzate 100x100 e senza caption)
+                # Visualizzazione Immagini (Ridimensionamento fisico forzato)
                 st.write("")
-                cols = st.columns(5) # Colonne fisse per allineamento compatto
+                cols = st.columns(5)
                 for i, (k, v) in enumerate(curr.items()):
                     if v != "-":
                         url = global_img_map.get(v)
                         if url:
-                            img_obj = get_img(url)
+                            # Richiediamo esplicitamente il 100x100
+                            img_obj = get_img(url, size=(100, 100))
                             if img_obj: 
-                                cols[i].image(img_obj, width=100) # Larghezza fissa 100px
+                                cols[i].image(img_obj)
 
                 if st.session_state.deck_selections[idx] != curr:
                     st.session_state.deck_selections[idx] = curr
                     st.session_state.expander_state[idx] = True
                     st.rerun()
 
-        st.markdown("<br>", unsafe_allow_html=True)
+        # Modifica Nome Deck
+        st.write("")
         if not st.session_state.editing_name:
             if st.button("📝 Modifica Nome Deck"):
                 st.session_state.editing_name = True; st.rerun()
