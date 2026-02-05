@@ -43,7 +43,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA DATI & STATO
+# LOGICA DATI
 # =========================
 @st.cache_data
 def load_db():
@@ -72,7 +72,6 @@ if 'inventario' not in st.session_state: st.session_state.inventario = {k: {} fo
 if 'deck_name' not in st.session_state: st.session_state.deck_name = "IL MIO DECK"
 if 'editing_name' not in st.session_state: st.session_state.editing_name = False
 if 'deck_selections' not in st.session_state: st.session_state.deck_selections = {i: {} for i in range(3)}
-# Persistenza stato expander
 if 'expander_state' not in st.session_state: st.session_state.expander_state = {i: False for i in range(3)}
 
 df, global_img_map = load_db()
@@ -82,7 +81,7 @@ df, global_img_map = load_db()
 # =========================
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# TAB 1: AGGIUNGI (Invariata)
+# TAB 1: AGGIUNGI (Intoccabile)
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df[df['_search'].str.contains(search_q)] if search_q else df.head(3)
@@ -108,7 +107,7 @@ with tab1:
                         st.session_state.inventario[ik][val] = st.session_state.inventario[ik].get(val, 0) + 1
                         st.toast(f"Aggiunto: {val}")
 
-# TAB 2: INVENTARIO (Invariata)
+# TAB 2: INVENTARIO (Intoccabile)
 with tab2:
     modo = st.radio("L", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     operazione = 1 if "Aggiungi" in modo else -1
@@ -121,7 +120,7 @@ with tab2:
                         if st.session_state.inventario[categoria][nome] <= 0: del st.session_state.inventario[categoria][nome]
                         st.rerun()
 
-# --- TAB 3: DECK BUILDER (CORRETTA) ---
+# TAB 3: DECK BUILDER
 with tab3:
     with st.expander(f"{st.session_state.deck_name.upper()}", expanded=True):
         def get_options(cat, theory=False):
@@ -141,13 +140,12 @@ with tab3:
             nome_parti = [v for v in sels.values() if v and v != "-"]
             titolo_slot = " ".join(nome_parti) if nome_parti else f"SLOT {idx+1}"
             
-            # Qui usiamo la logica di persistenza: se l'utente sta interagendo, rimane aperto
             with st.expander(titolo_slot.upper(), expanded=st.session_state.expander_state[idx]):
                 tipo = st.selectbox("Sistema", tipologie, key=f"type_{idx}")
                 is_theory = "Theory" in tipo
                 curr = {}
 
-                # Inizio logica selezioni
+                # Logica Selezioni
                 if "BX/UX" in tipo and "+RIB" not in tipo:
                     curr['b'] = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
                     curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
@@ -167,22 +165,22 @@ with tab3:
                     curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
                     curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
 
-                # Immagini
-                cols = st.columns(len(curr) if curr else 1)
+                # Visualizzazione Immagini (Forzate 100x100 e senza caption)
+                st.write("")
+                cols = st.columns(5) # Colonne fisse per allineamento compatto
                 for i, (k, v) in enumerate(curr.items()):
                     if v != "-":
                         url = global_img_map.get(v)
                         if url:
                             img_obj = get_img(url)
-                            if img_obj: cols[i].image(img_obj, caption=v, use_container_width=True)
+                            if img_obj: 
+                                cols[i].image(img_obj, width=100) # Larghezza fissa 100px
 
-                # Gestione Cambiamento: aggiorniamo stato e forziamo persistenza
                 if st.session_state.deck_selections[idx] != curr:
                     st.session_state.deck_selections[idx] = curr
-                    st.session_state.expander_state[idx] = True # Forza l'apertura dopo il rerun
+                    st.session_state.expander_state[idx] = True
                     st.rerun()
 
-        # Modifica Nome Deck
         st.markdown("<br>", unsafe_allow_html=True)
         if not st.session_state.editing_name:
             if st.button("📝 Modifica Nome Deck"):
