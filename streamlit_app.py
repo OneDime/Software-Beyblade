@@ -14,6 +14,9 @@ st.markdown("""
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     [data-testid="stVerticalBlock"] { gap: 0.5rem !important; }
     
+    /* TITOLO UTENTE PICCOLO */
+    .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; }
+
     /* STILI TAB AGGIUNGI (INTOCCABILI) */
     [data-testid="stVerticalBlock"] { text-align: center; align-items: center; }
     div[data-testid="stVerticalBlockBorderWrapper"] {
@@ -80,16 +83,13 @@ if 'users' not in st.session_state:
         "Fabio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {i: {} for i in range(3)}}]}
     }
 
-# Selezione Utente nella Sidebar
 st.sidebar.title("👤 Account")
 user_selected = st.sidebar.radio("Seleziona Utente:", ["Antonio", "Andrea", "Fabio"])
 
-# Puntatori rapidi ai dati dell'utente corrente
 user_data = st.session_state.users[user_selected]
 inventario_corrente = user_data["inv"]
 decks_correnti = user_data["decks"]
 
-# Stati globali (expander e editing)
 if 'exp_state' not in st.session_state: st.session_state.exp_state = {}
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
@@ -98,11 +98,11 @@ df, global_img_map = load_db()
 # =========================
 # UI PRINCIPALE
 # =========================
-st.title(f"Officina di {user_selected}")
+# Titolo rimpicciolito tramite classe CSS custom
+st.markdown(f"<div class='user-title'>Officina di {user_selected}</div>", unsafe_allow_html=True)
 
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI ---
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df[df['_search'].str.contains(search_q)] if search_q else df.head(3)
@@ -114,13 +114,11 @@ with tab1:
             components = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
                           ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
                           ("ratchet_integrated_bit", "ratchet_integrated_bit")]
-            
             if st.button("Aggiungi tutto", key=f"all_{i}"):
                 for ck, ik in components:
                     val = row[ck]
                     if val and val != "n/a": inventario_corrente[ik][val] = inventario_corrente[ik].get(val, 0) + 1
-                st.toast(f"Aggiunto all'inventario di {user_selected}!")
-
+                st.toast(f"Aggiunto a {user_selected}!")
             st.markdown("<hr>", unsafe_allow_html=True)
             for ck, ik in components:
                 val = row[ck]
@@ -130,7 +128,6 @@ with tab1:
                         inventario_corrente[ik][val] = inventario_corrente[ik].get(val, 0) + 1
                         st.toast(f"Aggiunto: {val}")
 
-# --- TAB 2: INVENTARIO ---
 with tab2:
     modo = st.radio("L", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     operazione = 1 if "Aggiungi" in modo else -1
@@ -143,7 +140,6 @@ with tab2:
                         if inventario_corrente[categoria][nome] <= 0: del inventario_corrente[categoria][nome]
                         st.rerun()
 
-# --- TAB 3: DECK BUILDER ---
 with tab3:
     def get_options(cat, theory=False):
         if theory:
@@ -159,14 +155,11 @@ with tab3:
                 sels = deck["slots"][s_idx]
                 nome_parti = [v for v in sels.values() if v and v != "-"]
                 titolo_slot = " ".join(nome_parti) if nome_parti else f"SLOT {s_idx+1}"
-                exp_key = f"{user_selected}-{d_idx}-{s_idx}" # Chiave unica per utente
-                
+                exp_key = f"{user_selected}-{d_idx}-{s_idx}"
                 with st.expander(titolo_slot.upper(), expanded=st.session_state.exp_state.get(exp_key, False)):
                     tipo = st.selectbox("Sistema", tipologie, key=f"type_{user_selected}_{d_idx}_{s_idx}")
                     is_theory = "Theory" in tipo
                     curr = {}
-
-                    # Logica Selezioni (BX/UX, CX, RIB)
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         curr['b'] = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{user_selected}_{d_idx}_{s_idx}")
                         curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{user_selected}_{d_idx}_{s_idx}")
@@ -186,7 +179,6 @@ with tab3:
                         curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{user_selected}_{d_idx}_{s_idx}")
                         curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{user_selected}_{d_idx}_{s_idx}")
 
-                    # Visualizzazione Immagini
                     st.write("")
                     cols = st.columns(5)
                     for i, (k, v) in enumerate(curr.items()):
@@ -200,7 +192,6 @@ with tab3:
                         st.session_state.exp_state[exp_key] = True
                         st.rerun()
 
-            # Comandi Deck
             st.markdown("<br>", unsafe_allow_html=True)
             c1, c2, _ = st.columns([0.2, 0.2, 0.6])
             if c1.button("📝 Rinomina", key=f"ren_{user_selected}_{d_idx}"):
@@ -210,7 +201,6 @@ with tab3:
                 if len(decks_correnti) > 1:
                     decks_correnti.pop(d_idx)
                     st.rerun()
-
             if st.session_state.edit_name_idx == f"{user_selected}_{d_idx}":
                 new_n = st.text_input("Nuovo nome:", deck['name'], key=f"input_{user_selected}_{d_idx}")
                 if st.button("Salva", key=f"save_{user_selected}_{d_idx}"):
