@@ -5,7 +5,7 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE (CENTRATURA E LAYOUT)
+# CONFIGURAZIONE & STILE (FIX ALTEZZA TASTI)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -14,13 +14,13 @@ st.markdown("""
     /* Sfondo Grigio-Blu molto scuro */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* Centratura forzata di tutti gli elementi interni */
+    /* Centratura forzata di tutti gli elementi */
     [data-testid="stVerticalBlock"] {
         text-align: center;
         align-items: center;
     }
 
-    /* CARD: Bordo rinforzato e distanziamento */
+    /* CARD: Bordo e distanziamento */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
@@ -43,28 +43,23 @@ st.markdown("""
     .comp-name {
         font-size: 1.1rem;
         color: #cbd5e1;
-        margin-top: 25px;
-        margin-bottom: 10px;
+        margin-top: 20px;
+        margin-bottom: 8px;
         text-align: center;
         width: 100%;
         display: block;
     }
 
-    /* BOTTONI LARGHI AL 100% (FORZATO) */
+    /* BOTTONI LARGHI AL 100% - Altezza 45px come richiesto */
     div.stButton > button {
         width: 100% !important;
         display: block !important;
         background-color: #334155 !important;
         color: white !important;
         border: 1px solid #475569 !important;
-        height: 55px !important;
-        font-size: 1.2rem !important;
+        height: 45px !important; /* Ridotto da 55px */
+        font-size: 1.1rem !important;
         border-radius: 8px !important;
-    }
-
-    /* Tasto Aggiungi Tutto specifico (colore leggermente diverso se vuoi evidenziarlo) */
-    div.stButton > button[kind="secondary"] {
-        border-color: #60a5fa !important;
     }
     
     /* Centratura Immagini */
@@ -75,7 +70,9 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# ... (Funzioni load_db e get_img rimangono invariate) ...
+# =========================
+# FUNZIONI CORE
+# =========================
 @st.cache_data
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame()
@@ -118,7 +115,7 @@ with tab1:
             if img:
                 st.image(img, width=180)
             
-            # 3. TASTO AGGIUNGI TUTTO (Ora sotto l'immagine)
+            # 3. TASTO AGGIUNGI TUTTO
             components = [
                 ("lock_chip", "lock_bit"),
                 ("blade", "blade"),
@@ -129,7 +126,7 @@ with tab1:
                 ("ratchet_integrated_bit", "ratchet_integrated_bit")
             ]
 
-            st.write("") # Spazio estetico
+            st.write("") 
             if st.button("Aggiungi tutto", key=f"all_{i}"):
                 for comp_key, inv_key in components:
                     val = row[comp_key]
@@ -137,7 +134,7 @@ with tab1:
                         add_to_inv(inv_key, val)
                 st.toast(f"Set {row['name']} aggiunto!")
 
-            st.markdown("<hr style='border-top: 1px solid #475569; width: 100%; margin: 20px 0;'>", unsafe_allow_html=True)
+            st.markdown("<hr style='border-top: 1px solid #475569; width: 100%; margin: 15px 0;'>", unsafe_allow_html=True)
 
             # 4. COMPONENTI SINGOLI
             for comp_key, inv_key in components:
