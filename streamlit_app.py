@@ -23,19 +23,20 @@ st.markdown("""
         margin-bottom: 15px !important;
         padding: 10px !important;
     }
+    div[data-testid="stVerticalBlockBorderWrapper"] > div > [data-testid="stVerticalBlock"] { gap: 0.2rem !important; }
 
-    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; }
-    .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; }
+    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 2px; text-align: center; }
+    .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; margin-top: 2px; margin-bottom: 0px; text-align: center; width: 100%; display: block; }
     hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; }
 
     /* BOTTONI AGGIUNGI (INTOCCABILI) */
     div.stButton > button {
-        width: auto !important; min-width: 150px !important;
+        width: auto !important; min-width: 150px !important; padding-left: 40px !important; padding-right: 40px !important;
         height: 30px !important; background-color: #334155 !important; color: white !important;
-        border: 1px solid #475569 !important; border-radius: 4px !important;
+        border: 1px solid #475569 !important; border-radius: 4px !important; font-size: 1.1rem !important;
     }
 
-    /* STILE EXPANDER (COERENTE) */
+    /* STILE EXPANDER */
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -133,10 +134,9 @@ with tab3:
 
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
 
-    # Ciclo Deck
     for d_idx, deck in enumerate(st.session_state.decks):
-        with st.expander(f"🛡️ {deck['name'].upper()}", expanded=True):
-            # Ciclo Beyblade Slot
+        # Expander principale del Deck (Niente icone)
+        with st.expander(f"{deck['name'].upper()}", expanded=True):
             for s_idx in range(3):
                 sels = deck["slots"][s_idx]
                 nome_parti = [v for v in sels.values() if v and v != "-"]
@@ -180,7 +180,7 @@ with tab3:
                         st.session_state.exp_state[exp_key] = True
                         st.rerun()
             
-            # Comandi Deck
+            # Comandi in fondo all'expander del deck
             st.markdown("<br>", unsafe_allow_html=True)
             c1, c2, _ = st.columns([0.2, 0.2, 0.6])
             if c1.button("📝 Rinomina", key=f"ren_{d_idx}"):
