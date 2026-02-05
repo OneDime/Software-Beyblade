@@ -68,11 +68,15 @@ def add_to_inv(tipo, nome, delta=1):
             if nome in st.session_state.inventario[tipo]:
                 del st.session_state.inventario[tipo][nome]
 
+# Inizializzazione Stati
 if 'inventario' not in st.session_state:
     st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
 
 if 'deck_name' not in st.session_state:
     st.session_state.deck_name = "IL MIO DECK"
+
+if 'editing_name' not in st.session_state:
+    st.session_state.editing_name = False
 
 df = load_db()
 
@@ -134,8 +138,24 @@ with tab3:
     # 1. Expander Generale del Deck
     with st.expander(f"{st.session_state.deck_name.upper()} (3 SLOT)", expanded=True):
         
-        # Campo per rinominare il Deck spostato qui dentro
-        st.session_state.deck_name = st.text_input("Rinomina Deck:", st.session_state.deck_name)
+        # Logica per la modifica del nome
+        if not st.session_state.editing_name:
+            if st.button("📝 Modifica Nome Deck"):
+                st.session_state.editing_name = True
+                st.rerun()
+        else:
+            new_name = st.text_input("Nuovo nome:", st.session_state.deck_name)
+            col_save, col_cancel = st.columns([1, 1])
+            with col_save:
+                if st.button("Salva"):
+                    st.session_state.deck_name = new_name
+                    st.session_state.editing_name = False
+                    st.rerun()
+            with col_cancel:
+                if st.button("Annulla"):
+                    st.session_state.editing_name = False
+                    st.rerun()
+
         st.write("---")
         
         def get_options(cat, theory=False):
@@ -158,23 +178,19 @@ with tab3:
                 tipo = st.selectbox("Sistema", tipologie, key=f"type_{idx}")
                 is_theory = "Theory" in tipo
                 
-                # Layout componenti
                 if "BX/UX" in tipo and "+RIB" not in tipo:
                     st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
                     st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
                     st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
-                
                 elif "CX" in tipo and "+RIB" not in tipo:
                     st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
                     st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
                     st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
                     st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
                     st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
-                
                 elif "BX/UX+RIB" in tipo:
                     st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
                     st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
-
                 elif "CX+RIB" in tipo:
                     st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
                     st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
