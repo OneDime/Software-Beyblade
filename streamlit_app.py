@@ -24,28 +24,33 @@ st.markdown("""
     }
     .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
     .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 2px; text-align: center; width: 100%; display: block; }
+    div.stButton > button {
+        width: auto !important; min-width: 150px !important; padding-left: 40px !important; padding-right: 40px !important;
+        height: 30px !important; background-color: #334155 !important; color: white !important;
+        border: 1px solid #475569 !important; border-radius: 4px !important; font-size: 1.1rem !important;
+    }
 
-    /* --- TAB INVENTARIO (SINISTRA) --- */
+    /* --- TAB INVENTARIO (ALLINEAMENTO A SINISTRA) --- */
     [data-testid="stExpander"] [data-testid="stVerticalBlock"] {
         text-align: left !important;
         align-items: flex-start !important;
     }
     .inv-row-container { 
         text-align: left !important; 
-        display: flex !important;
-        flex-direction: column !important;
+        width: 100%; 
+        display: flex;
+        flex-direction: column;
         align-items: flex-start !important;
-        justify-content: flex-start !important;
-        width: 100%;
     }
-    /* Forza allineamento bottoni inventario */
     .inv-row-container button {
-        text-align: left !important;
-        justify-content: flex-start !important;
-        width: 100% !important;
-        padding-left: 10px !important;
+        width: 100% !important; 
+        justify-content: flex-start !important; 
         background: transparent !important;
-        border: none !important;
+        border: none !important; 
+        color: #f1f5f9 !important; 
+        text-align: left !important; 
+        font-size: 1.1rem !important;
+        padding-left: 5px !important;
     }
     
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; }
@@ -53,7 +58,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI & STATI
+# FUNZIONI UTILI
 # =========================
 @st.cache_data
 def load_db():
@@ -78,15 +83,14 @@ def add_to_inv(tipo, nome, delta=1):
             if nome in st.session_state.inventario[tipo]:
                 del st.session_state.inventario[tipo][nome]
 
-# Inizializzazione Session State
 if 'inventario' not in st.session_state:
     st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
+
 if 'deck_name' not in st.session_state:
     st.session_state.deck_name = "IL MIO DECK"
+
 if 'editing_name' not in st.session_state:
     st.session_state.editing_name = False
-if 'last_opened_slot' not in st.session_state:
-    st.session_state.last_opened_slot = None
 
 df = load_db()
 
@@ -125,15 +129,17 @@ with tab1:
 
 # --- TAB 2: INVENTARIO (SINISTRA) ---
 with tab2:
-    modo = st.radio("Modo", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
+    modo = st.radio("Label_Hidden", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     operazione = 1 if "Aggiungi" in modo else -1
+    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
     has_content = any(len(v) > 0 for v in st.session_state.inventario.values())
     if not has_content:
         st.info("L'inventario è vuoto.")
     else:
         for categoria, pezzi in st.session_state.inventario.items():
             if pezzi:
-                with st.expander(categoria.replace('_', ' ').upper(), expanded=False):
+                cat_label = categoria.replace('_', ' ').upper()
+                with st.expander(cat_label, expanded=False):
                     st.markdown('<div class="inv-row-container">', unsafe_allow_html=True)
                     for nome, qta in pezzi.items():
                         if st.button(f"{nome} x{qta}", key=f"inv_{categoria}_{nome}"):
@@ -156,43 +162,46 @@ with tab3:
             else:
                 return ["-"] + sorted(list(st.session_state.inventario[cat].keys()))
 
-        tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
+        tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", 
+                     "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
 
         for idx in range(3):
-            # Recuperiamo i dati correnti per il titolo
-            vals = [st.session_state.get(f"{k}_{idx}", "-") for k in ["lb", "mb", "ab", "b", "r", "bi", "rib"]]
-            parti = [p for p in vals if p and p != "-"]
+            # Costruzione titolo dinamico SENZA rerun forzato
+            # Recuperiamo i valori direttamente dai widget usando i key
+            b = st.session_state.get(f"b_{idx}", "-")
+            r = st.session_state.get(f"r_{idx}", "-")
+            bi = st.session_state.get(f"bi_{idx}", "-")
+            lb = st.session_state.get(f"lb_{idx}", "-")
+            mb = st.session_state.get(f"mb_{idx}", "-")
+            ab = st.session_state.get(f"ab_{idx}", "-")
+            rib = st.session_state.get(f"rib_{idx}", "-")
+
+            # Logica di composizione nome in base al sistema (senza i "-")
+            parti = [p for p in [lb, mb, ab, b, r, bi, rib] if p and p != "-"]
             titolo_slot = " ".join(parti) if parti else f"SLOT {idx+1}"
             
-            # Persistenza dell'expander: se hai interagito con questo slot, rimane aperto
-            is_open = st.session_state.last_opened_slot == idx
-            
-            with st.expander(titolo_slot.upper(), expanded=is_open):
-                # Se l'utente tocca un widget qui dentro, questo slot diventa il "last_opened"
-                tipo = st.selectbox("Sistema", tipologie, key=f"type_{idx}", on_change=lambda i=idx: st.session_state.update({"last_opened_slot": i}))
+            with st.expander(titolo_slot.upper(), expanded=False):
+                tipo = st.selectbox("Sistema", tipologie, key=f"type_{idx}")
                 is_theory = "Theory" in tipo
                 
-                # Helper per le selectbox che aggiornano il focus
-                def on_val_change(i=idx): st.session_state.last_opened_slot = i
-
                 if "BX/UX" in tipo and "+RIB" not in tipo:
-                    st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}", on_change=on_val_change)
-                    st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}", on_change=on_val_change)
-                    st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}", on_change=on_val_change)
+                    st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
+                    st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
+                    st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
                 elif "CX" in tipo and "+RIB" not in tipo:
-                    st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}", on_change=on_val_change)
-                    st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}", on_change=on_val_change)
-                    st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}", on_change=on_val_change)
-                    st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}", on_change=on_val_change)
-                    st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}", on_change=on_val_change)
+                    st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
+                    st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
+                    st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
+                    st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
+                    st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
                 elif "BX/UX+RIB" in tipo:
-                    st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}", on_change=on_val_change)
-                    st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}", on_change=on_val_change)
+                    st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
+                    st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
                 elif "CX+RIB" in tipo:
-                    st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}", on_change=on_val_change)
-                    st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}", on_change=on_val_change)
-                    st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}", on_change=on_val_change)
-                    st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}", on_change=on_val_change)
+                    st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
+                    st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
+                    st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
+                    st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
 
         st.markdown("<br>", unsafe_allow_html=True)
         if not st.session_state.editing_name:
@@ -202,10 +211,12 @@ with tab3:
         else:
             new_name = st.text_input("Nuovo nome:", st.session_state.deck_name)
             col_save, col_cancel = st.columns([1, 1])
-            if col_save.button("Salva"):
-                st.session_state.deck_name = new_name
-                st.session_state.editing_name = False
-                st.rerun()
-            if col_cancel.button("Annulla"):
-                st.session_state.editing_name = False
-                st.rerun()
+            with col_save:
+                if st.button("Salva"):
+                    st.session_state.deck_name = new_name
+                    st.session_state.editing_name = False
+                    st.rerun()
+            with col_cancel:
+                if st.button("Annulla"):
+                    st.session_state.editing_name = False
+                    st.rerun()
