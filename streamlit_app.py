@@ -2,10 +2,12 @@ import streamlit as st
 import pandas as pd
 import hashlib
 import os
+import json
 from PIL import Image
+from streamlit_gsheets import GSheetsConnection
 
 # =========================
-# CONFIGURAZIONE & STILE
+# CONFIGURAZIONE & STILE (INALTERATO)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -46,7 +48,43 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA DATI & IMMAGINI
+# LOGICA SALVATAGGIO (NUOVA E PROTETTA)
+# =========================
+SHEET_URL = "https://docs.google.com/spreadsheets/d/1VW5TUbrvnHnSn9WCbmrkCfOgUo85et4jQK9pSgTrdkM/edit#gid=0"
+
+def save_cloud():
+    """Salva i dati su foglio senza interrompere l'app in caso di errore"""
+    try:
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        # Preparazione dati per i due fogli
+        inv_data = [{"Utente": u, "Dati_JSON": json.dumps(st.session_state.users[u]["inv"])} for u in st.session_state.users]
+        deck_data = [{"Utente": u, "Dati_JSON": json.dumps(st.session_state.users[u]["decks"])} for u in st.session_state.users]
+        
+        conn.update(spreadsheet=SHEET_URL, worksheet="inventario", data=pd.DataFrame(inv_data))
+        conn.update(spreadsheet=SHEET_URL, worksheet="decks", data=pd.DataFrame(deck_data))
+    except:
+        pass # Se fallisce, l'utente continua a giocare e il salvataggio riprova al prossimo click
+
+def load_cloud():
+    """Carica i dati iniziali dal foglio"""
+    try:
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        df_i = conn.read(spreadsheet=SHEET_URL, worksheet="inventario", ttl=0)
+        df_d = conn.read(spreadsheet=SHEET_URL, worksheet="decks", ttl=0)
+        loaded = {}
+        for u in ["Antonio", "Andrea", "Fabio"]:
+            u_i = df_i[df_i["Utente"] == u]
+            u_d = df_d[df_d["Utente"] == u]
+            loaded[u] = {
+                "inv": json.loads(u_i.iloc[0]["Dati_JSON"]) if not u_i.empty else {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]},
+                "decks": json.loads(u_d.iloc[0]["Dati_JSON"]) if not u_d.empty else [{"name": "DECK 1", "slots": {i: {} for i in range(3)}}]
+            }
+        return loaded
+    except:
+        return None
+
+# =========================
+# LOGICA DATI & IMMAGINI (TUA)
 # =========================
 @st.cache_data
 def load_db():
@@ -74,14 +112,18 @@ def get_img(url, size=(100, 100)):
     return None
 
 # =========================
-# GESTIONE ACCOUNT
+# GESTIONE ACCOUNT (TUA + CARICAMENTO CLOUD)
 # =========================
 if 'users' not in st.session_state:
-    st.session_state.users = {
-        "Antonio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {i: {} for i in range(3)}}]},
-        "Andrea": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {i: {} for i in range(3)}}]},
-        "Fabio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {i: {} for i in range(3)}}]}
-    }
+    cloud_data = load_cloud()
+    if cloud_data:
+        st.session_state.users = cloud_data
+    else:
+        st.session_state.users = {
+            "Antonio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {i: {} for i in range(3)}}]},
+            "Andrea": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {i: {} for i in range(3)}}]},
+            "Fabio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {i: {} for i in range(3)}}]}
+        }
 
 st.sidebar.title("👤 Account")
 user_selected = st.sidebar.radio("Seleziona Utente:", ["Antonio", "Andrea", "Fabio"])
@@ -96,9 +138,8 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 df, global_img_map = load_db()
 
 # =========================
-# UI PRINCIPALE
+# UI PRINCIPALE (LA TUA LOGICA INTEGRALE)
 # =========================
-# Titolo rimpicciolito tramite classe CSS custom
 st.markdown(f"<div class='user-title'>Officina di {user_selected}</div>", unsafe_allow_html=True)
 
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
@@ -118,6 +159,7 @@ with tab1:
                 for ck, ik in components:
                     val = row[ck]
                     if val and val != "n/a": inventario_corrente[ik][val] = inventario_corrente[ik].get(val, 0) + 1
+                save_cloud() # SALVATAGGIO AUTO
                 st.toast(f"Aggiunto a {user_selected}!")
             st.markdown("<hr>", unsafe_allow_html=True)
             for ck, ik in components:
@@ -126,6 +168,7 @@ with tab1:
                     st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
                     if st.button("＋", key=f"btn_{i}_{ck}"):
                         inventario_corrente[ik][val] = inventario_corrente[ik].get(val, 0) + 1
+                        save_cloud() # SALVATAGGIO AUTO
                         st.toast(f"Aggiunto: {val}")
 
 with tab2:
@@ -138,6 +181,7 @@ with tab2:
                     if st.button(f"{nome} x{qta}", key=f"inv_{user_selected}_{categoria}_{nome}"):
                         inventario_corrente[categoria][nome] += operazione
                         if inventario_corrente[categoria][nome] <= 0: del inventario_corrente[categoria][nome]
+                        save_cloud() # SALVATAGGIO AUTO
                         st.rerun()
 
 with tab3:
@@ -189,6 +233,7 @@ with tab3:
 
                     if deck["slots"][s_idx] != curr:
                         deck["slots"][s_idx] = curr
+                        save_cloud() # SALVATAGGIO AUTO
                         st.session_state.exp_state[exp_key] = True
                         st.rerun()
 
@@ -200,15 +245,18 @@ with tab3:
             if c2.button("🗑️ Elimina", key=f"del_{user_selected}_{d_idx}", type="primary"):
                 if len(decks_correnti) > 1:
                     decks_correnti.pop(d_idx)
+                    save_cloud() # SALVATAGGIO AUTO
                     st.rerun()
             if st.session_state.edit_name_idx == f"{user_selected}_{d_idx}":
                 new_n = st.text_input("Nuovo nome:", deck['name'], key=f"input_{user_selected}_{d_idx}")
                 if st.button("Salva", key=f"save_{user_selected}_{d_idx}"):
                     deck['name'] = new_n
+                    save_cloud() # SALVATAGGIO AUTO
                     st.session_state.edit_name_idx = None
                     st.rerun()
 
     st.markdown("---")
     if st.button("➕ Aggiungi Nuovo Deck"):
         decks_correnti.append({"name": f"DECK {len(decks_correnti) + 1}", "slots": {i: {} for i in range(3)}})
+        save_cloud() # SALVATAGGIO AUTO
         st.rerun()
