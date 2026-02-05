@@ -39,9 +39,6 @@ st.markdown("""
         border: none !important; color: #f1f5f9 !important; text-align: left !important; font-size: 1.1rem !important;
     }
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; }
-    
-    /* Input nome deck */
-    .deck-name-input { margin-bottom: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -75,7 +72,7 @@ if 'inventario' not in st.session_state:
     st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
 
 if 'deck_name' not in st.session_state:
-    st.session_state.deck_name = "Il Mio Deck"
+    st.session_state.deck_name = "IL MIO DECK"
 
 df = load_db()
 
@@ -134,11 +131,12 @@ with tab2:
 
 # --- TAB 3: DECK BUILDER ---
 with tab3:
-    # Campo per rinominare il Deck
-    st.session_state.deck_name = st.text_input("Nome del Deck:", st.session_state.deck_name)
-    
-    # 1. Expander Generale del Deck (Usa il nome personalizzato)
-    with st.expander(f"📦 {st.session_state.deck_name.upper()} (3 SLOT)", expanded=True):
+    # 1. Expander Generale del Deck
+    with st.expander(f"{st.session_state.deck_name.upper()} (3 SLOT)", expanded=True):
+        
+        # Campo per rinominare il Deck spostato qui dentro
+        st.session_state.deck_name = st.text_input("Rinomina Deck:", st.session_state.deck_name)
+        st.write("---")
         
         def get_options(cat, theory=False):
             if theory:
