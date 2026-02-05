@@ -5,76 +5,74 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE CSS ESTREMO
+# CONFIGURAZIONE & STILE CSS
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
-    /* Forza 2 colonne su smartphone */
-    [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        gap: 10px !important;
-    }
+    /* Sfondo generale e font */
+    .stApp { background-color: #0f172a; color: #f8fafc; }
     
-    /* Card completa con bordo e ombra */
-    .bey-card-container {
-        background-color: white;
-        border: 2px solid #d1d5db;
+    /* Card Beyblade: Blu-Grigio scuro, centrata */
+    .bey-card {
+        background-color: #1e293b; /* Blu-grigio scuro */
+        border: 1px solid #334155;
         border-radius: 15px;
-        padding: 15px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        min-height: 450px;
+        padding: 20px;
+        margin: 10px auto;
+        max-width: 450px; /* Evita che su desktop diventi troppo larga */
+        text-align: center;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
     }
 
+    /* Intestazione nome beyblade */
     .bey-name-header {
         font-weight: bold;
-        background-color: #1e3a8a;
+        font-size: 1.3rem;
+        background-color: #3b82f6; /* Blu più vivace per il nome */
         color: white;
-        width: 100%;
-        text-align: center;
-        padding: 8px 0;
-        border-radius: 10px;
+        padding: 10px;
+        border-radius: 8px;
         margin-bottom: 15px;
+        text-transform: uppercase;
+    }
+
+    /* Riga componenti: Testo e Bottone */
+    .comp-row {
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        justify-content: center;
-        min-height: 50px;
-    }
-
-    /* Righe componenti: forza testo e tasto sulla stessa riga sempre */
-    .row-flex {
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        width: 100% !important;
-        margin-bottom: 8px;
-    }
-
-    /* Fix immagini e selectbox nel Deck */
-    .deck-row {
-        display: flex !important;
-        align-items: center !important;
-        gap: 10px !important;
-        margin-bottom: 10px;
+        background: #0f172a;
+        margin: 5px 0;
+        padding: 8px 12px;
+        border-radius: 6px;
     }
     
-    .stSelectbox { flex-grow: 1; }
+    .comp-label { font-size: 0.95rem; color: #cbd5e1; }
+
+    /* Bottoni */
+    .stButton>button {
+        background-color: #334155;
+        color: white;
+        border: 1px solid #475569;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+    }
     
-    /* Centratura immagini */
-    .stImage > img { display: block; margin: 0 auto; }
+    /* Forza centratura immagini */
+    .stImage { display: flex; justify-content: center; }
+    
+    /* Fix per i flag del deck (li mettiamo su una riga se c'è spazio) */
+    .stCheckbox { margin-top: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA DATI
+# FUNZIONI CORE
 # =========================
 @st.cache_data
 def load_db():
@@ -84,7 +82,7 @@ def load_db():
     return df
 
 @st.cache_resource
-def get_img(url, size=(100, 100)):
+def get_img(url, size=(150, 150)):
     if not url or url == "n/a": return None
     h = hashlib.md5(url.encode()).hexdigest()
     path = os.path.join("images", f"{h}.png")
@@ -104,34 +102,37 @@ st.sidebar.title("🔧 Officina X")
 utente = st.sidebar.selectbox("Utente", ["Antonio", "Andrea", "Fabio"])
 
 # =========================
-# UI
+# TABS
 # =========================
 tab_add, tab_inv, tab_deck = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 with tab_add:
-    # Per rendere la ricerca "più" estemporanea usiamo il parametro on_change in futuro, 
-    # per ora ottimizziamo il filtro.
-    search_q = st.text_input("Cerca...", key="search_bar")
+    search_q = st.text_input("Cerca beyblade o componenti...", key="search_bar")
     
     filtered = df
     if len(search_q) >= 2:
         filtered = df[df['_search'].str.contains(search_q.lower())]
     else:
-        filtered = df.head(6)
+        filtered = df.head(5)
 
-    # Layout a 2 colonne reali (anche su mobile)
-    col_a, col_b = st.columns(2)
     for i, (_, row) in enumerate(filtered.iterrows()):
-        target = col_a if i % 2 == 0 else col_b
-        with target:
-            st.markdown(f'<div class="bey-card-container">', unsafe_allow_html=True)
-            st.markdown(f'<div class="bey-name-header">{row["name"]}</div>', unsafe_allow_html=True)
-            
+        # Creiamo la card intera con HTML
+        st.markdown(f"""
+            <div class="bey-card">
+                <div class="bey-name-header">{row['name']}</div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # L'immagine e i tasti devono stare dentro il container, 
+        # Streamlit non permette di mettere bottoni "dentro" una stringa HTML, 
+        # quindi usiamo un trucco di margini negativi o container puliti.
+        
+        with st.container():
+            # Immagine
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
-            if img: st.image(img, width=110)
+            if img: st.image(img, width=150)
             
-            st.write("") # Spacer
-            
+            # Lista componenti
             comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"), 
                      ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"), 
                      ("ratchet_integrated_bit", "ratchet_integrated_bit")]
@@ -139,39 +140,31 @@ with tab_add:
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    # Usiamo colonne piccolissime per forzare l'affiancamento
                     c_txt, c_btn = st.columns([0.8, 0.2])
                     c_txt.markdown(f"**{val}**")
-                    if c_btn.button("＋", key=f"btn_{i}_{field}"):
+                    if c_btn.button("＋", key=f"add_{i}_{field}"):
                         st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
                         st.toast(f"Aggiunto {val}")
-            
-            st.write("")
-            if st.button("Aggiungi tutto", key=f"all_{i}"):
-                for f, k in comps:
-                    if row[f] and row[f] != "n/a":
-                        st.session_state.inventario[k][row[f]] = st.session_state.inventario[k].get(row[f], 0) + 1
-                st.toast("Bey aggiunto!")
-            st.markdown('</div>', unsafe_allow_html=True)
+
+            st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True)
 
 with tab_inv:
     st.header(f"Inventario di {utente}")
     ordine = ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]
     for tipo in ordine:
         pezzi = st.session_state.inventario.get(tipo, {})
-        if any(pezzi.values()):
+        validi = {k: v for k, v in pezzi.items() if v > 0}
+        if validi:
             with st.expander(f"{tipo.replace('_', ' ').upper()}", expanded=True):
-                for nome, qta in list(pezzi.items()):
-                    if qta > 0:
-                        # Forza affiancamento tasti in inventario
-                        c1, c2, c3 = st.columns([0.6, 0.2, 0.2])
-                        c1.write(f"{nome} (x{qta})")
-                        if c2.button("＋", key=f"inv+_{tipo}_{nome}"):
-                            st.session_state.inventario[tipo][nome] += 1
-                            st.rerun()
-                        if c3.button("－", key=f"inv-_{tipo}_{nome}"):
-                            st.session_state.inventario[tipo][nome] -= 1
-                            st.rerun()
+                for nome, qta in validi.items():
+                    c1, c2, c3 = st.columns([0.6, 0.2, 0.2])
+                    c1.write(f"{nome} (x{qta})")
+                    if c2.button("＋", key=f"p_{tipo}_{nome}"):
+                        st.session_state.inventario[tipo][nome] += 1
+                        st.rerun()
+                    if c3.button("－", key=f"m_{tipo}_{nome}"):
+                        st.session_state.inventario[tipo][nome] -= 1
+                        st.rerun()
 
 with tab_deck:
     col_h, col_b = st.columns([2, 1])
@@ -182,9 +175,8 @@ with tab_deck:
     for d_idx, deck in enumerate(st.session_state.decks):
         with st.expander(f"📂 {deck['name']}", expanded=True):
             for b_idx in range(3):
-                st.subheader(f"Beyblade {b_idx+1}")
+                st.markdown(f"### Beyblade {b_idx+1}")
                 
-                # Flag affiancati
                 f1, f2, f3 = st.columns(3)
                 v_cx = f1.checkbox("CX", key=f"cx_{d_idx}_{b_idx}")
                 v_rib = f2.checkbox("RIB", key=f"rib_{d_idx}_{b_idx}")
@@ -202,11 +194,11 @@ with tab_deck:
                         inv_k = "lock_bit" if db_key == "lock_chip" else db_key
                         opts = [""] + sorted(list(st.session_state.inventario.get(inv_k, {}).keys()))
                     
-                    # Layout Deck: Menu e Immagine sulla stessa riga
-                    cd1, cd2 = st.columns([0.75, 0.25])
+                    # Layout orizzontale per smartphone: Menu a sinistra, immagine a destra
+                    cd1, cd2 = st.columns([0.7, 0.3])
                     scelta = cd1.selectbox(label, opts, key=f"s_{d_idx}_{b_idx}_{db_key}")
                     if scelta:
                         img_url = df[df[db_key] == scelta][img_db_key].values
                         if len(img_url) > 0:
-                            p_img = get_img(img_url[0], size=(70, 70))
+                            p_img = get_img(img_url[0], size=(80, 80))
                             if p_img: cd2.image(p_img)
