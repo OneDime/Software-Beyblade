@@ -40,19 +40,12 @@ st.markdown("""
     }
 
     /* STILE DECK BUILDER */
-    .deck-slot {
-        background-color: #1e293b;
-        border: 1px dashed #60a5fa;
-        border-radius: 10px;
-        padding: 10px;
-        margin-bottom: 20px;
-    }
-    .deck-title { color: #60a5fa; font-weight: bold; margin-bottom: 10px; font-size: 1.2rem; }
+    .deck-title { color: #60a5fa; font-weight: bold; margin-bottom: 10px; font-size: 1.2rem; text-align: center; }
     </style>
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI UTILI (INVARIATE)
+# FUNZIONI UTILI
 # =========================
 @st.cache_data
 def load_db():
@@ -77,16 +70,9 @@ def add_to_inv(tipo, nome, delta=1):
             if nome in st.session_state.inventario[tipo]:
                 del st.session_state.inventario[tipo][nome]
 
-# Inizializzazione Inventario e Deck
+# Inizializzazione Session State
 if 'inventario' not in st.session_state:
     st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
-
-if 'deck' not in st.session_state:
-    st.session_state.deck = {
-        "Bey 1": {"blade": None, "ratchet": None, "bit": None},
-        "Bey 2": {"blade": None, "ratchet": None, "bit": None},
-        "Bey 3": {"blade": None, "ratchet": None, "bit": None},
-    }
 
 df = load_db()
 
@@ -145,32 +131,63 @@ with tab2:
 
 # --- TAB 3: DECK BUILDER ---
 with tab3:
-    st.markdown("<div class='bey-name'>Il Tuo Deck (3 Slot)</div>", unsafe_allow_html=True)
+    st.markdown("<div class='bey-name'>Configurazione Deck</div>", unsafe_allow_html=True)
     
-    # Prepariamo le liste per i selectbox basate sull'inventario
-    # Uniamo le varie tipologie di blade e ratchet per semplicità
-    available_blades = ["Seleziona..."] + sorted(list(st.session_state.inventario["blade"].keys()) + list(st.session_state.inventario["main_blade"].keys()))
-    available_ratchets = ["Seleziona..."] + sorted(list(st.session_state.inventario["ratchet"].keys()))
-    available_bits = ["Seleziona..."] + sorted(list(st.session_state.inventario["bit"].keys()))
-
     cols = st.columns(3)
     
-    for idx, (bey_label, bey_data) in enumerate(st.session_state.deck.items()):
+    # Funzione per recuperare pezzi (Inventario o Database)
+    def get_options(cat, theory=False):
+        if theory:
+            # Prende tutti i valori unici dal CSV per quella colonna
+            # Mappiamo le categorie ai nomi colonna del CSV
+            csv_map = {
+                "lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade",
+                "assist_blade": "assist_blade", "ratchet": "ratchet", "bit": "bit",
+                "ratchet_integrated_bit": "ratchet_integrated_bit"
+            }
+            col_name = csv_map.get(cat, cat)
+            opts = df[col_name].unique().tolist()
+            return ["-"] + sorted([x for x in opts if x and x != "n/a"])
+        else:
+            # Solo quello che c'è in inventario
+            return ["-"] + sorted(list(st.session_state.inventario[cat].keys()))
+
+    tipologie = [
+        "BX/UX", "CX", "BX/UX+RIB", "CX+RIB", 
+        "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"
+    ]
+
+    for idx in range(3):
         with cols[idx]:
             with st.container(border=True):
-                st.markdown(f"<div class='deck-title'>{bey_label}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='deck-title'>Slot {idx+1}</div>", unsafe_allow_html=True)
                 
-                # Selezione componenti
-                # Nota: Streamlit non permette duplicati nelle chiavi dei pezzi, usiamo indici
-                st.session_state.deck[bey_label]["blade"] = st.selectbox(f"Blade", available_blades, key=f"sel_b_{idx}")
-                st.session_state.deck[bey_label]["ratchet"] = st.selectbox(f"Ratchet", available_ratchets, key=f"sel_r_{idx}")
-                st.session_state.deck[bey_label]["bit"] = st.selectbox(f"Bit", available_bits, key=f"sel_bit_{idx}")
+                tipo = st.selectbox("Sistema", tipologie, key=f"type_{idx}")
+                is_theory = "Theory" in tipo
                 
-                # Visualizzazione anteprima (se selezionato)
-                if st.session_state.deck[bey_label]["blade"] != "Seleziona...":
-                    # Cerchiamo l'immagine della blade nel CSV
-                    blade_name = st.session_state.deck[bey_label]["blade"]
-                    img_url = df[df['blade'] == blade_name]['blade_image'].values
-                    if len(img_url) > 0 and img_url[0] != "n/a":
-                        img = get_img(img_url[0])
-                        if img: st.image(img, use_container_width=True)
+                # Definizione componenti in base al sistema scelto
+                if "BX/UX" in tipo and "+RIB" not in tipo:
+                    # Blade, Ratchet, Bit
+                    b = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
+                    r = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
+                    bi = st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
+                
+                elif "CX" in tipo and "+RIB" not in tipo:
+                    # Lock Bit, Main, Assist, Ratchet, Bit
+                    lb = st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
+                    mb = st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
+                    ab = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
+                    r = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
+                    bi = st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
+                
+                elif "BX/UX+RIB" in tipo:
+                    # Blade, RIB
+                    b = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
+                    rib = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
+
+                elif "CX+RIB" in tipo:
+                    # Lock Bit, Main, Assist, RIB
+                    lb = st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
+                    mb = st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
+                    ab = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
+                    rib = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
