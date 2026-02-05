@@ -32,7 +32,14 @@ st.markdown("""
     
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; }
 
-    /* Bottone Elimina (Rosso) */
+    /* Centratura Immagini Deck */
+    .img-center-wrapper {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
     div.stButton > button[key^="del_deck_"] { background-color: #991b1b !important; color: white !important; border: none !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -83,7 +90,7 @@ def add_to_inv(tipo, nome, delta=1):
             if nome in st.session_state.inventario[tipo]:
                 del st.session_state.inventario[tipo][nome]
 
-# Inizializzazione
+# Inizializzazione Session State
 if 'inventario' not in st.session_state:
     st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
 if 'decks' not in st.session_state:
@@ -162,7 +169,6 @@ with tab3:
             tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
 
             for s_idx in range(3):
-                # Generazione chiavi dinamiche
                 comp_keys = ["lb", "mb", "ab", "b", "r", "bi", "rib"]
                 slot_keys = {k: f"d{d_idx}_s{s_idx}_{k}" for k in comp_keys}
                 
@@ -178,6 +184,7 @@ with tab3:
                     tipo = st.selectbox("Sistema", tipologie, key=f"d{d_idx}_s{s_idx}_type", on_change=set_focus)
                     is_theory = "Theory" in tipo
 
+                    # Form Selectbox
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         st.selectbox("Blade", get_options("blade", is_theory), key=slot_keys["b"], on_change=set_focus)
                         st.selectbox("Ratchet", get_options("ratchet", is_theory), key=slot_keys["r"], on_change=set_focus)
@@ -198,7 +205,7 @@ with tab3:
                         st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=slot_keys["rib"], on_change=set_focus)
 
                     # --- SEZIONE IMMAGINI CENTRATE E UNIFORMI ---
-                    st.write("") # Spazio extra
+                    st.write("")
                     for k_id in slot_keys.values():
                         valore = st.session_state.get(k_id, "-")
                         if valore != "-":
@@ -206,10 +213,10 @@ with tab3:
                             if url_comp:
                                 img_obj = get_img(url_comp)
                                 if img_obj:
-                                    # st.image con width fissa e trucco del CSS per centrare
-                                    st.image(img_obj, width=100, use_container_width=False)
-                    # Trucco CSS locale per forzare la centratura delle immagini caricate in questo expander
-                    st.markdown("<style>img { display: block; margin-left: auto !important; margin-right: auto !important; }</style>", unsafe_allow_html=True)
+                                    # Usiamo un container st.container() o st.markdown per centrare
+                                    st.markdown('<div class="img-center-wrapper">', unsafe_allow_html=True)
+                                    st.image(img_obj, width=100)
+                                    st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown("<br>", unsafe_allow_html=True)
             if not deck['editing']:
