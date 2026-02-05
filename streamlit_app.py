@@ -5,7 +5,7 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE (TASTI 30PX - FULL WIDTH)
+# CONFIGURAZIONE & STILE (FIX TOTALE LARGHEZZA)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -39,31 +39,40 @@ st.markdown("""
         text-align: center;
     }
 
-    /* Nomi Componenti Centrati - Distanziamento ridotto */
+    /* Nomi Componenti Centrati */
     .comp-name {
-        font-size: 1.1rem; /* Font ripristinato */
+        font-size: 1.1rem;
         color: #cbd5e1;
-        margin-top: 7px;   /* Ridotto di altri 5px */
+        margin-top: 7px;
         margin-bottom: 2px;
         text-align: center;
         width: 100%;
         display: block;
     }
 
-    /* BOTTONI: Altezza 30px, Larghezza 100% FORZATA */
+    /* FIX DEFINITIVO LARGHEZZA E ALTEZZA */
+    /* Colpiamo il contenitore del bottone per forzarlo al 100% */
+    div[data-testid="stButton"] {
+        width: 100% !important;
+    }
+
     div.stButton > button {
         width: 100% !important;
         min-width: 100% !important;
-        max-width: 100% !important;
         display: block !important;
         background-color: #334155 !important;
         color: white !important;
         border: 1px solid #475569 !important;
+        
+        /* Altezza 30px reale */
         height: 30px !important; 
-        font-size: 1.1rem !important; /* Font ripristinato */
+        min-height: 30px !important;
+        max-height: 30px !important;
+        
+        font-size: 1.1rem !important;
         border-radius: 4px !important;
         padding: 0px !important;
-        line-height: 30px !important; /* Centra il testo verticalmente nei 30px */
+        line-height: 1 !important; /* Riduce lo spazio interno del testo */
     }
     
     /* Centratura Immagini */
@@ -128,6 +137,7 @@ with tab1:
             ]
 
             st.write("") 
+            # TASTO AGGIUNGI TUTTO
             if st.button("Aggiungi tutto", key=f"all_{i}"):
                 for comp_key, inv_key in components:
                     val = row[comp_key]
@@ -137,6 +147,7 @@ with tab1:
 
             st.markdown("<hr style='border-top: 1px solid #475569; width: 100%; margin: 10px 0;'>", unsafe_allow_html=True)
 
+            # TASTI SINGOLI
             for comp_key, inv_key in components:
                 val = row[comp_key]
                 if val and val != "n/a":
