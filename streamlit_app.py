@@ -5,7 +5,7 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE (TASTI PROPORZIONATI AL TESTO)
+# CONFIGURAZIONE & STILE
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -40,13 +40,11 @@ st.markdown("""
     }
 
     div.stButton > button {
-        /* Larghezza basata sul contenuto (testo) */
         width: auto !important; 
-        min-width: 150px !important; /* Minimo per non farlo troppo stretto sul "+" */
-        padding-left: 40px !important;  /* Padding generoso per caricarlo lateralmente */
+        min-width: 150px !important; 
+        padding-left: 40px !important;  
         padding-right: 40px !important;
         
-        /* Altezza bloccata a 30px */
         height: 30px !important;
         min-height: 30px !important;
         max-height: 30px !important;
@@ -69,7 +67,9 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# ... (Funzioni load_db e get_img invariate) ...
+# =========================
+# FUNZIONI UTILI
+# =========================
 @st.cache_data
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame()
@@ -86,7 +86,10 @@ def get_img(url):
 
 def add_to_inv(tipo, nome):
     if nome and nome != "n/a":
-        st.session_state.inventario[tipo][nome] = st.session_state.inventario[tipo].get(nome, 0) + 1
+        # Inizializza il dizionario della categoria se non esiste
+        if nome not in st.session_state.inventario[tipo]:
+            st.session_state.inventario[tipo][nome] = 0
+        st.session_state.inventario[tipo][nome] += 1
 
 if 'inventario' not in st.session_state:
     st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
@@ -98,13 +101,14 @@ df = load_db()
 # =========================
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
+# --- TAB 1: AGGIUNGI (INTOCCABILE) ---
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df[df['_search'].str.contains(search_q)] if search_q else df.head(3)
 
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
+            st.markdown(f<div class='bey-name'>{row['name']}</div>, unsafe_allow_html=True)
             
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
             if img: st.image(img, width=150)
@@ -115,7 +119,6 @@ with tab1:
                 ("ratchet_integrated_bit", "ratchet_integrated_bit")
             ]
 
-            # AGGIUNGI TUTTO (1.5x rispetto alla scritta)
             st.write("")
             if st.button("Aggiungi tutto", key=f"all_{i}"):
                 for ck, ik in components:
@@ -124,7 +127,6 @@ with tab1:
 
             st.markdown("<hr style='border-top: 1px solid #475569; margin: 15px 0;'>", unsafe_allow_html=True)
 
-            # TASTI SINGOLI
             for ck, ik in components:
                 val = row[ck]
                 if val and val != "n/a":
@@ -132,3 +134,43 @@ with tab1:
                     if st.button("＋", key=f"btn_{i}_{ck}"):
                         add_to_inv(ik, val)
                         st.toast(f"Aggiunto: {val}")
+
+# --- TAB 2: INVENTARIO ---
+with tab2:
+    st.markdown("<div class='bey-name'>Magazzino Pezzi</div>", unsafe_allow_html=True)
+    
+    # Verifichiamo se c'è qualcosa in inventario
+    vuoto = True
+    for cat in st.session_state.inventario:
+        if any(q > 0 for q in st.session_state.inventario[cat].values()):
+            vuoto = False
+            break
+            
+    if vuoto:
+        st.info("L'inventario è vuoto. Torna nel tab 'Aggiungi' per inserire i tuoi Beyblade.")
+    else:
+        for categoria, pezzi in st.session_state.inventario.items():
+            # Mostra la categoria solo se contiene pezzi con quantità > 0
+            pezzi_validi = {n: q for n, q in pezzi.items() if q > 0}
+            if pezzi_validi:
+                with st.container(border=True):
+                    # Titolo Categoria
+                    st.markdown(f"<div class='bey-name' style='color: #94a3b8; font-size: 1.1rem;'>{categoria.replace('_', ' ').upper()}</div>", unsafe_allow_html=True)
+                    
+                    for nome, qta in pezzi_validi.items():
+                        st.markdown(f"<div class='comp-name'>{nome}</div>", unsafe_allow_html=True)
+                        
+                        # Tasti di gestione quantità (+ e -)
+                        c1, c2 = st.columns(2)
+                        with c1:
+                            if st.button(f"－ ({qta})", key=f"min_{categoria}_{nome}"):
+                                st.session_state.inventario[categoria][nome] -= 1
+                                st.rerun()
+                        with c2:
+                            if st.button("＋", key=f"plu_{categoria}_{nome}"):
+                                st.session_state.inventario[categoria][nome] += 1
+                                st.rerun()
+
+# --- TAB 3: DECK BUILDER (STRUTTURA BASE) ---
+with tab3:
+    st.info("Area Deck Builder in fase di allestimento...")
