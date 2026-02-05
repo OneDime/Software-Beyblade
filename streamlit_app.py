@@ -52,11 +52,11 @@ st.markdown("""
         white-space: nowrap !important;
     }
 
-    /* --- STILI TAB INVENTARIO (PERSONALIZZATI) --- */
+    /* --- STILI TAB INVENTARIO --- */
     
     /* Riduzione altezza area Switch (Radio) */
     div[data-testid="stWidgetLabel"] {
-        display: none !important; /* Nasconde l'etichetta dello switch per risparmiare spazio */
+        display: none !important;
     }
     
     div[data-testid="stRadio"] > div {
@@ -80,7 +80,7 @@ st.markdown("""
         color: #f1f5f9 !important;
         text-align: left !important;
         font-size: 1.1rem !important;
-        height: 35px !important; /* Leggermente più alto per il touch */
+        height: 35px !important;
         padding-left: 0px !important;
     }
     
@@ -95,7 +95,6 @@ st.markdown("""
         text-align: left !important;
     }
     
-    /* Fix per forzare l'allineamento a sinistra dentro gli expander */
     .stExpander [data-testid="stVerticalBlock"] {
         align-items: flex-start !important;
         text-align: left !important;
@@ -127,7 +126,8 @@ def add_to_inv(tipo, nome, delta=1):
             st.session_state.inventario[tipo][nome] = 0
         st.session_state.inventario[tipo][nome] += delta
         if st.session_state.inventario[tipo][nome] <= 0:
-            del st.session_state.inventario[tipo][nome]
+            if nome in st.session_state.inventario[tipo]:
+                del st.session_state.inventario[tipo][nome]
 
 if 'inventario' not in st.session_state:
     st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
@@ -137,7 +137,8 @@ df = load_db()
 # =========================
 # UI PRINCIPALE
 # =========================
-tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "Inventario", "🧩 Deck Builder"])
+# Ripristinata icona solo nel nome del Tab Inventario
+tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 # --- TAB 1: AGGIUNGI (INTOCCABILE) ---
 with tab1:
@@ -168,7 +169,6 @@ with tab1:
 
 # --- TAB 2: INVENTARIO (SINISTRA & SWITCH COMPATTO) ---
 with tab2:
-    # Switch modalità ridotto
     modo = st.radio("Label_Hidden", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     operazione = 1 if "Aggiungi" in modo else -1
     
@@ -183,7 +183,6 @@ with tab2:
             if pezzi:
                 cat_label = categoria.replace('_', ' ').upper()
                 with st.expander(cat_label, expanded=False):
-                    # Forziamo il contenitore dell'expander a sinistra
                     st.markdown('<div class="inv-row-container">', unsafe_allow_html=True)
                     for nome, qta in pezzi.items():
                         st.markdown('<div class="inv-row">', unsafe_allow_html=True)
