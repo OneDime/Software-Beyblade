@@ -5,15 +5,16 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE "ULTRA-WIDE"
+# CONFIGURAZIONE & STILE (TASTI PROPORZIONATI AL TESTO)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
+    /* Sfondo Grigio-Blu molto scuro */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* Centratura contenitore principale */
+    /* Centratura forzata */
     [data-testid="stVerticalBlock"] {
         text-align: center;
         align-items: center;
@@ -24,15 +25,14 @@ st.markdown("""
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
         border-radius: 12px !important;
-        margin-bottom: 30px !important;
+        margin-bottom: 25px !important;
         padding: 15px !important;
-        overflow: visible !important; /* Permette ai tasti di uscire se necessario */
     }
 
-    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 8px; }
-    .comp-name { font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 2px; }
+    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+    .comp-name { font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 2px; text-align: center; }
 
-    /* IL TRUCCO PER I TASTI LARGHISSIMI */
+    /* TASTI: Proporzionati al testo, larghi 1.5x e alti 30px */
     div[data-testid="stButton"] {
         width: 100% !important;
         display: flex !important;
@@ -40,14 +40,13 @@ st.markdown("""
     }
 
     div.stButton > button {
-        /* Forza la larghezza al 150% rispetto al suo contenitore naturale */
-        width: 150% !important; 
-        min-width: 150% !important;
+        /* Larghezza basata sul contenuto (testo) */
+        width: auto !important; 
+        min-width: 150px !important; /* Minimo per non farlo troppo stretto sul "+" */
+        padding-left: 40px !important;  /* Padding generoso per caricarlo lateralmente */
+        padding-right: 40px !important;
         
-        /* Traslazione per mantenerlo centrato nonostante la larghezza extra */
-        transform: translateX(0%); 
-        
-        /* Altezza bloccata sottile */
+        /* Altezza bloccata a 30px */
         height: 30px !important;
         min-height: 30px !important;
         max-height: 30px !important;
@@ -59,23 +58,18 @@ st.markdown("""
         
         font-size: 1.1rem !important;
         line-height: 1 !important;
-        padding: 0px !important;
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        
-        /* Evita che il testo vada a capo */
         white-space: nowrap !important;
     }
 
-    /* Rimuove i vincoli di larghezza dei contenitori intermedi di Streamlit */
-    div[data-testid="stHorizontalBlock"], div[data-testid="stVerticalBlock"] > div {
-        width: 100% !important;
-    }
+    /* Riduzione spazio tra gli elementi */
+    .stMarkdown { margin-bottom: -10px !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# ... (Funzioni load_db e get_img caricate come prima) ...
+# ... (Funzioni load_db e get_img invariate) ...
 @st.cache_data
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame()
@@ -121,13 +115,14 @@ with tab1:
                 ("ratchet_integrated_bit", "ratchet_integrated_bit")
             ]
 
-            # AGGIUNGI TUTTO
+            # AGGIUNGI TUTTO (1.5x rispetto alla scritta)
+            st.write("")
             if st.button("Aggiungi tutto", key=f"all_{i}"):
                 for ck, ik in components:
                     if row[ck] and row[ck] != "n/a": add_to_inv(ik, row[ck])
                 st.toast(f"Set aggiunto!")
 
-            st.markdown("<hr style='border-top: 1px solid #475569; margin: 10px 0;'>", unsafe_allow_html=True)
+            st.markdown("<hr style='border-top: 1px solid #475569; margin: 15px 0;'>", unsafe_allow_html=True)
 
             # TASTI SINGOLI
             for ck, ik in components:
