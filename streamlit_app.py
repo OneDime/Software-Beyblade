@@ -5,7 +5,7 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE "LOCK-LAYOUT"
+# CONFIGURAZIONE & FIX LAYOUT
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -13,46 +13,43 @@ st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* FIX INTESTAZIONI: Finalmente scure */
+    /* FIX INTESTAZIONI: Sfondo scuro per Expander */
     div[data-testid="stExpander"] {
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
-        border-radius: 10px !important;
     }
     div[data-testid="stExpander"] summary { background-color: #1e293b !important; }
-    div[data-testid="stExpander"] summary p { color: #cbd5e1 !important; font-weight: bold; }
+    div[data-testid="stExpander"] summary p { color: #f1f5f9 !important; }
 
-    /* CENTRATURA TITOLO E IMMAGINE */
-    .centered-text { text-align: center; width: 100%; display: block; }
+    /* CENTRATURA IMMAGINE */
     [data-testid="stImage"] { display: flex; justify-content: center; }
     [data-testid="stImage"] img { margin: 0 auto !important; }
 
-    /* FORZA RIGA ORIZZONTALE (Il segreto è il Flexbox applicato al blocco orizzontale) */
+    /* FIX ORIZZONTALE: Impedisce ai tasti di uscire a destra */
     div[data-testid="stHorizontalBlock"] {
         display: flex !important;
-        flex-direction: row !important; /* Forza orizzontale anche su mobile */
+        flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        justify-content: space-between !important;
         width: 100% !important;
     }
 
-    /* Regola le colonne interne per non collassare */
-    div[data-testid="column"] {
-        width: auto !important;
+    /* Forza la colonna del tasto a restare visibile senza sforare */
+    div[data-testid="column"]:nth-of-type(2), div[data-testid="column"]:nth-of-type(3) {
+        flex: 0 1 auto !important;
+        min-width: 50px !important;
+    }
+    
+    /* La colonna del testo prende tutto lo spazio rimanente ma non spinge */
+    div[data-testid="column"]:nth-of-type(1) {
         flex: 1 1 auto !important;
-        min-width: 0 !important;
+        overflow: hidden;
     }
 
-    /* Bottone piccolissimo per il "+" */
+    /* Ripristino bottoni standard (rimossa ogni modifica colore non richiesta) */
     .stButton button {
-        width: 45px !important;
-        height: 45px !important;
-        padding: 0 !important;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-left: auto !important; /* Spinge il tasto a destra */
+        width: auto !important;
+        min-width: 40px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -68,7 +65,7 @@ def load_db():
     return df
 
 @st.cache_resource
-def get_img(url, size=(220, 220)):
+def get_img(url, size=(200, 200)):
     if not url or url == "n/a": return None
     h = hashlib.md5(url.encode()).hexdigest()
     path = os.path.join("images", f"{h}.png")
@@ -84,7 +81,6 @@ if 'decks' not in st.session_state:
     st.session_state.decks = []
 
 df = load_db()
-utente = st.sidebar.selectbox("Utente", ["Antonio", "Andrea", "Fabio"])
 
 # =========================
 # TABS
@@ -92,21 +88,20 @@ utente = st.sidebar.selectbox("Utente", ["Antonio", "Andrea", "Fabio"])
 tab_add, tab_inv, tab_deck = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 with tab_add:
-    search_q = st.text_input("Cerca...")
-    
+    search_q = st.text_input("Cerca...", key="search_main")
     filtered = df[df['_search'].str.contains(search_q.lower())].head(3) if len(search_q) >= 2 else df.head(3)
 
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            # 1. NOME (Centrato)
-            st.markdown(f"<h2 class='centered-text' style='color:#60a5fa;'>{row['name'].upper()}</h2>", unsafe_allow_html=True)
+            # 1. Nome Beyblade Centrato
+            st.markdown(f"<h3 style='text-align:center;'>{row['name'].upper()}</h3>", unsafe_allow_html=True)
             
-            # 2. IMMAGINE (Centrata)
+            # 2. Immagine Centrata
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
             if img:
                 st.image(img)
             
-            # 3. COMPONENTI (Testo a sinistra, Tasto a destra)
+            # 3. Componenti con tasto accanto
             comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"), 
                      ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"), 
                      ("ratchet_integrated_bit", "ratchet_integrated_bit")]
@@ -114,20 +109,14 @@ with tab_add:
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    # Usiamo colonne ma il CSS 'flex-direction: row' impedisce che vadano a capo
-                    c_txt, c_btn = st.columns([0.8, 0.2])
-                    c_txt.markdown(f"<div style='padding-top:10px; font-size:1.1rem;'>{val}</div>", unsafe_allow_html=True)
-                    if c_btn.button("＋", key=f"add_{i}_{field}"):
+                    c1, c2 = st.columns([0.8, 0.2])
+                    c1.markdown(f"<div style='padding-top:8px;'>{val}</div>", unsafe_allow_html=True)
+                    if c2.button("＋", key=f"add_{i}_{field}"):
                         st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
                         st.toast(f"Aggiunto {val}")
 
-            # 4. AGGIUNGI TUTTO (Centrato sotto)
-            st.write("")
-            if st.button("Aggiungi tutto", key=f"btn_all_{i}", use_container_width=True):
-                for f, k in comps:
-                    if row[f] and row[f] != "n/a":
-                        st.session_state.inventario[k][row[f]] = st.session_state.inventario[k].get(row[f], 0) + 1
-                st.toast("Beyblade aggiunto!")
+            # 4. Aggiungi tutto (Bottone standard largo)
+            st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True)
 
 with tab_inv:
     st.header(f"Inventario")
@@ -139,11 +128,11 @@ with tab_inv:
             with st.expander(tipo.replace('_', ' ').upper(), expanded=True):
                 for nome, qta in validi.items():
                     # Layout: Nome | + | -
-                    c1, c2, c3 = st.columns([0.6, 0.2, 0.2])
-                    c1.markdown(f"<div style='padding-top:10px;'>{nome} (x{qta})</div>", unsafe_allow_html=True)
-                    if c2.button("＋", key=f"inv_p_{tipo}_{nome}"):
+                    ci1, ci2, ci3 = st.columns([0.7, 0.15, 0.15])
+                    ci1.markdown(f"<div style='padding-top:8px;'>{nome} (x{qta})</div>", unsafe_allow_html=True)
+                    if ci2.button("＋", key=f"inv_p_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] += 1
                         st.rerun()
-                    if c3.button("－", key=f"inv_m_{tipo}_{nome}"):
+                    if ci3.button("－", key=f"inv_m_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] -= 1
                         st.rerun()
