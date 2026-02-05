@@ -5,7 +5,7 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE (LARGHEZZA MASSIMA)
+# CONFIGURAZIONE & STILE "ULTRA-WIDE"
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -13,39 +13,41 @@ st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
+    /* Centratura contenitore principale */
     [data-testid="stVerticalBlock"] {
         text-align: center;
         align-items: center;
     }
 
-    /* CARD */
+    /* CARD: Bordo e sfondo */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
         border-radius: 12px !important;
-        margin-bottom: 25px !important;
-        padding: 10px !important;
+        margin-bottom: 30px !important;
+        padding: 15px !important;
+        overflow: visible !important; /* Permette ai tasti di uscire se necessario */
     }
 
-    /* TITOLO E NOMI */
-    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; }
-    .comp-name { font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 2px; text-align: center; width: 100%; display: block; }
+    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 8px; }
+    .comp-name { font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 2px; }
 
-    /* FIX DEFINITIVO: Tasto largo e sottile */
+    /* IL TRUCCO PER I TASTI LARGHISSIMI */
     div[data-testid="stButton"] {
         width: 100% !important;
-        margin: 0px !important;
-        padding: 0px !important;
+        display: flex !important;
+        justify-content: center !important;
     }
 
     div.stButton > button {
-        /* Larghezza: invece di 150% che uscirebbe dallo schermo, 
-           usiamo 100% ma eliminiamo ogni margine interno */
-        width: 100% !important; 
-        min-width: 100% !important;
+        /* Forza la larghezza al 150% rispetto al suo contenitore naturale */
+        width: 150% !important; 
+        min-width: 150% !important;
         
-        /* Altezza: la blocchiamo a un valore fisso basso (30px) 
-           perché il 100% in altezza su un bottone è ambiguo */
+        /* Traslazione per mantenerlo centrato nonostante la larghezza extra */
+        transform: translateX(0%); 
+        
+        /* Altezza bloccata sottile */
         height: 30px !important;
         min-height: 30px !important;
         max-height: 30px !important;
@@ -61,16 +63,19 @@ st.markdown("""
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
+        
+        /* Evita che il testo vada a capo */
+        white-space: nowrap !important;
     }
 
-    /* Rimuove lo spazio che Streamlit mette tra i bottoni */
-    [data-testid="stVerticalBlock"] > div {
-        gap: 0rem !important;
+    /* Rimuove i vincoli di larghezza dei contenitori intermedi di Streamlit */
+    div[data-testid="stHorizontalBlock"], div[data-testid="stVerticalBlock"] > div {
+        width: 100% !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# ... (Funzioni load_db e get_img invariate) ...
+# ... (Funzioni load_db e get_img caricate come prima) ...
 @st.cache_data
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame()
