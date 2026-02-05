@@ -1,2 +1,3 @@
 pandas
 Pillow
+st-gsheets-connection
