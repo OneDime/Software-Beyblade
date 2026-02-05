@@ -32,7 +32,17 @@ st.markdown("""
     
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; }
 
-    /* Bottone Elimina (Rosso) */
+    /* --- DECK BUILDER IMMAGINI CENTRATE --- */
+    .deck-img-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
     div.stButton > button[key^="del_deck_"] { background-color: #991b1b !important; color: white !important; border: none !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -42,18 +52,28 @@ st.markdown("""
 # =========================
 @st.cache_data
 def load_db():
-    if not os.path.exists("beyblade_x.csv"): return pd.DataFrame()
+    if not os.path.exists("beyblade_x.csv"): return pd.DataFrame(), {}
     df = pd.read_csv("beyblade_x.csv").fillna("")
-    # Creiamo dizionari di lookup per le immagini per velocità
+    
+    # Mappa completa dei componenti alle loro immagini specifiche
     img_map = {}
-    cols_to_check = ['lock_chip', 'blade', 'main_blade', 'assist_blade', 'ratchet', 'bit', 'ratchet_integrated_bit']
-    for col in cols_to_check:
-        if col in df.columns:
-            # Associa il nome del pezzo alla sua immagine (usa blade_image o beyblade_page_image)
+    mapping_rules = [
+        ('lock_chip', 'lock_chip_image'),
+        ('blade', 'blade_image'),
+        ('main_blade', 'main_blade_image'),
+        ('assist_blade', 'assist_blade_image'),
+        ('ratchet', 'ratchet_image'),
+        ('bit', 'bit_image'),
+        ('ratchet_integrated_bit', 'ratchet_integrated_bit_image')
+    ]
+    
+    for comp_col, img_col in mapping_rules:
+        if comp_col in df.columns and img_col in df.columns:
             for _, r in df.iterrows():
-                if r[col] and r[col] != "n/a":
-                    img_url = r['blade_image'] if r['blade_image'] else r['beyblade_page_image']
-                    img_map[r[col]] = img_url
+                nome = r[comp_col]
+                url = r[img_col]
+                if nome and nome != "n/a" and url and url != "n/a":
+                    img_map[nome] = url
     
     df['_search'] = df.astype(str).apply(lambda x: ' '.join(x).lower(), axis=1)
     return df, img_map
@@ -153,10 +173,20 @@ with tab3:
             tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
 
             for s_idx in range(3):
-                # Titolo dinamico
-                keys = ["lb", "mb", "ab", "b", "r", "bi", "rib"]
-                current_vals = {k: st.session_state.get(f"d{d_idx}_s{s_idx}_{k}", "-") for k in keys}
-                parti = [p for p in current_vals.values() if p and p != "-"]
+                # Chiavi dei componenti per questo slot
+                keys_map = {
+                    "lb": f"d{d_idx}_s{s_idx}_lb",
+                    "mb": f"d{d_idx}_s{s_idx}_mb",
+                    "ab": f"d{d_idx}_s{s_idx}_ab",
+                    "b": f"d{d_idx}_s{s_idx}_b",
+                    "r": f"d{d_idx}_s{s_idx}_r",
+                    "bi": f"d{d_idx}_s{s_idx}_bi",
+                    "rib": f"d{d_idx}_s{s_idx}_rib"
+                }
+                
+                # Valori correnti per il titolo
+                vals = [st.session_state.get(k, "-") for k in keys_map.values()]
+                parti = [p for p in vals if p and p != "-"]
                 titolo_slot = " ".join(parti) if parti else f"SLOT {s_idx+1}"
                 
                 slot_is_open = (st.session_state.focus['deck_idx'] == d_idx and st.session_state.focus['slot_idx'] == s_idx)
@@ -167,41 +197,37 @@ with tab3:
                     tipo = st.selectbox("Sistema", tipologie, key=f"d{d_idx}_s{s_idx}_type", on_change=set_focus)
                     is_theory = "Theory" in tipo
 
-                    # Form per i menu a tendina
                     if "BX/UX" in tipo and "+RIB" not in tipo:
-                        st.selectbox("Blade", get_options("blade", is_theory), key=f"d{d_idx}_s{s_idx}_b", on_change=set_focus)
-                        st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"d{d_idx}_s{s_idx}_r", on_change=set_focus)
-                        st.selectbox("Bit", get_options("bit", is_theory), key=f"d{d_idx}_s{s_idx}_bi", on_change=set_focus)
+                        st.selectbox("Blade", get_options("blade", is_theory), key=keys_map["b"], on_change=set_focus)
+                        st.selectbox("Ratchet", get_options("ratchet", is_theory), key=keys_map["r"], on_change=set_focus)
+                        st.selectbox("Bit", get_options("bit", is_theory), key=keys_map["bi"], on_change=set_focus)
                     elif "CX" in tipo and "+RIB" not in tipo:
-                        st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"d{d_idx}_s{s_idx}_lb", on_change=set_focus)
-                        st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"d{d_idx}_s{s_idx}_mb", on_change=set_focus)
-                        st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"d{d_idx}_s{s_idx}_ab", on_change=set_focus)
-                        st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"d{d_idx}_s{s_idx}_r", on_change=set_focus)
-                        st.selectbox("Bit", get_options("bit", is_theory), key=f"d{d_idx}_s{s_idx}_bi", on_change=set_focus)
+                        st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=keys_map["lb"], on_change=set_focus)
+                        st.selectbox("Main Blade", get_options("main_blade", is_theory), key=keys_map["mb"], on_change=set_focus)
+                        st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=keys_map["ab"], on_change=set_focus)
+                        st.selectbox("Ratchet", get_options("ratchet", is_theory), key=keys_map["r"], on_change=set_focus)
+                        st.selectbox("Bit", get_options("bit", is_theory), key=keys_map["bi"], on_change=set_focus)
                     elif "BX/UX+RIB" in tipo:
-                        st.selectbox("Blade", get_options("blade", is_theory), key=f"d{d_idx}_s{s_idx}_b", on_change=set_focus)
-                        st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"d{d_idx}_s{s_idx}_rib", on_change=set_focus)
+                        st.selectbox("Blade", get_options("blade", is_theory), key=keys_map["b"], on_change=set_focus)
+                        st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=keys_map["rib"], on_change=set_focus)
                     elif "CX+RIB" in tipo:
-                        st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"d{d_idx}_s{s_idx}_lb", on_change=set_focus)
-                        st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"d{d_idx}_s{s_idx}_mb", on_change=set_focus)
-                        st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{d_idx}_s{s_idx}", on_change=set_focus)
-                        st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"d{d_idx}_s{s_idx}_rib", on_change=set_focus)
+                        st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=keys_map["lb"], on_change=set_focus)
+                        st.selectbox("Main Blade", get_options("main_blade", is_theory), key=keys_map["mb"], on_change=set_focus)
+                        st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=keys_map["ab"], on_change=set_focus)
+                        st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=keys_map["rib"], on_change=set_focus)
 
-                    # --- SEZIONE IMMAGINI (AFFIANCATE) ---
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    # Filtriamo solo i pezzi che hanno un'immagine valida e non sono "-"
-                    active_imgs = []
-                    for val in current_vals.values():
-                        if val != "-":
-                            url = global_img_map.get(val)
-                            if url: active_imgs.append(url)
-                    
-                    if active_imgs:
-                        cols = st.columns(len(active_imgs))
-                        for i, img_url in enumerate(active_imgs):
-                            loaded_img = get_img(img_url)
-                            if loaded_img:
-                                cols[i].image(loaded_img, width=75) # Circa 50% del tab Aggiungi
+                    # --- SEZIONE IMMAGINI CENTRATE ---
+                    st.markdown('<div class="deck-img-container">', unsafe_allow_html=True)
+                    # Mostriamo le immagini in ordine
+                    for k_id in keys_map.values():
+                        valore = st.session_state.get(k_id, "-")
+                        if valore != "-":
+                            url_comp = global_img_map.get(valore)
+                            if url_comp:
+                                img_obj = get_img(url_comp)
+                                if img_obj:
+                                    st.image(img_obj, width=80)
+                    st.markdown('</div>', unsafe_allow_html=True)
 
             # Footer del deck
             st.markdown("<br>", unsafe_allow_html=True)
