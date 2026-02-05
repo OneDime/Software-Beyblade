@@ -18,10 +18,22 @@ st.markdown("""
     /* TITOLO UTENTE PICCOLO */
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: left !important; }
 
-    /* REGOLE TAB AGGIUNGI (INTOCCABILI) */
-    [data-testid="stVerticalBlockBorderWrapper"] > div > [data-testid="stVerticalBlock"] {
-        text-align: center !important;
+    /* --- TAB AGGIUNGI: CENTRATURA TOTALE (REGOLA FERREA) --- */
+    /* Forza ogni elemento dentro i container della tab Aggiungi a stare al centro */
+    [data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stVerticalBlock"] {
+        display: flex !important;
+        flex-direction: column !important;
         align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+    }
+
+    /* Forza centratura immagini e bottoni */
+    [data-testid="stVerticalBlockBorderWrapper"] .stImage, 
+    [data-testid="stVerticalBlockBorderWrapper"] .stButton {
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
     }
 
     .bey-name { 
@@ -29,28 +41,24 @@ st.markdown("""
         font-size: 1.4rem; 
         color: #60a5fa; 
         text-transform: uppercase; 
-        text-align: center !important; 
-        width: 100%; 
-        display: block;
         margin-bottom: 10px;
+        text-align: center;
     }
 
     .comp-name-centered { 
         font-size: 1.1rem; 
         color: #cbd5e1; 
-        text-align: center !important; 
-        width: 100%; 
-        display: block; 
         margin-top: 5px;
         margin-bottom: 2px;
+        text-align: center;
     }
 
-    hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; }
+    hr { width: 100%; margin: 8px 0 !important; opacity: 0.3; }
 
     /* BOTTONI AGGIUNGI */
     div.stButton > button {
         width: auto !important; min-width: 150px !important;
-        height: 30px !important; background-color: #334155 !important; color: white !important;
+        height: 35px !important; background-color: #334155 !important; color: white !important;
         border: 1px solid #475569 !important; border-radius: 4px !important;
     }
 
@@ -100,7 +108,7 @@ def save_cloud_data():
     conn.update(spreadsheet=SHEET_URL, worksheet="decks", data=pd.DataFrame(deck_rows))
 
 # =========================
-# LOGICA APP
+# LOGICA APP & SESSIONE
 # =========================
 if 'users' not in st.session_state:
     st.session_state.users = load_cloud_data()
@@ -150,6 +158,7 @@ st.markdown(f"<div class='user-title'>Officina di {user_selected}</div>", unsafe
 
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
+# --- TAB 1: AGGIUNGI ---
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
@@ -181,6 +190,7 @@ with tab1:
                         st.toast(f"Aggiunto: {val}")
                         st.rerun()
 
+# --- TAB 2: INVENTARIO ---
 with tab2:
     modo = st.radio("L", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     operazione = 1 if "Aggiungi" in modo else -1
@@ -194,6 +204,7 @@ with tab2:
                         save_cloud_data()
                         st.rerun()
 
+# --- TAB 3: DECK BUILDER ---
 with tab3:
     def get_options(cat, theory=False):
         if theory:
