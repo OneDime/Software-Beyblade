@@ -5,7 +5,7 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE "ULTIMATUM"
+# CONFIGURAZIONE & STILE "ULTIMATUM" + FIX SLITTAMENTO
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -14,8 +14,7 @@ st.markdown("""
     /* Sfondo Generale */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* FIX INTESTAZIONI BIANCHE (Expander/Deck/Inventario) */
-    /* Questo colpisce direttamente il contenitore del titolo che vedi bianco */
+    /* FIX INTESTAZIONI BIANCHE */
     div[data-testid="stExpander"] {
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
@@ -23,34 +22,32 @@ st.markdown("""
         margin-bottom: 10px !important;
     }
     
-    /* Forza il testo dell'intestazione a essere grigio chiaro e non bianco accecante */
     div[data-testid="stExpander"] summary p {
         color: #cbd5e1 !important;
         font-weight: 600 !important;
     }
 
-    /* Rende lo sfondo dell'intestazione scuro invece che bianco */
     div[data-testid="stExpander"] summary {
         background-color: #1e293b !important;
         border-radius: 10px !important;
     }
 
-    /* FIX TAB AGGIUNGI & INVENTARIO: Forza affiancamento */
+    /* FIX SLITTAMENTO: Forza le colonne a stare nel contenitore senza uscire a destra */
     [data-testid="column"] {
         display: flex !important;
         align-items: center !important;
-        justify-content: flex-start !important;
-        width: auto !important;
-        min-width: 0px !important;
+        min-width: 0px !important; /* Fondamentale per non farle uscire */
+        flex: 1 1 auto !important;
     }
 
-    /* Impedisce ai bottoni di andare a capo su mobile */
     div[data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
-        flex-wrap: nowrap !important;
+        flex-wrap: nowrap !important; /* Impedisce di andare a capo */
         align-items: center !important;
         justify-content: space-between !important;
+        width: 100% !important;
+        overflow: hidden !important; /* Taglia ciò che uscirebbe, forzando il ridimensionamento */
     }
 
     /* Centratura Immagini */
@@ -60,7 +57,7 @@ st.markdown("""
         margin-right: auto !important;
     }
 
-    /* Stile Bottoni Piccolo (Stile Officina) */
+    /* Stile Bottoni Piccolo */
     button {
         background-color: #334155 !important;
         color: #f1f5f9 !important;
@@ -68,6 +65,11 @@ st.markdown("""
         padding: 0px 8px !important;
         height: 30px !important;
         line-height: 1 !important;
+    }
+    
+    /* Riduce il gap tra colonne per guadagnare spazio su mobile */
+    div[data-testid="stHorizontalBlock"] {
+        gap: 0.5rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -130,9 +132,9 @@ with tab_add:
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    # Layout Forzato: Tasto fisso accanto al nome
                     col_txt, col_btn = st.columns([0.8, 0.2])
-                    col_txt.markdown(f"<div style='text-align:left; font-size:0.9rem;'>{val}</div>", unsafe_allow_html=True)
+                    # Il div con white-space: nowrap e overflow: hidden impedisce al testo di spingere il tasto
+                    col_txt.markdown(f"<div style='text-align:left; font-size:0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>{val}</div>", unsafe_allow_html=True)
                     if col_btn.button("＋", key=f"add_{i}_{field}"):
                         st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
                         st.toast(f"Aggiunto {val}")
@@ -146,11 +148,10 @@ with tab_inv:
         validi = {k: v for k, v in pezzi.items() if v > 0}
         
         if validi:
-            # L'intestazione di questo expander ora dovrebbe essere scura grazie al CSS sopra
             with st.expander(tipo.replace('_', ' ').upper(), expanded=True):
                 for nome, qta in validi.items():
                     c1, c2, c3 = st.columns([0.6, 0.2, 0.2])
-                    c1.markdown(f"<div style='text-align:left;'>{nome} (x{qta})</div>", unsafe_allow_html=True)
+                    c1.markdown(f"<div style='text-align:left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;'>{nome} (x{qta})</div>", unsafe_allow_html=True)
                     if c2.button("＋", key=f"inv_p_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] += 1
                         st.rerun()
@@ -159,12 +160,12 @@ with tab_inv:
                         st.rerun()
 
 with tab_deck:
+    # (Codice Deck Builder invariato come richiesto)
     st.header(f"Deck Builder")
     if st.button("➕ Nuovo Deck", use_container_width=True):
         st.session_state.decks.append({"name": f"Deck {len(st.session_state.decks)+1}"})
 
     for d_idx, deck in enumerate(st.session_state.decks):
-        # Anche questa intestazione sarà scura
         with st.expander(f"📂 {deck['name']}", expanded=True):
             for b_idx in range(3):
                 st.markdown(f"**BEYBLADE {b_idx+1}**")
