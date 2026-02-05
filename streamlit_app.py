@@ -5,75 +5,59 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE "ULTIMATUM"
+# CONFIGURAZIONE & STILE "NO-OVERFLOW"
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
-    /* Sfondo Generale */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* FIX INTESTAZIONI BIANCHE (Expander/Deck/Inventario) */
-    /* Questo colpisce direttamente il contenitore del titolo che vedi bianco */
+    /* FIX INTESTAZIONI: Finalmente scure */
     div[data-testid="stExpander"] {
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
         border-radius: 10px !important;
-        margin-bottom: 10px !important;
+    }
+    div[data-testid="stExpander"] summary { background-color: #1e293b !important; }
+    div[data-testid="stExpander"] summary p { color: #cbd5e1 !important; }
+
+    /* FIX CENTRATURA IMMAGINE: Più aggressivo */
+    [data-testid="stImage"] {
+        display: flex !important;
+        justify-content: center !important;
+        width: 100% !important;
+    }
+    [data-testid="stImage"] img {
+        margin: 0 auto !important;
+    }
+
+    /* FIX OVERFLOW TASTI: Blocca la larghezza delle colonne */
+    [data-testid="column"] {
+        min-width: 0px !important;
+        flex-basis: auto !important;
     }
     
-    /* Forza il testo dell'intestazione a essere grigio chiaro e non bianco accecante */
-    div[data-testid="stExpander"] summary p {
-        color: #cbd5e1 !important;
-        font-weight: 600 !important;
+    /* Forza il contenitore orizzontale a non uscire dallo schermo */
+    [data-testid="stHorizontalBlock"] {
+        gap: 0.5rem !important;
+        width: 100% !important;
+        overflow: hidden !important;
     }
 
-    /* Rende lo sfondo dell'intestazione scuro invece che bianco */
-    div[data-testid="stExpander"] summary {
-        background-color: #1e293b !important;
-        border-radius: 10px !important;
-    }
-
-    /* FIX TAB AGGIUNGI & INVENTARIO: Forza affiancamento */
-    [data-testid="column"] {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
-        width: auto !important;
-        min-width: 0px !important;
-    }
-
-    /* Impedisce ai bottoni di andare a capo su mobile */
-    div[data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-    }
-
-    /* Centratura Immagini */
-    [data-testid="stImage"] img {
-        display: block !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-    }
-
-    /* Stile Bottoni Piccolo (Stile Officina) */
+    /* Stile Bottoni */
     button {
-        background-color: #334155 !important;
+        background-color: #1e293b !important;
         color: #f1f5f9 !important;
-        border: 1px solid #475569 !important;
-        padding: 0px 8px !important;
-        height: 30px !important;
-        line-height: 1 !important;
+        border: 1px solid #3b82f6 !important;
+        padding: 0px 5px !important;
+        width: 100% !important; /* Fa sì che il bottone riempia la sua piccola colonna */
     }
     </style>
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI CORE
+# LOGICA DATI
 # =========================
 @st.cache_data
 def load_db():
@@ -103,12 +87,12 @@ st.sidebar.title("🔧 Officina X")
 utente = st.sidebar.selectbox("Utente", ["Antonio", "Andrea", "Fabio"])
 
 # =========================
-# UI PRINCIPALE
+# TABS
 # =========================
 tab_add, tab_inv, tab_deck = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 with tab_add:
-    search_q = st.text_input("Cerca beyblade o componenti...", key="search_main")
+    search_q = st.text_input("Cerca...", key="search_main")
     
     filtered = df
     if len(search_q) >= 2:
@@ -118,10 +102,11 @@ with tab_add:
 
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            st.markdown(f"<h3 style='text-align:center; color:#60a5fa;'>{row['name'].upper()}</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3 style='text-align:center;'>{row['name'].upper()}</h3>", unsafe_allow_html=True)
             
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
-            if img: st.image(img, width=200)
+            if img:
+                st.image(img, width=180) # Centrata dal nuovo CSS
             
             comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"), 
                      ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"), 
@@ -130,31 +115,37 @@ with tab_add:
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    # Layout Forzato: Tasto fisso accanto al nome
-                    col_txt, col_btn = st.columns([0.8, 0.2])
-                    col_txt.markdown(f"<div style='text-align:left; font-size:0.9rem;'>{val}</div>", unsafe_allow_html=True)
-                    if col_btn.button("＋", key=f"add_{i}_{field}"):
+                    # Usiamo una proporzione che lascia pochissimo spazio al tasto per non farlo uscire
+                    c1, c2 = st.columns([0.85, 0.15])
+                    c1.markdown(f"<div style='font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;'>{val}</div>", unsafe_allow_html=True)
+                    if c2.button("＋", key=f"add_{i}_{field}"):
                         st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
                         st.toast(f"Aggiunto {val}")
 
-            st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True)
+            st.write("")
+            # FIX AGGIUNGI TUTTO: Tolto l'HTML che lo rompeva
+            if st.button("Aggiungi tutto", key=f"btn_all_{i}", use_container_width=True):
+                for f, k in comps:
+                    if row[f] and row[f] != "n/a":
+                        st.session_state.inventario[k][row[f]] = st.session_state.inventario[k].get(row[f], 0) + 1
+                st.toast(f"Aggiunto {row['name']}!")
 
 with tab_inv:
-    st.header(f"Inventario: {utente}")
+    st.header(f"Inventario")
     for tipo in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]:
         pezzi = st.session_state.inventario.get(tipo, {})
         validi = {k: v for k, v in pezzi.items() if v > 0}
         
         if validi:
-            # L'intestazione di questo expander ora dovrebbe essere scura grazie al CSS sopra
             with st.expander(tipo.replace('_', ' ').upper(), expanded=True):
                 for nome, qta in validi.items():
-                    c1, c2, c3 = st.columns([0.6, 0.2, 0.2])
-                    c1.markdown(f"<div style='text-align:left;'>{nome} (x{qta})</div>", unsafe_allow_html=True)
-                    if c2.button("＋", key=f"inv_p_{tipo}_{nome}"):
+                    # FIX OVERFLOW INVENTARIO: 3 colonne con proporzioni fisse
+                    ci1, ci2, ci3 = st.columns([0.7, 0.15, 0.15])
+                    ci1.markdown(f"<div style='font-size:0.85rem;'>{nome} (x{qta})</div>", unsafe_allow_html=True)
+                    if ci2.button("＋", key=f"inv_p_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] += 1
                         st.rerun()
-                    if c3.button("－", key=f"inv_m_{tipo}_{nome}"):
+                    if ci3.button("－", key=f"inv_m_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] -= 1
                         st.rerun()
 
@@ -164,10 +155,9 @@ with tab_deck:
         st.session_state.decks.append({"name": f"Deck {len(st.session_state.decks)+1}"})
 
     for d_idx, deck in enumerate(st.session_state.decks):
-        # Anche questa intestazione sarà scura
         with st.expander(f"📂 {deck['name']}", expanded=True):
             for b_idx in range(3):
-                st.markdown(f"**BEYBLADE {b_idx+1}**")
+                st.markdown(f"<div style='text-align:center; padding:5px;'><b>BEY {b_idx+1}</b></div>", unsafe_allow_html=True)
                 f1, f2, f3 = st.columns(3)
                 v_cx = f1.checkbox("CX", key=f"cx_{d_idx}_{b_idx}")
                 v_rib = f2.checkbox("RIB", key=f"rib_{d_idx}_{b_idx}")
@@ -185,10 +175,11 @@ with tab_deck:
                         inv_k = "lock_bit" if db_key == "lock_chip" else db_key
                         opts = [""] + sorted([k for k, v in st.session_state.inventario.get(inv_k, {}).items() if v > 0])
                     
-                    c_sel, c_img = st.columns([0.75, 0.25])
-                    scelta = c_sel.selectbox(label, opts, key=f"dk_{d_idx}_{b_idx}_{db_key}")
+                    # Layout Deck con immagine accanto
+                    cd1, cd2 = st.columns([0.8, 0.2])
+                    scelta = cd1.selectbox(label, opts, key=f"dk_{d_idx}_{b_idx}_{db_key}")
                     if scelta:
                         img_url = df[df[db_key] == scelta][img_db_key].values
                         if len(img_url) > 0:
-                            p_img = get_img(img_url[0], size=(80, 80))
-                            if p_img: c_img.image(p_img)
+                            p_img = get_img(img_url[0], size=(60, 60))
+                            if p_img: cd2.image(p_img)
