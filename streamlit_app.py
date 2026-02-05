@@ -86,7 +86,6 @@ def get_img(url):
 
 def add_to_inv(tipo, nome):
     if nome and nome != "n/a":
-        # Accesso sicuro al dizionario annidato
         if nome not in st.session_state.inventario[tipo]:
             st.session_state.inventario[tipo][nome] = 0
         st.session_state.inventario[tipo][nome] += 1
@@ -113,7 +112,6 @@ with tab1:
 
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            # FIX SYNTAX ERROR QUI SOTTO
             st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
             
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
@@ -141,10 +139,8 @@ with tab1:
                         add_to_inv(ik, val)
                         st.toast(f"Aggiunto: {val}")
 
-# --- TAB 2: INVENTARIO ---
+# --- TAB 2: INVENTARIO (VERSIONE PULITA) ---
 with tab2:
-    st.markdown("<div class='bey-name'>Magazzino Pezzi</div>", unsafe_allow_html=True)
-    
     # Controllo se l'inventario ha dati
     has_content = False
     for cat in st.session_state.inventario:
@@ -153,29 +149,20 @@ with tab2:
             break
             
     if not has_content:
-        st.info("L'inventario è vuoto. Torna nel tab 'Aggiungi' per inserire i tuoi pezzi.")
+        st.info("L'inventario è vuoto.")
     else:
         for categoria, pezzi in st.session_state.inventario.items():
             pezzi_validi = {n: q for n, q in pezzi.items() if q > 0}
             if pezzi_validi:
                 with st.container(border=True):
-                    # Titolo Categoria
-                    cat_display = categoria.replace('_', ' ').upper()
-                    st.markdown(f"<div class='bey-name' style='color: #94a3b8; font-size: 1.1rem;'>{cat_display}</div>", unsafe_allow_html=True)
+                    # Titolo Categoria meno invasivo
+                    st.markdown(f"<div style='color: #60a5fa; font-size: 0.9rem; font-weight: bold; margin-bottom: 10px;'>{categoria.replace('_', ' ').upper()}</div>", unsafe_allow_html=True)
                     
                     for nome, qta in pezzi_validi.items():
-                        st.markdown(f"<div class='comp-name'>{nome}</div>", unsafe_allow_html=True)
-                        
-                        # Tasti di gestione quantità (Colonne per tenerli affiancati)
-                        c1, c2 = st.columns(2)
-                        with c1:
-                            if st.button(f"－ ({qta})", key=f"min_{categoria}_{nome}"):
-                                st.session_state.inventario[categoria][nome] -= 1
-                                st.rerun()
-                        with c2:
-                            if st.button("＋", key=f"plu_{categoria}_{nome}"):
-                                st.session_state.inventario[categoria][nome] += 1
-                                st.rerun()
+                        # Formato richiesto: Nome xQuantità
+                        st.markdown(f"<div class='comp-name'>{nome} x{qta}</div>", unsafe_allow_html=True)
+                    
+                    st.write("") # Padding fondo card
 
 # --- TAB 3: DECK BUILDER ---
 with tab3:
