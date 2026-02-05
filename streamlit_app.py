@@ -30,16 +30,23 @@ st.markdown("""
     .inv-row-container { text-align: left !important; display: flex !important; flex-direction: column !important; align-items: flex-start !important; width: 100%; }
     .inv-row-container button { text-align: left !important; justify-content: flex-start !important; width: 100% !important; padding-left: 10px !important; background: transparent !important; border: none !important; }
     
-    .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; }
-
-    /* Centratura Immagini Deck */
-    .img-center-wrapper {
-        display: flex;
-        justify-content: center;
-        width: 100%;
-        margin-bottom: 10px;
+    /* --- DECK BUILDER: CENTRATURA TOTALE --- */
+    /* Forza il contenitore degli expander del deck builder a centrare tutto il contenuto */
+    [data-testid="stExpanderDetails"] [data-testid="stVerticalBlock"] > div [data-testid="stImage"] {
+        display: flex !important;
+        justify-content: center !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        width: 100% !important;
+    }
+    
+    /* Assicura che l'immagine stessa dentro il wrapper sia centrata */
+    [data-testid="stImage"] img {
+        margin: 0 auto !important;
+        display: block !important;
     }
 
+    .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; }
     div.stButton > button[key^="del_deck_"] { background-color: #991b1b !important; color: white !important; border: none !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -51,26 +58,19 @@ st.markdown("""
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame(), {}
     df = pd.read_csv("beyblade_x.csv").fillna("")
-    
     img_map = {}
     mapping_rules = [
-        ('lock_chip', 'lock_chip_image'),
-        ('blade', 'blade_image'),
-        ('main_blade', 'main_blade_image'),
-        ('assist_blade', 'assist_blade_image'),
-        ('ratchet', 'ratchet_image'),
-        ('bit', 'bit_image'),
+        ('lock_chip', 'lock_chip_image'), ('blade', 'blade_image'),
+        ('main_blade', 'main_blade_image'), ('assist_blade', 'assist_blade_image'),
+        ('ratchet', 'ratchet_image'), ('bit', 'bit_image'),
         ('ratchet_integrated_bit', 'ratchet_integrated_bit_image')
     ]
-    
     for comp_col, img_col in mapping_rules:
         if comp_col in df.columns and img_col in df.columns:
             for _, r in df.iterrows():
-                nome = r[comp_col]
-                url = r[img_col]
+                nome, url = r[comp_col], r[img_col]
                 if nome and nome != "n/a" and url and url != "n/a":
                     img_map[nome] = url
-    
     df['_search'] = df.astype(str).apply(lambda x: ' '.join(x).lower(), axis=1)
     return df, img_map
 
@@ -87,10 +87,9 @@ def add_to_inv(tipo, nome, delta=1):
             st.session_state.inventario[tipo][nome] = 0
         st.session_state.inventario[tipo][nome] += delta
         if st.session_state.inventario[tipo][nome] <= 0:
-            if nome in st.session_state.inventario[tipo]:
-                del st.session_state.inventario[tipo][nome]
+            if nome in st.session_state.inventario[tipo]: del st.session_state.inventario[tipo][nome]
 
-# Inizializzazione Session State
+# Inizializzazione
 if 'inventario' not in st.session_state:
     st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
 if 'decks' not in st.session_state:
@@ -146,8 +145,7 @@ with tab2:
                     st.markdown('<div class="inv-row-container">', unsafe_allow_html=True)
                     for nome, qta in pezzi.items():
                         if st.button(f"{nome} x{qta}", key=f"inv_{categoria}_{nome}"):
-                            add_to_inv(categoria, nome, operazione)
-                            st.rerun()
+                            add_to_inv(categoria, nome, operazione); st.rerun()
                     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 3: DECK BUILDER ---
@@ -171,7 +169,6 @@ with tab3:
             for s_idx in range(3):
                 comp_keys = ["lb", "mb", "ab", "b", "r", "bi", "rib"]
                 slot_keys = {k: f"d{d_idx}_s{s_idx}_{k}" for k in comp_keys}
-                
                 vals = [st.session_state.get(v, "-") for v in slot_keys.values()]
                 parti = [p for p in vals if p and p != "-"]
                 titolo_slot = " ".join(parti) if parti else f"SLOT {s_idx+1}"
@@ -180,11 +177,9 @@ with tab3:
                 
                 with st.expander(titolo_slot.upper(), expanded=slot_is_open):
                     def set_focus(di=d_idx, si=s_idx): st.session_state.focus = {"deck_idx": di, "slot_idx": si}
-
                     tipo = st.selectbox("Sistema", tipologie, key=f"d{d_idx}_s{s_idx}_type", on_change=set_focus)
                     is_theory = "Theory" in tipo
 
-                    # Form Selectbox
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         st.selectbox("Blade", get_options("blade", is_theory), key=slot_keys["b"], on_change=set_focus)
                         st.selectbox("Ratchet", get_options("ratchet", is_theory), key=slot_keys["r"], on_change=set_focus)
@@ -204,7 +199,7 @@ with tab3:
                         st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=slot_keys["ab"], on_change=set_focus)
                         st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=slot_keys["rib"], on_change=set_focus)
 
-                    # --- SEZIONE IMMAGINI CENTRATE E UNIFORMI ---
+                    # --- IMMAGINI ---
                     st.write("")
                     for k_id in slot_keys.values():
                         valore = st.session_state.get(k_id, "-")
@@ -213,32 +208,24 @@ with tab3:
                             if url_comp:
                                 img_obj = get_img(url_comp)
                                 if img_obj:
-                                    # Usiamo un container st.container() o st.markdown per centrare
-                                    st.markdown('<div class="img-center-wrapper">', unsafe_allow_html=True)
                                     st.image(img_obj, width=100)
-                                    st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown("<br>", unsafe_allow_html=True)
             if not deck['editing']:
                 c1, c2 = st.columns([1, 1])
                 if c1.button("📝 Modifica Nome", key=f"edit_btn_{d_idx}"):
-                    st.session_state.decks[d_idx]['editing'] = True
-                    st.rerun()
+                    st.session_state.decks[d_idx]['editing'] = True; st.rerun()
                 if c2.button("🗑️ Elimina Deck", key=f"del_deck_{d_idx}"):
-                    st.session_state.decks.pop(d_idx)
-                    st.rerun()
+                    st.session_state.decks.pop(d_idx); st.rerun()
             else:
                 new_name = st.text_input("Nuovo nome:", deck['name'], key=f"input_{d_idx}")
                 c1, c2 = st.columns([1, 1])
                 if c1.button("Salva", key=f"save_{d_idx}"):
                     st.session_state.decks[d_idx]['name'] = new_name
-                    st.session_state.decks[d_idx]['editing'] = False
-                    st.rerun()
+                    st.session_state.decks[d_idx]['editing'] = False; st.rerun()
                 if c2.button("Annulla", key=f"cancel_{d_idx}"):
-                    st.session_state.decks[d_idx]['editing'] = False
-                    st.rerun()
+                    st.session_state.decks[d_idx]['editing'] = False; st.rerun()
 
     st.write("---")
     if st.button("➕ NUOVO DECK"):
-        st.session_state.decks.append({"name": f"NUOVO DECK {len(st.session_state.decks)+1}", "editing": False})
-        st.rerun()
+        st.session_state.decks.append({"name": f"NUOVO DECK {len(st.session_state.decks)+1}", "editing": False}); st.rerun()
