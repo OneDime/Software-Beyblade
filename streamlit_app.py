@@ -5,7 +5,7 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE (INVARIATI)
+# CONFIGURAZIONE & STILE
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -13,7 +13,7 @@ st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* STILE TAB AGGIUNGI (INTOCCABILE) */
+    /* STILI TAB AGGIUNGI (INTOCCABILI) */
     [data-testid="stVerticalBlock"] { text-align: center; align-items: center; }
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
@@ -32,15 +32,16 @@ st.markdown("""
         border: 1px solid #475569 !important; border-radius: 4px !important; font-size: 1.1rem !important;
     }
 
-    /* STILE INVENTARIO */
+    /* STILE INVENTARIO & DECK RETRAIBILE */
     .inv-row-container { text-align: left !important; width: 100%; padding-left: 10px; }
     .inv-row button {
         width: 100% !important; justify-content: flex-start !important; background: transparent !important;
         border: none !important; color: #f1f5f9 !important; text-align: left !important; font-size: 1.1rem !important;
     }
-
-    /* STILE DECK BUILDER */
-    .deck-title { color: #60a5fa; font-weight: bold; margin-bottom: 10px; font-size: 1.2rem; text-align: center; }
+    .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; }
+    
+    /* Titoli Deck Builder */
+    .deck-header { color: #60a5fa; font-weight: bold; font-size: 1.2rem; text-align: left; margin-bottom: 5px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -70,7 +71,6 @@ def add_to_inv(tipo, nome, delta=1):
             if nome in st.session_state.inventario[tipo]:
                 del st.session_state.inventario[tipo][nome]
 
-# Inizializzazione Session State
 if 'inventario' not in st.session_state:
     st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
 
@@ -131,63 +131,48 @@ with tab2:
 
 # --- TAB 3: DECK BUILDER ---
 with tab3:
-    st.markdown("<div class='bey-name'>Configurazione Deck</div>", unsafe_allow_html=True)
-    
-    cols = st.columns(3)
-    
-    # Funzione per recuperare pezzi (Inventario o Database)
-    def get_options(cat, theory=False):
-        if theory:
-            # Prende tutti i valori unici dal CSV per quella colonna
-            # Mappiamo le categorie ai nomi colonna del CSV
-            csv_map = {
-                "lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade",
-                "assist_blade": "assist_blade", "ratchet": "ratchet", "bit": "bit",
-                "ratchet_integrated_bit": "ratchet_integrated_bit"
-            }
-            col_name = csv_map.get(cat, cat)
-            opts = df[col_name].unique().tolist()
-            return ["-"] + sorted([x for x in opts if x and x != "n/a"])
-        else:
-            # Solo quello che c'è in inventario
-            return ["-"] + sorted(list(st.session_state.inventario[cat].keys()))
+    # 1. Expander Generale del Deck
+    with st.expander("IL TUO DECK (3 SLOT)", expanded=True):
+        
+        def get_options(cat, theory=False):
+            if theory:
+                csv_map = {"lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade",
+                           "assist_blade": "assist_blade", "ratchet": "ratchet", "bit": "bit",
+                           "ratchet_integrated_bit": "ratchet_integrated_bit"}
+                col_name = csv_map.get(cat, cat)
+                opts = df[col_name].unique().tolist()
+                return ["-"] + sorted([x for x in opts if x and x != "n/a"])
+            else:
+                return ["-"] + sorted(list(st.session_state.inventario[cat].keys()))
 
-    tipologie = [
-        "BX/UX", "CX", "BX/UX+RIB", "CX+RIB", 
-        "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"
-    ]
+        tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", 
+                     "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
 
-    for idx in range(3):
-        with cols[idx]:
-            with st.container(border=True):
-                st.markdown(f"<div class='deck-title'>Slot {idx+1}</div>", unsafe_allow_html=True)
-                
+        # 2. Expander singoli per ogni Slot
+        for idx in range(3):
+            with st.expander(f"SLOT {idx+1}", expanded=False):
                 tipo = st.selectbox("Sistema", tipologie, key=f"type_{idx}")
                 is_theory = "Theory" in tipo
                 
-                # Definizione componenti in base al sistema scelto
+                # Layout componenti
                 if "BX/UX" in tipo and "+RIB" not in tipo:
-                    # Blade, Ratchet, Bit
-                    b = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
-                    r = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
-                    bi = st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
+                    st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
+                    st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
+                    st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
                 
                 elif "CX" in tipo and "+RIB" not in tipo:
-                    # Lock Bit, Main, Assist, Ratchet, Bit
-                    lb = st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
-                    mb = st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
-                    ab = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
-                    r = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
-                    bi = st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
+                    st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
+                    st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
+                    st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
+                    st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
+                    st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
                 
                 elif "BX/UX+RIB" in tipo:
-                    # Blade, RIB
-                    b = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
-                    rib = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
+                    st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
+                    st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
 
                 elif "CX+RIB" in tipo:
-                    # Lock Bit, Main, Assist, RIB
-                    lb = st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
-                    mb = st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
-                    ab = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
-                    rib = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
+                    st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
+                    st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
+                    st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
+                    st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
