@@ -5,81 +5,57 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE DEFINITIVO
+# CONFIGURAZIONE & CSS
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
-    /* Sfondo Generale */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* INTESTAZIONI EXPANDER SCURE (INVENTARIO) */
+    /* INTESTAZIONI EXPANDER SCURE */
     div[data-testid="stExpander"] {
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
-        border-radius: 10px !important;
     }
-    div[data-testid="stExpander"] summary { background-color: #1e293b !important; }
     div[data-testid="stExpander"] summary p { color: #cbd5e1 !important; }
 
-    /* STILE TABELLE HTML PER COSTRUIRE LA CARD */
-    .table-bey {
+    /* TABELLE HTML PER CENTRATURA TOTALE */
+    .table-main {
         width: 100%;
         border-collapse: collapse;
         margin: 0 auto;
+        table-layout: fixed;
     }
-    .table-bey td {
+    .table-main td {
         text-align: center;
         vertical-align: middle;
-        padding: 10px;
-    }
-
-    /* Tabella Componenti: Forza l'allineamento affiancato */
-    .table-comp {
-        width: 100%;
-        max-width: 300px; /* Impedisce che si allarghi troppo su desktop */
-        margin: 0 auto;   /* Centra la tabella nella card */
-        border-collapse: collapse;
-    }
-    .table-comp td {
         padding: 5px;
-        vertical-align: middle;
-    }
-    .td-name {
-        text-align: right; /* Nome componente spinge verso il centro */
-        width: 70%;
-        color: #f1f5f9;
-        font-size: 0.95rem;
-    }
-    .td-btn {
-        text-align: left; /* Tasto "+" spinge verso il centro */
-        width: 30%;
     }
 
-    /* Override Bottoni Streamlit per farli stare nella tabella */
-    div.stButton > button {
+    /* Immagine con dimensione controllata */
+    .bey-img {
+        width: 180px !important;
+        display: block;
+        margin: 10px auto;
+    }
+
+    /* BOTTONI: Riconfigurati per stare in riga */
+    .stButton button {
         background-color: #334155 !important;
         color: #f1f5f9 !important;
         border: 1px solid #475569 !important;
-        padding: 0px 10px !important;
-        height: 32px !important;
-        width: 40px !important;
+        display: inline-flex;
     }
 
-    /* Centratura Immagine */
-    .bey-img-container {
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-        width: 150px;
+    /* Fix per tasto Aggiungi Tutto */
+    .full-width-btn div[data-testid="stVerticalBlock"] > div:last-child button {
+        width: 100% !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# =========================
-# FUNZIONI CORE
-# =========================
+# ... (Funzioni load_db e get_img invariate) ...
 @st.cache_data
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame()
@@ -88,18 +64,14 @@ def load_db():
     return df
 
 @st.cache_resource
-def get_img(url, size=(150, 150)):
+def get_img(url, size=(180, 180)):
     if not url or url == "n/a": return None
     h = hashlib.md5(url.encode()).hexdigest()
     path = os.path.join("images", f"{h}.png")
     if os.path.exists(path):
-        img = Image.open(path)
-        img.thumbnail(size)
+        img = Image.open(path); img.thumbnail(size)
         return img
     return None
-
-if 'inventario' not in st.session_state:
-    st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
 
 df = load_db()
 
@@ -115,22 +87,23 @@ with tab_add:
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
             
-            # --- PRIMA TABELLA: 1 COLONNA, 2 RIGHE (NOME E IMMAGINE) ---
+            # 1. TABELLA NOME E IMMAGINE (Centrata)
             st.markdown(f"""
-                <table class="table-bey">
-                    <tr><td><h3 style="color:#60a5fa; margin:0; text-transform: uppercase;">{row['name']}</h3></td></tr>
-                </table>
+                <div style="text-align:center;">
+                    <h3 style="color:#60a5fa; margin-bottom:5px;">{row['name'].upper()}</h3>
+                </div>
             """, unsafe_allow_html=True)
             
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
             if img:
-                # Usiamo le colonne solo per l'immagine per tenerla piccola al centro
-                _, img_col, _ = st.columns([1, 1, 1])
-                img_col.image(img, use_container_width=True)
+                # Metodo più sicuro per centrare l'immagine senza farla esplodere
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col2:
+                    st.image(img, use_container_width=True)
             
-            st.markdown("<hr style='margin:10px 0; border:0; border-top:1px solid #334155;'>", unsafe_allow_html=True)
+            st.write("---")
             
-            # --- SECONDA TABELLA: 2 COLONNE (COMPONENTE E TASTO) ---
+            # 2. TABELLA COMPONENTI (2 Colonne, Centrate)
             comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"), 
                      ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"), 
                      ("ratchet_integrated_bit", "ratchet_integrated_bit")]
@@ -138,20 +111,21 @@ with tab_add:
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    # Usiamo le colonne sbilanciate ma con allineamento forzato CSS
-                    col_left, col_right = st.columns([0.65, 0.35])
-                    col_left.markdown(f"<div style='text-align:right; padding-top:5px;'>{val}</div>", unsafe_allow_html=True)
-                    if col_right.button("＋", key=f"add_{i}_{field}"):
+                    # Usiamo colonne ma forziamo il CSS per non farle andare a capo
+                    # Questo è l'ultimo tentativo prima dell'HTML puro per i bottoni
+                    c1, c2 = st.columns([0.7, 0.3])
+                    c1.markdown(f"<div style='text-align:right; padding-top:5px;'>{val}</div>", unsafe_allow_html=True)
+                    if c2.button("＋", key=f"add_{i}_{field}"):
                         st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
                         st.toast(f"Aggiunto {val}")
 
-            # --- TASTO AGGIUNGI TUTTO ---
+            # 3. TASTO AGGIUNGI TUTTO (Largo quanto la card)
             st.write("")
             if st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True):
                 for f, k in comps:
                     if row[f] and row[f] != "n/a":
                         st.session_state.inventario[k][row[f]] = st.session_state.inventario[k].get(row[f], 0) + 1
-                st.toast(f"Set {row['name']} aggiunto!")
+                st.toast("Set aggiunto")
 
 with tab_inv:
     st.header("Inventario")
@@ -161,11 +135,11 @@ with tab_inv:
         if validi:
             with st.expander(tipo.replace('_', ' ').upper(), expanded=True):
                 for nome, qta in validi.items():
-                    c1, c2, c3 = st.columns([0.6, 0.2, 0.2])
-                    c1.write(f"{nome} (x{qta})")
-                    if c2.button("＋", key=f"inv_p_{tipo}_{nome}"):
+                    ci1, ci2, ci3 = st.columns([0.6, 0.2, 0.2])
+                    ci1.write(f"{nome} (x{qta})")
+                    if ci2.button("＋", key=f"inv_p_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] += 1
                         st.rerun()
-                    if c3.button("－", key=f"inv_m_{tipo}_{nome}"):
+                    if ci3.button("－", key=f"inv_m_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] -= 1
                         st.rerun()
