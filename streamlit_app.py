@@ -3,211 +3,159 @@ import pandas as pd
 import hashlib
 import os
 from PIL import Image
+import streamlit.components.v1 as components
 
 # =========================
-# CONFIGURAZIONE & CSS
+# CONFIG
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
 <style>
-.stApp {
-    background-color: #0f172a;
-    color: #f1f5f9;
+.stApp { background:#0f172a; color:#f1f5f9; }
+
+.card {
+    background:#1e293b;
+    border:1px solid #334155;
+    border-radius:14px;
+    padding:14px;
+    margin-bottom:14px;
 }
 
-/* CARD */
-div[data-testid="stContainer"] {
-    background-color: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 14px;
+.title {
+    text-align:center;
+    color:#60a5fa;
+    margin-bottom:6px;
 }
 
-/* CENTRATORE ASSOLUTO */
-.center {
-    display: flex;
-    justify-content: center;
-    width: 100%;
+.img-wrap {
+    display:flex;
+    justify-content:center;
+    margin:10px 0;
+}
+.img-wrap img {
+    max-width:180px;
 }
 
-/* TITOLO */
-.bey-title {
-    text-align: center;
-    color: #60a5fa;
-    margin: 4px 0 6px 0;
+.comp {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin:6px 0;
 }
 
-/* IMMAGINE */
-.bey-img {
-    display: flex;
-    justify-content: center;
-    margin: 8px 0 12px 0;
-}
-.bey-img img {
-    max-width: 180px;
+.comp span {
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
-/* RIGA COMPONENTE */
-.comp-line {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin: 6px 0;
+.comp button {
+    width:34px;
+    height:34px;
+    background:#334155;
+    color:white;
+    border:1px solid #475569;
+    border-radius:6px;
 }
 
-/* TESTO COMPONENTE */
-.comp-text {
-    flex: 1;
-    text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* BOTTONE + MICRO */
-.comp-btn button {
-    width: 36px !important;
-    min-width: 36px !important;
-    padding: 0 !important;
-}
-
-/* BOTTONI */
-.stButton button {
-    background-color: #334155 !important;
-    color: #f1f5f9 !important;
-    border: 1px solid #475569 !important;
+.full {
+    width:100%;
+    margin-top:10px;
+    padding:10px;
+    background:#334155;
+    border:1px solid #475569;
+    color:white;
+    border-radius:8px;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI
+# DATA
 # =========================
 @st.cache_data
 def load_db():
-    if not os.path.exists("beyblade_x.csv"):
-        return pd.DataFrame()
     df = pd.read_csv("beyblade_x.csv").fillna("")
     df["_search"] = df.astype(str).apply(lambda x: " ".join(x).lower(), axis=1)
     return df
 
-@st.cache_resource
-def get_img(url, size=(180, 180)):
-    if not url or url == "n/a":
-        return None
-    h = hashlib.md5(url.encode()).hexdigest()
-    path = os.path.join("images", f"{h}.png")
-    if os.path.exists(path):
-        img = Image.open(path)
-        img.thumbnail(size)
-        return img
-    return None
-
-# =========================
-# DATA
-# =========================
 df = load_db()
 
 if "inventario" not in st.session_state:
     st.session_state.inventario = {
-        "lock_bit": {},
-        "blade": {},
-        "main_blade": {},
-        "assist_blade": {},
-        "ratchet": {},
-        "bit": {},
+        "lock_bit": {}, "blade": {}, "main_blade": {},
+        "assist_blade": {}, "ratchet": {}, "bit": {},
         "ratchet_integrated_bit": {}
     }
 
 # =========================
-# UI
+# TABS
 # =========================
-tab_add, tab_inv, tab_deck = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
+tab_add, tab_inv, _ = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 # =========================
-# TAB AGGIUNGI (FIX REALE MOBILE)
+# TAB AGGIUNGI (HTML PURO)
 # =========================
 with tab_add:
-    search_q = st.text_input("Cerca...", key="search_main")
-    filtered = df[df["_search"].str.contains(search_q.lower())].head(3) if len(search_q) >= 2 else df.head(3)
+    search = st.text_input("Cerca...")
+    rows = df[df["_search"].str.contains(search.lower())].head(3) if len(search) >= 2 else df.head(3)
 
-    for i, (_, row) in enumerate(filtered.iterrows()):
-        with st.container():
+    for idx, row in rows.iterrows():
+        html = f"""
+        <div class="card">
+            <h3 class="title">{row['name'].upper()}</h3>
 
-            # NOME (CENTRATO REALE)
-            st.markdown(
-                f"<div class='center'><h3 class='bey-title'>{row['name'].upper()}</h3></div>",
-                unsafe_allow_html=True
-            )
+            <div class="img-wrap">
+                <img src="{row['blade_image'] or row['beyblade_page_image']}">
+            </div>
+        """
 
-            # IMMAGINE (CENTRATA REALE)
-            img = get_img(row["blade_image"] or row["beyblade_page_image"])
-            if img:
-                st.markdown("<div class='bey-img'>", unsafe_allow_html=True)
-                st.image(img)
-                st.markdown("</div>", unsafe_allow_html=True)
+        comps = [
+            ("lock_chip", "lock_bit"),
+            ("blade", "blade"),
+            ("main_blade", "main_blade"),
+            ("assist_blade", "assist_blade"),
+            ("ratchet", "ratchet"),
+            ("bit", "bit"),
+            ("ratchet_integrated_bit", "ratchet_integrated_bit"),
+        ]
 
-            st.divider()
+        for f, k in comps:
+            if row[f] and row[f] != "n/a":
+                html += f"""
+                <div class="comp">
+                    <span>{row[f]}</span>
+                    <button onclick="Streamlit.setComponentValue('{k}|{row[f]}')">+</button>
+                </div>
+                """
 
-            # COMPONENTI (RIGA BLOCCATA)
-            comps = [
-                ("lock_chip", "lock_bit"),
-                ("blade", "blade"),
-                ("main_blade", "main_blade"),
-                ("assist_blade", "assist_blade"),
-                ("ratchet", "ratchet"),
-                ("bit", "bit"),
-                ("ratchet_integrated_bit", "ratchet_integrated_bit")
-            ]
+        html += """
+            <button class="full" onclick="Streamlit.setComponentValue('ALL')">
+                Aggiungi tutto
+            </button>
+        </div>
+        """
 
-            for field, inv_key in comps:
-                val = row[field]
-                if val and val != "n/a":
+        res = components.html(html, height=420)
 
-                    # CONTENITORE FLEX
-                    left, right = st.columns([1, 0.0001])
-
-                    with left:
-                        st.markdown(
-                            f"<div class='comp-line'><div class='comp-text'>{val}</div></div>",
-                            unsafe_allow_html=True
-                        )
-
-                    with right:
-                        st.markdown("<div class='comp-btn'>", unsafe_allow_html=True)
-                        if st.button("＋", key=f"add_{i}_{field}"):
-                            inv = st.session_state.inventario[inv_key]
-                            inv[val] = inv.get(val, 0) + 1
-                            st.toast(f"Aggiunto {val}")
-                        st.markdown("</div>", unsafe_allow_html=True)
-
-            # AGGIUNGI TUTTO (UNICO FULL WIDTH)
-            if st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True):
+        if res:
+            if res == "ALL":
                 for f, k in comps:
                     if row[f] and row[f] != "n/a":
                         inv = st.session_state.inventario[k]
                         inv[row[f]] = inv.get(row[f], 0) + 1
-                st.toast("Set aggiunto")
+            else:
+                k, v = res.split("|")
+                inv = st.session_state.inventario[k]
+                inv[v] = inv.get(v, 0) + 1
 
 # =========================
 # TAB INVENTARIO (INVARIATO)
 # =========================
 with tab_inv:
-    st.header("Inventario")
-    for tipo in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]:
-        pezzi = st.session_state.inventario.get(tipo, {})
-        validi = {k: v for k, v in pezzi.items() if v > 0}
-        if validi:
-            with st.expander(tipo.replace("_", " ").upper(), expanded=True):
-                for nome, qta in validi.items():
-                    ci1, ci2, ci3 = st.columns([0.6, 0.2, 0.2])
-                    ci1.write(f"{nome} (x{qta})")
-                    if ci2.button("＋", key=f"inv_p_{tipo}_{nome}"):
-                        st.session_state.inventario[tipo][nome] += 1
-                        st.rerun()
-                    if ci3.button("－", key=f"inv_m_{tipo}_{nome}"):
-                        st.session_state.inventario[tipo][nome] -= 1
-                        st.rerun()
+    for tipo, items in st.session_state.inventario.items():
+        if items:
+            with st.expander(tipo.replace("_", " ").upper(), True):
+                for n, q in items.items():
+                    st.write(f"{n} (x{q})")
