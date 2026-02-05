@@ -13,8 +13,8 @@ st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* --- TAB AGGIUNGI (INTOCCABILE) --- */
-    .add-container [data-testid="stVerticalBlock"] { text-align: center; align-items: center; }
+    /* --- TAB AGGIUNGI (INTOCCABILE - RIPRISTINATO) --- */
+    .add-container [data-testid="stVerticalBlock"] { text-align: center !important; align-items: center !important; }
     .add-container div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
@@ -24,26 +24,27 @@ st.markdown("""
     }
     .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
     .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 2px; text-align: center; width: 100%; display: block; }
+    
+    /* Forza centratura bottoni tab aggiungi */
+    .add-container button {
+        margin: 0 auto !important;
+        display: block !important;
+    }
 
     /* --- TAB INVENTARIO (SINISTRA) --- */
     [data-testid="stExpander"] [data-testid="stVerticalBlock"] { text-align: left !important; align-items: flex-start !important; }
     .inv-row-container { text-align: left !important; display: flex !important; flex-direction: column !important; align-items: flex-start !important; width: 100%; }
     .inv-row-container button { text-align: left !important; justify-content: flex-start !important; width: 100% !important; padding-left: 10px !important; background: transparent !important; border: none !important; }
     
-    /* --- DECK BUILDER: CENTRATURA TOTALE --- */
-    /* Forza il contenitore degli expander del deck builder a centrare tutto il contenuto */
-    [data-testid="stExpanderDetails"] [data-testid="stVerticalBlock"] > div [data-testid="stImage"] {
+    /* --- DECK BUILDER: CENTRATURA IMMAGINI MIRATA --- */
+    /* Colpiamo solo le immagini dentro l'expander del Deck Builder senza toccare i bottoni o altre tab */
+    .deck-slot-container [data-testid="stImage"] {
         display: flex !important;
         justify-content: center !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
         width: 100% !important;
     }
-    
-    /* Assicura che l'immagine stessa dentro il wrapper sia centrata */
-    [data-testid="stImage"] img {
+    .deck-slot-container [data-testid="stImage"] img {
         margin: 0 auto !important;
-        display: block !important;
     }
 
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; }
@@ -175,6 +176,8 @@ with tab3:
                 
                 slot_is_open = (st.session_state.focus['deck_idx'] == d_idx and st.session_state.focus['slot_idx'] == s_idx)
                 
+                # Avvolgiamo lo slot in un div con classe specifica per la centratura immagini
+                st.markdown('<div class="deck-slot-container">', unsafe_allow_html=True)
                 with st.expander(titolo_slot.upper(), expanded=slot_is_open):
                     def set_focus(di=d_idx, si=s_idx): st.session_state.focus = {"deck_idx": di, "slot_idx": si}
                     tipo = st.selectbox("Sistema", tipologie, key=f"d{d_idx}_s{s_idx}_type", on_change=set_focus)
@@ -199,7 +202,6 @@ with tab3:
                         st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=slot_keys["ab"], on_change=set_focus)
                         st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=slot_keys["rib"], on_change=set_focus)
 
-                    # --- IMMAGINI ---
                     st.write("")
                     for k_id in slot_keys.values():
                         valore = st.session_state.get(k_id, "-")
@@ -209,6 +211,7 @@ with tab3:
                                 img_obj = get_img(url_comp)
                                 if img_obj:
                                     st.image(img_obj, width=100)
+                st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown("<br>", unsafe_allow_html=True)
             if not deck['editing']:
