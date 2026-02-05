@@ -25,16 +25,9 @@ div[data-testid="stContainer"] {
     margin-bottom: 16px;
 }
 
-/* CENTRATURA GLOBALE */
+/* CENTRATURA TESTO */
 .center {
     text-align: center;
-}
-
-/* IMMAGINE */
-.center img {
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
 }
 
 /* BOTTONI */
@@ -91,7 +84,7 @@ if "inventario" not in st.session_state:
 tab_add, tab_inv, tab_deck = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 # =========================
-# TAB AGGIUNGI — CENTRATURA REALE
+# TAB AGGIUNGI — FIX IMMAGINE
 # =========================
 with tab_add:
     search_q = st.text_input("Cerca...", key="search_main")
@@ -100,18 +93,18 @@ with tab_add:
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container():
 
-            # ---- TITOLO ----
+            # ---- TITOLO CENTRATO ----
             st.markdown(
                 f"<div class='center'><h3 style='color:#60a5fa'>{row['name'].upper()}</h3></div>",
                 unsafe_allow_html=True
             )
 
-            # ---- IMMAGINE ----
+            # ---- IMMAGINE DAVVERO CENTRATA ----
             img = get_img(row["blade_image"] or row["beyblade_page_image"])
             if img:
-                st.markdown("<div class='center'>", unsafe_allow_html=True)
-                st.image(img)
-                st.markdown("</div>", unsafe_allow_html=True)
+                col_l, col_c, col_r = st.columns([1, 2, 1])
+                with col_c:
+                    st.image(img)
 
             st.divider()
 
