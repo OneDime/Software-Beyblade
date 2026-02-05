@@ -36,7 +36,7 @@ st.markdown("""
         border: 1px solid #475569 !important; border-radius: 4px !important; font-size: 1.1rem !important;
     }
 
-    /* STILE INVENTARIO */
+    /* STILE INVENTARIO & EXPANDER */
     .inv-row-container { text-align: left !important; width: 100%; padding-left: 10px; }
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
     </style>
@@ -78,12 +78,12 @@ for key in ['inventario', 'deck_name', 'editing_name', 'deck_selections']:
 df, global_img_map = load_db()
 
 # =========================
-# FRAMMENTI (PER EVITARE RERUN TOTALI)
+# FRAMMENTI UI
 # =========================
 
 @st.fragment
 def beyblade_card(row, idx):
-    """Gestisce un singolo box Beyblade senza ricaricare la pagina"""
+    """Gestisce l'aggiunta componenti senza ricaricare la pagina intera"""
     with st.container(border=True):
         st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
         img = get_img(row['blade_image'] or row['beyblade_page_image'])
@@ -109,27 +109,6 @@ def beyblade_card(row, idx):
                     st.session_state.inventario[ik][val] = st.session_state.inventario[ik].get(val, 0) + 1
                     st.toast(f"Aggiunto: {val}")
 
-@st.fragment
-def inventory_section():
-    """Gestisce l'inventario in modo fluido"""
-    modo = st.radio("L", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
-    delta = 1 if "Aggiungi" in modo else -1
-    
-    has_content = any(len(v) > 0 for v in st.session_state.inventario.values())
-    if not has_content:
-        st.info("L'inventario è vuoto.")
-        return
-
-    for categoria, pezzi in st.session_state.inventario.items():
-        if pezzi:
-            with st.expander(categoria.replace('_', ' ').upper()):
-                for nome, qta in list(pezzi.items()):
-                    if st.button(f"{nome} x{qta}", key=f"inv_{categoria}_{nome}"):
-                        st.session_state.inventario[categoria][nome] += delta
-                        if st.session_state.inventario[categoria][nome] <= 0:
-                            del st.session_state.inventario[categoria][nome]
-                        st.rerun() # Qui serve per aggiornare il numero nel bottone
-
 # =========================
 # UI PRINCIPALE
 # =========================
@@ -142,11 +121,87 @@ with tab1:
         beyblade_card(row, i)
 
 with tab2:
-    inventory_section()
+    modo = st.radio("L", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
+    operazione = 1 if "Aggiungi" in modo else -1
+    has_content = any(len(v) > 0 for v in st.session_state.inventario.values())
+    if not has_content:
+        st.info("L'inventario è vuoto.")
+    else:
+        for categoria, pezzi in st.session_state.inventario.items():
+            if pezzi:
+                with st.expander(categoria.replace('_', ' ').upper()):
+                    for nome, qta in pezzi.items():
+                        if st.button(f"{nome} x{qta}", key=f"inv_{categoria}_{nome}"):
+                            st.session_state.inventario[categoria][nome] += operazione
+                            if st.session_state.inventario[categoria][nome] <= 0:
+                                del st.session_state.inventario[categoria][nome]
+                            st.rerun()
 
 with tab3:
-    # (Logica Builder ripristinata come prima)
     with st.expander(f"{st.session_state.deck_name.upper()}", expanded=True):
-        # ... [Codice Builder Identico a prima] ...
-        st.write("Configurazione Deck Builder attiva.")
-        # Nota: Qui il rerun serve per cambiare il titolo dell'expander dinamicamente
+        def get_options(cat, theory=False):
+            if theory:
+                csv_map = {"lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade",
+                           "assist_blade": "assist_blade", "ratchet": "ratchet", "bit": "bit",
+                           "ratchet_integrated_bit": "ratchet_integrated_bit"}
+                col_name = csv_map.get(cat, cat)
+                opts = df[col_name].unique().tolist()
+                return ["-"] + sorted([x for x in opts if x and x != "n/a"])
+            return ["-"] + sorted(list(st.session_state.inventario[cat].keys()))
+
+        tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
+
+        for idx in range(3):
+            sels = st.session_state.deck_selections[idx]
+            nome_parti = [v for v in sels.values() if v and v != "-"]
+            titolo_slot = " ".join(nome_parti) if nome_parti else f"SLOT {idx+1}"
+            
+            with st.expander(titolo_slot.upper()):
+                tipo = st.selectbox("Sistema", tipologie, key=f"type_{idx}")
+                is_theory = "Theory" in tipo
+                curr = {}
+
+                if "BX/UX" in tipo and "+RIB" not in tipo:
+                    curr['b'] = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
+                    curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
+                    curr['bi'] = st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
+                elif "CX" in tipo and "+RIB" not in tipo:
+                    curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
+                    curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
+                    curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
+                    curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{idx}")
+                    curr['bi'] = st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{idx}")
+                elif "BX/UX+RIB" in tipo:
+                    curr['b'] = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{idx}")
+                    curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
+                elif "CX+RIB" in tipo:
+                    curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{idx}")
+                    curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
+                    curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
+                    curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
+
+                # Immagini
+                cols = st.columns(len(curr) if curr else 1)
+                for i, (k, v) in enumerate(curr.items()):
+                    if v != "-":
+                        url = global_img_map.get(v)
+                        if url:
+                            img_obj = get_img(url)
+                            if img_obj: cols[i].image(img_obj, caption=v, use_container_width=True)
+
+                if st.session_state.deck_selections[idx] != curr:
+                    st.session_state.deck_selections[idx] = curr
+                    st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if not st.session_state.editing_name:
+            if st.button("📝 Modifica Nome Deck"):
+                st.session_state.editing_name = True; st.rerun()
+        else:
+            new_name = st.text_input("Nuovo nome:", st.session_state.deck_name)
+            c1, c2 = st.columns([0.1, 1])
+            if c1.button("Salva"):
+                st.session_state.deck_name = new_name
+                st.session_state.editing_name = False; st.rerun()
+            if c2.button("Annulla"):
+                st.session_state.editing_name = False; st.rerun()
