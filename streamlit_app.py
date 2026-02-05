@@ -2,35 +2,41 @@ import streamlit as st
 import pandas as pd
 import hashlib
 import os
+import time
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE
+# CONFIGURAZIONE & STILE CSS AVANZATO
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
-# CSS Custom per card, bordi e layout
 st.markdown("""
     <style>
-    .stApp { background-color: #f8fafc; }
-    /* Card stile Tab Aggiungi */
+    /* Font generale e sfondi */
+    html, body, [class*="st-"] { font-size: 1.05rem; }
+    .stApp { background-color: #f1f5f9; }
+    
+    /* Card Aggiungi */
     .bey-card { 
-        background-color: white; 
-        padding: 15px; 
-        border-radius: 12px; 
-        border: 1px solid #e2e8f0; 
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
-        text-align: center;
+        background-color: white; padding: 15px; border-radius: 12px; 
+        border: 2px solid #e2e8f0; margin-bottom: 20px; text-align: center;
     }
-    .bey-name { font-weight: bold; font-size: 1rem; color: #1e293b; margin-bottom: 8px; }
-    .comp-text { font-size: 0.85rem; color: #64748b; line-height: 1.2; }
+    .bey-name { font-weight: bold; font-size: 1.2rem; color: #0f172a; margin-bottom: 10px; text-align: center; }
     
-    /* Bottoni compatti */
-    .stButton>button { border-radius: 8px; font-size: 0.8rem; }
+    /* Griglia componenti in 2 colonne */
+    .comp-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 8px; 
+        align-items: center; justify-items: center; margin-top: 10px;
+    }
+    .comp-item { font-size: 0.95rem; color: #475569; text-align: center; }
+
+    /* Bottoni e controlli */
+    .stButton>button { width: 100%; border-radius: 6px; }
+    .small-btn>div>button { padding: 2px 5px; height: 28px; width: 28px; font-size: 0.8rem; }
     
-    /* Ottimizzazione spazio Deck */
-    [data-testid="stExpander"] { border: 1px solid #cbd5e1; background: white; }
+    /* Forzatura flag inline per Mobile */
+    [data-testid="column"] { min-width: 0px !important; }
+    .stCheckbox { margin-bottom: 0px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -38,7 +44,7 @@ CSV_FILE = "beyblade_x.csv"
 IMAGES_DIR = "images"
 
 # =========================
-# FUNZIONI OTTIMIZZATE
+# FUNZIONI CORE
 # =========================
 @st.cache_data
 def load_db():
@@ -48,7 +54,7 @@ def load_db():
     return df
 
 @st.cache_resource
-def get_img(url, size=(100, 100)):
+def get_img(url, size=(90, 90)):
     if not url or url == "n/a": return None
     h = hashlib.md5(url.encode()).hexdigest()
     path = os.path.join(IMAGES_DIR, f"{h}.png")
@@ -58,140 +64,128 @@ def get_img(url, size=(100, 100)):
         return img
     return None
 
-def add_to_inv(tipo, nome):
-    if nome and nome != "n/a":
-        st.session_state.inventario[tipo][nome] = st.session_state.inventario[tipo].get(nome, 0) + 1
-
-# Inizializzazione Session State
+# Inizializzazione Session State (Memoria locale)
 if 'inventario' not in st.session_state:
-    st.session_state.inventario = {
-        "lock_bit": {}, "blade": {}, "main_blade": {}, "assist_blade": {},
-        "ratchet": {}, "bit": {}, "ratchet_integrated_bit": {}
-    }
+    st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
 if 'decks' not in st.session_state:
     st.session_state.decks = []
 
 df = load_db()
 
 # =========================
-# UI SIDEBAR
+# UI PRINCIPALE
 # =========================
-st.sidebar.title("🔧 Officina X")
-utente = st.sidebar.selectbox("Utente", ["Antonio", "Andrea", "Fabio"])
+tab_add, tab_inv, tab_deck = st.tabs(["➕ Aggiungi", "📦 Inventario", "🧩 Deck"])
 
-# =========================
-# TAB PRINCIPALI
-# =========================
-tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
+# --- TAB AGGIUNGI ---
+with tab_add:
+    # Ricerca con delay e soglia caratteri
+    search_input = st.text_input("Cerca (minimo 2 lettere)...", key="search_main")
+    
+    filtered = df
+    if len(search_input) >= 2:
+        time.sleep(0.1) # Piccolo delay per non appesantire
+        filtered = df[df['_search'].str.contains(search_input.lower())]
+    elif len(search_input) == 1:
+        st.caption("Continua a scrivere...")
+        filtered = df.head(0) # Non mostrare nulla con 1 lettera
+    else:
+        filtered = df.head(10) # Default iniziale
 
-# --- TAB 1: AGGIUNGI ---
-with tab1:
-    search_q = st.text_input("Cerca...", "").lower()
-    filtered = df[df['_search'].str.contains(search_q)] if search_q else df
-    
-    # 2 colonne per cellulare, 4 per desktop
-    n_cols = 2 if st.columns(2) else 4 
-    cols = st.columns(2 if search_q else 2) # Forza 2 colonne per ordine cellulare
-    
+    cols = st.columns(2) # Forza 2 colonne per mobile
     for i, (_, row) in enumerate(filtered.iterrows()):
-        col_idx = i % 2
-        with cols[col_idx]:
-            st.markdown(f"""<div class='bey-card'>
-                <div class='bey-name'>{row['name']}</div>""", unsafe_allow_html=True)
-            
+        with cols[i % 2]:
+            st.markdown(f"<div class='bey-card'><div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
-            if img: st.image(img, use_container_width=False, width=120)
+            if img: st.image(img, use_container_width=False, width=100)
             
-            # Elenco componenti con tasto "+" singolo (Punto Aggiungi)
-            comps = [
-                ("lock_chip", "lock_bit"), ("blade", "blade"), 
-                ("main_blade", "main_blade"), ("assist_blade", "assist_blade"),
-                ("ratchet", "ratchet"), ("bit", "bit"), 
-                ("ratchet_integrated_bit", "ratchet_integrated_bit")
-            ]
+            # Griglia Componenti (Punto: 2 colonne e "+" accanto)
+            comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"), 
+                     ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"), 
+                     ("ratchet_integrated_bit", "ratchet_integrated_bit")]
             
+            st.markdown("<div class='comp-grid'>", unsafe_allow_html=True)
             for field, inv_key in comps:
-                nome_pezzo = row[field]
-                if nome_pezzo and nome_pezzo != "n/a":
-                    c_text, c_btn = st.columns([4, 1])
-                    c_text.markdown(f"<div class='comp-text'>{nome_pezzo}</div>", unsafe_allow_html=True)
-                    if c_btn.button("＋", key=f"add_{inv_key}_{i}"):
-                        add_to_inv(inv_key, nome_pezzo)
-                        st.toast(f"Aggiunto: {nome_pezzo}")
+                val = row[field]
+                if val and val != "n/a":
+                    c1, c2 = st.columns([3, 1])
+                    c1.markdown(f"<div class='comp-item'>{val}</div>", unsafe_allow_html=True)
+                    if c2.button("＋", key=f"add_{inv_key}_{i}_{val}"):
+                        st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
+                        st.toast(f"Aggiunto {val}")
+            st.markdown("</div>", unsafe_allow_html=True)
             
-            st.divider()
-            if st.button(f"Aggiungi Tutto", key=f"all_{i}"):
+            st.write("") # Spaziatore
+            if st.button("Aggiungi Tutto", key=f"all_{i}"):
                 for field, inv_key in comps:
-                    add_to_inv(inv_key, row[field])
-                st.toast("Intero Beyblade aggiunto!")
+                    if row[field] and row[field] != "n/a":
+                        st.session_state.inventario[inv_key][row[field]] = st.session_state.inventario[inv_key].get(row[field], 0) + 1
+                st.toast("Beyblade completo aggiunto!")
             st.markdown("</div>", unsafe_allow_html=True)
 
-# --- TAB 2: INVENTARIO ---
-with tab2:
-    st.header(f"Inventario di {utente}")
-    # Ordine richiesto (Punto Inventario)
-    ordine_inv = ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]
+# --- TAB INVENTARIO ---
+with tab_inv:
+    st.header("Il tuo Inventario")
+    ordine = ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]
     
-    for tipo in ordine_inv:
+    for tipo in ordine:
         pezzi = st.session_state.inventario[tipo]
-        if pezzi:
-            with st.expander(f"{tipo.replace('_', ' ').title()}", expanded=True):
-                for nome, qta in pezzi.items():
-                    st.write(f"**{qta}x** {nome}")
+        if any(pezzi.values()): # Mostra solo se ci sono pezzi con qta > 0
+            with st.expander(f"**{tipo.replace('_', ' ').upper()}**", expanded=True):
+                for nome, qta in list(pezzi.items()):
+                    if qta > 0:
+                        c1, c2, c3 = st.columns([4, 1, 1])
+                        c1.write(f"{nome} (x{qta})")
+                        if c2.button("＋", key=f"inv_plus_{tipo}_{nome}"):
+                            st.session_state.inventario[tipo][nome] += 1
+                            st.rerun()
+                        if c3.button("－", key=f"inv_min_{tipo}_{nome}"):
+                            st.session_state.inventario[tipo][nome] -= 1
+                            if st.session_state.inventario[tipo][nome] <= 0:
+                                del st.session_state.inventario[tipo][nome]
+                            st.rerun()
 
-# --- TAB 3: DECK BUILDER ---
-with tab3:
-    header_col, btn_col = st.columns([3, 1])
-    header_col.header(f"Deck di {utente}")
-    if btn_col.button("➕ Nuovo Deck"):
+# --- TAB DECK ---
+with tab_deck:
+    col_h, col_b = st.columns([2, 1])
+    col_h.header(f"Deck di {utente}")
+    if col_b.button("➕ Nuovo Deck"):
         st.session_state.decks.append({"name": f"Deck {len(st.session_state.decks)+1}"})
 
     for d_idx, deck in enumerate(st.session_state.decks):
         with st.expander(f"📂 {deck['name']}", expanded=True):
-            b_cols = st.columns(3)
             for b_idx in range(3):
-                with b_cols[b_idx]:
-                    st.markdown(f"**Bey {b_idx+1}**")
-                    
-                    # Flags su una riga (Punto Deck)
-                    f1, f2, f3 = st.columns(3)
-                    cx = f1.checkbox("CX", key=f"cx_{d_idx}_{b_idx}")
-                    rib = f2.checkbox("RIB", key=f"rib_{d_idx}_{b_idx}")
-                    theory = f3.checkbox("Theory", key=f"th_{d_idx}_{b_idx}")
-                    
-                    def select_part(label, key, img_key):
-                        # Filtro opzioni
-                        if theory:
-                            opts = sorted(df[key].unique().tolist())
-                        else:
-                            inv_k = "lock_bit" if key == "lock_chip" else key
-                            opts = sorted(list(st.session_state.inventario[inv_k].keys()))
-                        
-                        if not opts: opts = [""]
-                        
-                        sel = st.selectbox(label, opts, key=f"sel_{key}_{d_idx}_{b_idx}")
-                        
-                        # Mostra immagine (Punto Deck Immagini)
-                        if sel:
-                            img_url = df[df[key] == sel][img_key].values
-                            if len(img_url) > 0:
-                                p_img = get_img(img_url[0], size=(80, 80))
-                                if p_img: st.image(p_img, width=70)
-                        return sel
+                st.markdown(f"--- **BEYBLADE {b_idx+1}** ---")
+                
+                # Flag inline (Forzatura colonne strette)
+                f1, f2, f3 = st.columns([1, 1, 1.5])
+                cx = f1.checkbox("CX", key=f"cx_{d_idx}_{b_idx}")
+                rib = f2.checkbox("RIB", key=f"rib_{d_idx}_{b_idx}")
+                theory = f3.checkbox("Theory", key=f"th_{d_idx}_{b_idx}")
+                
+                rows = []
+                if cx: rows += [("Lock Bit", "lock_chip", "lock_chip_image"), ("Main Blade", "main_blade", "main_blade_image"), ("Assist Blade", "assist_blade", "assist_blade_image")]
+                else:  rows += [("Blade", "blade", "blade_image")]
+                
+                if rib: rows += [("R.I.B.", "ratchet_integrated_bit", "ratchet_integrated_bit_image")]
+                else:   rows += [("Ratchet", "ratchet", "ratchet_image"), ("Bit", "bit", "bit_image")]
 
-                    if cx:
-                        select_part("Lock Bit", "lock_chip", "lock_chip_image")
-                        select_part("Main Blade", "main_blade", "main_blade_image")
-                        select_part("Assist Blade", "assist_blade", "assist_blade_image")
+                for label, db_key, img_db_key in rows:
+                    # Logica opzioni (Theory o Inventario)
+                    if theory:
+                        opts = [""] + sorted(df[db_key].unique().tolist())
                     else:
-                        select_part("Blade", "blade", "blade_image")
+                        inv_k = "lock_bit" if db_key == "lock_chip" else db_key
+                        opts = [""] + sorted(list(st.session_state.inventario[inv_k].keys()))
                     
-                    if rib:
-                        select_part("R.I.B.", "ratchet_integrated_bit", "ratchet_integrated_bit_image")
-                    else:
-                        select_part("Ratchet", "ratchet", "ratchet_image")
-                        select_part("Bit", "bit", "bit_image")
+                    # Layout Componente + Immagine ACCOANTO
+                    c_sel, c_img = st.columns([3, 1])
+                    scelta = c_sel.selectbox(label, opts, key=f"sel_{d_idx}_{b_idx}_{db_key}")
+                    
+                    if scelta:
+                        img_url = df[df[db_key] == scelta][img_db_key].values
+                        if len(img_url) > 0:
+                            p_img = get_img(img_url[0], size=(60, 60))
+                            if p_img: c_img.image(p_img)
 
-    st.divider()
-    if st.button("💾 SALVA TUTTI I DATI ONLINE"):
-        st.success("Pronto per il collegamento finale a Google Sheets!")
+    st.button("💾 SALVATAGGIO CLOUD (Prossimo Step)")
