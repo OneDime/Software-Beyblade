@@ -13,22 +13,28 @@ st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* --- TAB AGGIUNGI (INTOCCABILE - RIPRISTINATO) --- */
-    .add-container [data-testid="stVerticalBlock"] { text-align: center !important; align-items: center !important; }
+    /* --- TAB AGGIUNGI (INTOCCABILE - FIX CENTRATURA) --- */
+    .add-container, .add-container [data-testid="stVerticalBlock"] { 
+        text-align: center !important; 
+        align-items: center !important; 
+        display: flex;
+        flex-direction: column;
+    }
     .add-container div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
         border-radius: 12px !important;
         margin-bottom: 25px !important;
         padding: 15px !important;
+        width: 100%;
     }
-    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 8px; text-align: center; width: 100%; }
     .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 2px; text-align: center; width: 100%; display: block; }
     
-    /* Forza centratura bottoni tab aggiungi */
-    .add-container button {
-        margin: 0 auto !important;
-        display: block !important;
+    /* Forza centratura specifica per le immagini e i bottoni solo in add-container */
+    .add-container [data-testid="stImage"], .add-container button {
+        margin-left: auto !important;
+        margin-right: auto !important;
     }
 
     /* --- TAB INVENTARIO (SINISTRA) --- */
@@ -36,15 +42,15 @@ st.markdown("""
     .inv-row-container { text-align: left !important; display: flex !important; flex-direction: column !important; align-items: flex-start !important; width: 100%; }
     .inv-row-container button { text-align: left !important; justify-content: flex-start !important; width: 100% !important; padding-left: 10px !important; background: transparent !important; border: none !important; }
     
-    /* --- DECK BUILDER: CENTRATURA IMMAGINI MIRATA --- */
-    /* Colpiamo solo le immagini dentro l'expander del Deck Builder senza toccare i bottoni o altre tab */
-    .deck-slot-container [data-testid="stImage"] {
-        display: flex !important;
-        justify-content: center !important;
-        width: 100% !important;
-    }
+    /* --- DECK BUILDER: CENTRATURA IMMAGINI --- */
+    /* Usiamo un selettore che punta solo alle immagini dentro gli expander del deck builder */
     .deck-slot-container [data-testid="stImage"] img {
-        margin: 0 auto !important;
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+    .deck-slot-container [data-testid="stImage"] {
+        text-align: center !important;
     }
 
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; }
@@ -105,7 +111,7 @@ df, global_img_map = load_db()
 # =========================
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI (INTOCCABILE) ---
+# --- TAB 1: AGGIUNGI (INTOCCABILE - FIX RIPRISTINATO) ---
 with tab1:
     st.markdown('<div class="add-container">', unsafe_allow_html=True)
     search_q = st.text_input("Cerca...", "").lower()
@@ -176,7 +182,6 @@ with tab3:
                 
                 slot_is_open = (st.session_state.focus['deck_idx'] == d_idx and st.session_state.focus['slot_idx'] == s_idx)
                 
-                # Avvolgiamo lo slot in un div con classe specifica per la centratura immagini
                 st.markdown('<div class="deck-slot-container">', unsafe_allow_html=True)
                 with st.expander(titolo_slot.upper(), expanded=slot_is_open):
                     def set_focus(di=d_idx, si=s_idx): st.session_state.focus = {"deck_idx": di, "slot_idx": si}
