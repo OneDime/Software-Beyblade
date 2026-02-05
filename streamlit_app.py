@@ -11,16 +11,15 @@ st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
-    /* Sfondo Grigio-Blu molto scuro */
+    /* Sfondo Generale */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* Centratura forzata per Tab Aggiungi */
+    /* --- STILI TAB AGGIUNGI (INTOCCABILI) --- */
     [data-testid="stVerticalBlock"] {
         text-align: center;
         align-items: center;
     }
 
-    /* CARD: Bordo e sfondo */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
@@ -32,13 +31,7 @@ st.markdown("""
     .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
     .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; margin-top: 5px; margin-bottom: 2px; text-align: center; width: 100%; display: block; }
 
-    /* TASTI AGGIUNGI: Larghi 1.5x e alti 30px (VERSIONE RIPRISTINATA) */
-    div[data-testid="stButton"] {
-        width: 100% !important;
-        display: flex !important;
-        justify-content: center !important;
-    }
-
+    /* Bottoni Tab Aggiungi */
     div.stButton > button {
         width: auto !important; 
         min-width: 150px !important; 
@@ -59,17 +52,36 @@ st.markdown("""
         white-space: nowrap !important;
     }
 
-    /* STILE TASTI INVENTARIO (LISTA PULITA A SINISTRA) */
+    /* --- STILI TAB INVENTARIO (PERSONALIZZATI) --- */
+    
+    /* Riduzione altezza area Switch (Radio) */
+    div[data-testid="stWidgetLabel"] {
+        display: none !important; /* Nasconde l'etichetta dello switch per risparmiare spazio */
+    }
+    
+    div[data-testid="stRadio"] > div {
+        padding: 0px !important;
+        margin-top: -15px !important;
+        margin-bottom: -15px !important;
+    }
+
+    /* Allineamento componenti a sinistra nell'inventario */
+    .inv-row-container {
+        text-align: left !important;
+        width: 100%;
+        padding-left: 10px;
+    }
+
     .inv-row button {
         width: 100% !important;
         justify-content: flex-start !important;
-        padding-left: 5px !important;
         background: transparent !important;
         border: none !important;
         color: #f1f5f9 !important;
         text-align: left !important;
         font-size: 1.1rem !important;
-        height: auto !important;
+        height: 35px !important; /* Leggermente più alto per il touch */
+        padding-left: 0px !important;
     }
     
     .inv-row button:hover {
@@ -77,10 +89,18 @@ st.markdown("""
     }
 
     /* Expander Style */
-    .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; }
+    .stExpander { 
+        border: 1px solid #334155 !important; 
+        background-color: #1e293b !important; 
+        text-align: left !important;
+    }
     
-    /* Riduzione spazio tra gli elementi Markdown */
-    .stMarkdown { margin-bottom: -10px !important; }
+    /* Fix per forzare l'allineamento a sinistra dentro gli expander */
+    .stExpander [data-testid="stVerticalBlock"] {
+        align-items: flex-start !important;
+        text-align: left !important;
+    }
+
     </style>
     """, unsafe_allow_html=True)
 
@@ -106,7 +126,6 @@ def add_to_inv(tipo, nome, delta=1):
         if nome not in st.session_state.inventario[tipo]:
             st.session_state.inventario[tipo][nome] = 0
         st.session_state.inventario[tipo][nome] += delta
-        # Rimuove l'entrata se la quantità scende a zero o meno
         if st.session_state.inventario[tipo][nome] <= 0:
             del st.session_state.inventario[tipo][nome]
 
@@ -120,32 +139,25 @@ df = load_db()
 # =========================
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI (RIPRISTINATO E BLINDATO) ---
+# --- TAB 1: AGGIUNGI (INTOCCABILE) ---
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df[df['_search'].str.contains(search_q)] if search_q else df.head(3)
-
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
             st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
-            
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
-            if img: st.image(img, width=150) # Dimensioni fisse come da tua richiesta precedente
+            if img: st.image(img, width=150)
             
-            components = [
-                ("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
-                ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
-                ("ratchet_integrated_bit", "ratchet_integrated_bit")
-            ]
-
+            components = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
+                          ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
+                          ("ratchet_integrated_bit", "ratchet_integrated_bit")]
             st.write("")
             if st.button("Aggiungi tutto", key=f"all_{i}"):
                 for ck, ik in components:
                     if row[ck] and row[ck] != "n/a": add_to_inv(ik, row[ck])
-                st.toast(f"Set aggiunto!")
-
+                st.toast("Set aggiunto!")
             st.markdown("<hr style='border-top: 1px solid #475569; margin: 15px 0;'>", unsafe_allow_html=True)
-
             for ck, ik in components:
                 val = row[ck]
                 if val and val != "n/a":
@@ -154,13 +166,13 @@ with tab1:
                         add_to_inv(ik, val)
                         st.toast(f"Aggiunto: {val}")
 
-# --- TAB 2: INVENTARIO (CON SWITCH MODALITÀ) ---
+# --- TAB 2: INVENTARIO (SINISTRA & SWITCH COMPATTO) ---
 with tab2:
-    # Switch per la modalità d'uso
-    modo = st.radio("Modalità tocco:", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
+    # Switch modalità ridotto
+    modo = st.radio("Label_Hidden", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     operazione = 1 if "Aggiungi" in modo else -1
     
-    st.write("---")
+    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
     
     has_content = any(len(v) > 0 for v in st.session_state.inventario.values())
             
@@ -171,13 +183,15 @@ with tab2:
             if pezzi:
                 cat_label = categoria.replace('_', ' ').upper()
                 with st.expander(cat_label, expanded=False):
+                    # Forziamo il contenitore dell'expander a sinistra
+                    st.markdown('<div class="inv-row-container">', unsafe_allow_html=True)
                     for nome, qta in pezzi.items():
-                        # Ogni riga è un pulsante trasparente allineato a sinistra
                         st.markdown('<div class="inv-row">', unsafe_allow_html=True)
                         if st.button(f"{nome} x{qta}", key=f"inv_{categoria}_{nome}"):
                             add_to_inv(categoria, nome, operazione)
                             st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
 
 # --- TAB 3: DECK BUILDER ---
 with tab3:
