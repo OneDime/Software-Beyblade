@@ -18,39 +18,55 @@ st.markdown("""
     background-color: #1e293b;
     border: 1px solid #334155;
     border-radius: 12px;
-    padding: 12px;
+    padding: 14px;
 }
 
-/* COMPONENTI: FLEX BLOCCATO (NO WRAP SU MOBILE) */
+/* NOME CENTRATO */
+.bey-title {
+    text-align: center;
+    color: #60a5fa;
+    margin-bottom: 6px;
+}
+
+/* IMMAGINE CENTRATA */
+.bey-img {
+    display: flex;
+    justify-content: center;
+    margin: 8px 0 12px 0;
+}
+.bey-img img {
+    max-width: 180px;
+}
+
+/* RIGA COMPONENTE */
 .comp-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
     margin: 6px 0;
-    white-space: nowrap;
 }
 
 .comp-name {
     flex: 1;
-    text-align: right;
-    padding-right: 6px;
+    text-align: left;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* BOTTONI */
+/* BOTTONE + PICCOLO */
+.comp-btn button {
+    width: 38px !important;
+    min-width: 38px !important;
+    padding: 0 !important;
+}
+
+/* BOTTONI GENERALI */
 .stButton button {
     background-color: #334155 !important;
     color: #f1f5f9 !important;
     border: 1px solid #475569 !important;
-}
-
-/* IMMAGINE */
-.bey-img img {
-    max-width: 180px;
-    margin: 0 auto;
-    display: block;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -100,7 +116,7 @@ if "inventario" not in st.session_state:
 tab_add, tab_inv, tab_deck = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 # =========================
-# TAB AGGIUNGI (FIX MOBILE)
+# TAB AGGIUNGI (MOBILE FIX DEFINITIVO)
 # =========================
 with tab_add:
     search_q = st.text_input("Cerca...", key="search_main")
@@ -111,7 +127,7 @@ with tab_add:
 
             # NOME
             st.markdown(
-                f"<h3 style='text-align:center;color:#60a5fa'>{row['name'].upper()}</h3>",
+                f"<h3 class='bey-title'>{row['name'].upper()}</h3>",
                 unsafe_allow_html=True
             )
 
@@ -124,7 +140,7 @@ with tab_add:
 
             st.divider()
 
-            # COMPONENTI (FLEX BLOCCATO)
+            # COMPONENTI
             comps = [
                 ("lock_chip", "lock_bit"),
                 ("blade", "blade"),
@@ -138,19 +154,21 @@ with tab_add:
             for field, inv_key in comps:
                 val = row[field]
                 if val and val != "n/a":
-                    c1, c2 = st.columns([0.85, 0.15])
-                    with c1:
+                    col_text, col_btn = st.columns([0.85, 0.15])
+                    with col_text:
                         st.markdown(
                             f"<div class='comp-row'><div class='comp-name'>{val}</div></div>",
                             unsafe_allow_html=True
                         )
-                    with c2:
-                        if st.button("＋", key=f"add_{i}_{field}", use_container_width=True):
+                    with col_btn:
+                        st.markdown("<div class='comp-btn'>", unsafe_allow_html=True)
+                        if st.button("＋", key=f"add_{i}_{field}"):
                             inv = st.session_state.inventario[inv_key]
                             inv[val] = inv.get(val, 0) + 1
                             st.toast(f"Aggiunto {val}")
+                        st.markdown("</div>", unsafe_allow_html=True)
 
-            # AGGIUNGI TUTTO
+            # AGGIUNGI TUTTO (UNICO FULL WIDTH)
             if st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True):
                 for f, k in comps:
                     if row[f] and row[f] != "n/a":
