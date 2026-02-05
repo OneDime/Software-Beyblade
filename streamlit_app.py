@@ -32,7 +32,17 @@ st.markdown("""
     
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; }
 
-    /* Bottone Elimina (Rosso) */
+    /* --- DECK BUILDER IMMAGINI CENTRATE --- */
+    .deck-img-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
     div.stButton > button[key^="del_deck_"] { background-color: #991b1b !important; color: white !important; border: none !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -45,6 +55,7 @@ def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame(), {}
     df = pd.read_csv("beyblade_x.csv").fillna("")
     
+    # Mappa completa dei componenti alle loro immagini specifiche
     img_map = {}
     mapping_rules = [
         ('lock_chip', 'lock_chip_image'),
@@ -162,11 +173,19 @@ with tab3:
             tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
 
             for s_idx in range(3):
-                # Generazione chiavi dinamiche
-                comp_keys = ["lb", "mb", "ab", "b", "r", "bi", "rib"]
-                slot_keys = {k: f"d{d_idx}_s{s_idx}_{k}" for k in comp_keys}
+                # Chiavi dei componenti per questo slot
+                keys_map = {
+                    "lb": f"d{d_idx}_s{s_idx}_lb",
+                    "mb": f"d{d_idx}_s{s_idx}_mb",
+                    "ab": f"d{d_idx}_s{s_idx}_ab",
+                    "b": f"d{d_idx}_s{s_idx}_b",
+                    "r": f"d{d_idx}_s{s_idx}_r",
+                    "bi": f"d{d_idx}_s{s_idx}_bi",
+                    "rib": f"d{d_idx}_s{s_idx}_rib"
+                }
                 
-                vals = [st.session_state.get(v, "-") for v in slot_keys.values()]
+                # Valori correnti per il titolo
+                vals = [st.session_state.get(k, "-") for k in keys_map.values()]
                 parti = [p for p in vals if p and p != "-"]
                 titolo_slot = " ".join(parti) if parti else f"SLOT {s_idx+1}"
                 
@@ -179,38 +198,38 @@ with tab3:
                     is_theory = "Theory" in tipo
 
                     if "BX/UX" in tipo and "+RIB" not in tipo:
-                        st.selectbox("Blade", get_options("blade", is_theory), key=slot_keys["b"], on_change=set_focus)
-                        st.selectbox("Ratchet", get_options("ratchet", is_theory), key=slot_keys["r"], on_change=set_focus)
-                        st.selectbox("Bit", get_options("bit", is_theory), key=slot_keys["bi"], on_change=set_focus)
+                        st.selectbox("Blade", get_options("blade", is_theory), key=keys_map["b"], on_change=set_focus)
+                        st.selectbox("Ratchet", get_options("ratchet", is_theory), key=keys_map["r"], on_change=set_focus)
+                        st.selectbox("Bit", get_options("bit", is_theory), key=keys_map["bi"], on_change=set_focus)
                     elif "CX" in tipo and "+RIB" not in tipo:
-                        st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=slot_keys["lb"], on_change=set_focus)
-                        st.selectbox("Main Blade", get_options("main_blade", is_theory), key=slot_keys["mb"], on_change=set_focus)
-                        st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=slot_keys["ab"], on_change=set_focus)
-                        st.selectbox("Ratchet", get_options("ratchet", is_theory), key=slot_keys["r"], on_change=set_focus)
-                        st.selectbox("Bit", get_options("bit", is_theory), key=slot_keys["bi"], on_change=set_focus)
+                        st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=keys_map["lb"], on_change=set_focus)
+                        st.selectbox("Main Blade", get_options("main_blade", is_theory), key=keys_map["mb"], on_change=set_focus)
+                        st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=keys_map["ab"], on_change=set_focus)
+                        st.selectbox("Ratchet", get_options("ratchet", is_theory), key=keys_map["r"], on_change=set_focus)
+                        st.selectbox("Bit", get_options("bit", is_theory), key=keys_map["bi"], on_change=set_focus)
                     elif "BX/UX+RIB" in tipo:
-                        st.selectbox("Blade", get_options("blade", is_theory), key=slot_keys["b"], on_change=set_focus)
-                        st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=slot_keys["rib"], on_change=set_focus)
+                        st.selectbox("Blade", get_options("blade", is_theory), key=keys_map["b"], on_change=set_focus)
+                        st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=keys_map["rib"], on_change=set_focus)
                     elif "CX+RIB" in tipo:
-                        st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=slot_keys["lb"], on_change=set_focus)
-                        st.selectbox("Main Blade", get_options("main_blade", is_theory), key=slot_keys["mb"], on_change=set_focus)
-                        st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=slot_keys["ab"], on_change=set_focus)
-                        st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=slot_keys["rib"], on_change=set_focus)
+                        st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=keys_map["lb"], on_change=set_focus)
+                        st.selectbox("Main Blade", get_options("main_blade", is_theory), key=keys_map["mb"], on_change=set_focus)
+                        st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=keys_map["ab"], on_change=set_focus)
+                        st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=keys_map["rib"], on_change=set_focus)
 
-                    # --- SEZIONE IMMAGINI CENTRATE E UNIFORMI ---
-                    st.write("") # Spazio extra
-                    for k_id in slot_keys.values():
+                    # --- SEZIONE IMMAGINI CENTRATE ---
+                    st.markdown('<div class="deck-img-container">', unsafe_allow_html=True)
+                    # Mostriamo le immagini in ordine
+                    for k_id in keys_map.values():
                         valore = st.session_state.get(k_id, "-")
                         if valore != "-":
                             url_comp = global_img_map.get(valore)
                             if url_comp:
                                 img_obj = get_img(url_comp)
                                 if img_obj:
-                                    # st.image con width fissa e trucco del CSS per centrare
-                                    st.image(img_obj, width=100, use_container_width=False)
-                    # Trucco CSS locale per forzare la centratura delle immagini caricate in questo expander
-                    st.markdown("<style>img { display: block; margin-left: auto !important; margin-right: auto !important; }</style>", unsafe_allow_html=True)
+                                    st.image(img_obj, width=80)
+                    st.markdown('</div>', unsafe_allow_html=True)
 
+            # Footer del deck
             st.markdown("<br>", unsafe_allow_html=True)
             if not deck['editing']:
                 c1, c2 = st.columns([1, 1])
