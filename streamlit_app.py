@@ -23,20 +23,19 @@ st.markdown("""
         margin-bottom: 15px !important;
         padding: 10px !important;
     }
-    div[data-testid="stVerticalBlockBorderWrapper"] > div > [data-testid="stVerticalBlock"] { gap: 0.2rem !important; }
 
-    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; margin-bottom: 2px; text-align: center; }
-    .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; margin-top: 2px; margin-bottom: 0px; text-align: center; width: 100%; display: block; }
+    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; }
+    .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; }
     hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; }
 
     /* BOTTONI AGGIUNGI (INTOCCABILI) */
     div.stButton > button {
-        width: auto !important; min-width: 150px !important; padding-left: 40px !important; padding-right: 40px !important;
+        width: auto !important; min-width: 150px !important;
         height: 30px !important; background-color: #334155 !important; color: white !important;
-        border: 1px solid #475569 !important; border-radius: 4px !important; font-size: 1.1rem !important;
+        border: 1px solid #475569 !important; border-radius: 4px !important;
     }
 
-    /* STILE INVENTARIO & EXPANDER */
+    /* STILE EXPANDER (COERENTE) */
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
     </style>
     """, unsafe_allow_html=True)
@@ -78,6 +77,8 @@ if 'decks' not in st.session_state:
     st.session_state.decks = [{"name": "DECK 1", "slots": {i: {} for i in range(3)}}]
 if 'exp_state' not in st.session_state:
     st.session_state.exp_state = {}
+if 'edit_name_idx' not in st.session_state:
+    st.session_state.edit_name_idx = None
 
 df, global_img_map = load_db()
 
@@ -94,17 +95,14 @@ with tab1:
             st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
             img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
             if img: st.image(img)
-            
             components = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
                           ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
                           ("ratchet_integrated_bit", "ratchet_integrated_bit")]
-            
             if st.button("Aggiungi tutto", key=f"all_{i}"):
                 for ck, ik in components:
                     val = row[ck]
                     if val and val != "n/a": st.session_state.inventario[ik][val] = st.session_state.inventario[ik].get(val, 0) + 1
                 st.toast("Aggiunto!")
-
             st.markdown("<hr>", unsafe_allow_html=True)
             for ck, ik in components:
                 val = row[ck]
@@ -135,58 +133,72 @@ with tab3:
 
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
 
+    # Ciclo Deck
     for d_idx, deck in enumerate(st.session_state.decks):
-        col_t, col_del = st.columns([0.85, 0.15])
-        col_t.markdown(f"### 🛡️ {deck['name']}")
-        if col_del.button("🗑️", key=f"del_deck_{d_idx}"):
-            if len(st.session_state.decks) > 1:
-                st.session_state.decks.pop(d_idx)
-                st.rerun()
+        with st.expander(f"🛡️ {deck['name'].upper()}", expanded=True):
+            # Ciclo Beyblade Slot
+            for s_idx in range(3):
+                sels = deck["slots"][s_idx]
+                nome_parti = [v for v in sels.values() if v and v != "-"]
+                titolo_slot = " ".join(nome_parti) if nome_parti else f"SLOT {s_idx+1}"
+                exp_key = f"{d_idx}-{s_idx}"
+                
+                with st.expander(titolo_slot.upper(), expanded=st.session_state.exp_state.get(exp_key, False)):
+                    tipo = st.selectbox("Sistema", tipologie, key=f"type_{d_idx}_{s_idx}")
+                    is_theory = "Theory" in tipo
+                    curr = {}
 
-        for s_idx in range(3):
-            sels = deck["slots"][s_idx]
-            nome_parti = [v for v in sels.values() if v and v != "-"]
-            titolo_slot = " ".join(nome_parti) if nome_parti else f"SLOT {s_idx+1}"
-            exp_key = f"{d_idx}-{s_idx}"
+                    if "BX/UX" in tipo and "+RIB" not in tipo:
+                        curr['b'] = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{d_idx}_{s_idx}")
+                        curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{d_idx}_{s_idx}")
+                        curr['bi'] = st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{d_idx}_{s_idx}")
+                    elif "CX" in tipo and "+RIB" not in tipo:
+                        curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{d_idx}_{s_idx}")
+                        curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{d_idx}_{s_idx}")
+                        curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{d_idx}_{s_idx}")
+                        curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{d_idx}_{s_idx}")
+                        curr['bi'] = st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{d_idx}_{s_idx}")
+                    elif "BX/UX+RIB" in tipo:
+                        curr['b'] = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{d_idx}_{s_idx}")
+                        curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{d_idx}_{s_idx}")
+                    elif "CX+RIB" in tipo:
+                        curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{d_idx}_{s_idx}")
+                        curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{d_idx}_{s_idx}")
+                        curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{d_idx}_{s_idx}")
+                        curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{d_idx}_{s_idx}")
+
+                    st.write("")
+                    cols = st.columns(5)
+                    for i, (k, v) in enumerate(curr.items()):
+                        if v != "-":
+                            url = global_img_map.get(v)
+                            img_obj = get_img(url, size=(100, 100))
+                            if img_obj: cols[i].image(img_obj)
+
+                    if deck["slots"][s_idx] != curr:
+                        deck["slots"][s_idx] = curr
+                        st.session_state.exp_state[exp_key] = True
+                        st.rerun()
             
-            with st.expander(titolo_slot.upper(), expanded=st.session_state.exp_state.get(exp_key, False)):
-                tipo = st.selectbox("Sistema", tipologie, key=f"type_{d_idx}_{s_idx}")
-                is_theory = "Theory" in tipo
-                curr = {}
-
-                if "BX/UX" in tipo and "+RIB" not in tipo:
-                    curr['b'] = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{d_idx}_{s_idx}")
-                    curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{d_idx}_{s_idx}")
-                    curr['bi'] = st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{d_idx}_{s_idx}")
-                elif "CX" in tipo and "+RIB" not in tipo:
-                    curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{d_idx}_{s_idx}")
-                    curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{d_idx}_{s_idx}")
-                    curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{d_idx}_{s_idx}")
-                    curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_theory), key=f"r_{d_idx}_{s_idx}")
-                    curr['bi'] = st.selectbox("Bit", get_options("bit", is_theory), key=f"bi_{d_idx}_{s_idx}")
-                elif "BX/UX+RIB" in tipo:
-                    curr['b'] = st.selectbox("Blade", get_options("blade", is_theory), key=f"b_{d_idx}_{s_idx}")
-                    curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{d_idx}_{s_idx}")
-                elif "CX+RIB" in tipo:
-                    curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_theory), key=f"lb_{d_idx}_{s_idx}")
-                    curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{d_idx}_{s_idx}")
-                    curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{d_idx}_{s_idx}")
-                    curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{d_idx}_{s_idx}")
-
-                st.write("")
-                cols = st.columns(5)
-                for i, (k, v) in enumerate(curr.items()):
-                    if v != "-":
-                        url = global_img_map.get(v)
-                        img_obj = get_img(url, size=(100, 100))
-                        if img_obj: cols[i].image(img_obj)
-
-                if deck["slots"][s_idx] != curr:
-                    deck["slots"][s_idx] = curr
-                    st.session_state.exp_state[exp_key] = True
+            # Comandi Deck
+            st.markdown("<br>", unsafe_allow_html=True)
+            c1, c2, _ = st.columns([0.2, 0.2, 0.6])
+            if c1.button("📝 Rinomina", key=f"ren_{d_idx}"):
+                st.session_state.edit_name_idx = d_idx
+                st.rerun()
+            if c2.button("🗑️ Elimina", key=f"del_{d_idx}", type="primary"):
+                if len(st.session_state.decks) > 1:
+                    st.session_state.decks.pop(d_idx)
                     st.rerun()
-        st.markdown("---")
+            
+            if st.session_state.edit_name_idx == d_idx:
+                new_n = st.text_input("Nuovo nome:", deck['name'], key=f"input_{d_idx}")
+                if st.button("Salva", key=f"save_{d_idx}"):
+                    deck['name'] = new_n
+                    st.session_state.edit_name_idx = None
+                    st.rerun()
 
+    st.markdown("---")
     if st.button("➕ Aggiungi Nuovo Deck"):
         st.session_state.decks.append({"name": f"DECK {len(st.session_state.decks) + 1}", "slots": {i: {} for i in range(3)}})
         st.rerun()
