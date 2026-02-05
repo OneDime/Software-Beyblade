@@ -5,69 +5,90 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE CSS
+# CONFIGURAZIONE & STILE DARK "OFFICINA"
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
-    /* Sfondo generale e font */
-    .stApp { background-color: #0f172a; color: #f8fafc; }
+    /* Sfondo Generale e Testi Tab/Ricerca */
+    .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* Card Beyblade: Blu-Grigio scuro, centrata */
-    .bey-card {
-        background-color: #1e293b; /* Blu-grigio scuro */
-        border: 1px solid #334155;
-        border-radius: 15px;
+    /* Rende i testi dei Tab e delle Label grigio chiaro/bianco */
+    .stTabs [data-baseweb="tab-list"] button [data-testid="stWidgetLabel"] p,
+    .stTabs [data-baseweb="tab-panel"] p,
+    label [data-testid="stWidgetLabel"] p, 
+    .stMarkdown p { color: #f1f5f9 !important; font-weight: 500; }
+    
+    /* Input di ricerca: testo chiaro */
+    input { color: #f1f5f9 !important; background-color: #1e293b !important; border: 1px solid #334155 !important; }
+
+    /* CARD TOTALE: La "Scocca" che racchiude tutto */
+    .bey-card-total {
+        background-color: #1e293b; 
+        border: 2px solid #3b82f6;
+        border-radius: 20px;
         padding: 20px;
-        margin: 10px auto;
-        max-width: 450px; /* Evita che su desktop diventi troppo larga */
+        margin-bottom: 25px;
         text-align: center;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
     }
 
-    /* Intestazione nome beyblade */
-    .bey-name-header {
+    .bey-header {
         font-weight: bold;
-        font-size: 1.3rem;
-        background-color: #3b82f6; /* Blu più vivace per il nome */
-        color: white;
-        padding: 10px;
-        border-radius: 8px;
+        font-size: 1.4rem;
+        color: #60a5fa;
         margin-bottom: 15px;
         text-transform: uppercase;
+        border-bottom: 1px solid #334155;
+        padding-bottom: 10px;
     }
 
-    /* Riga componenti: Testo e Bottone */
-    .comp-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    /* Riga Componenti: FORZA l'affiancamento senza andare a capo */
+    .force-row {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
         background: #0f172a;
-        margin: 5px 0;
+        margin: 6px 0;
         padding: 8px 12px;
-        border-radius: 6px;
+        border-radius: 10px;
     }
     
-    .comp-label { font-size: 0.95rem; color: #cbd5e1; }
+    .comp-name-text {
+        font-size: 0.95rem;
+        color: #e2e8f0;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex-shrink: 1;
+    }
 
-    /* Bottoni */
-    .stButton>button {
-        background-color: #334155;
-        color: white;
-        border: 1px solid #475569;
-        transition: 0.3s;
+    /* Bottoni Aggiungi (+) */
+    .add-btn-style button {
+        min-width: 35px !important;
+        height: 35px !important;
+        background-color: #3b82f6 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        flex-shrink: 0 !important;
     }
-    .stButton>button:hover {
-        background-color: #3b82f6;
-        border-color: #3b82f6;
+
+    /* Centratura Immagine */
+    [data-testid="stImage"] { display: flex; justify-content: center; margin: 15px 0; }
+    
+    /* Deck Builder Fix */
+    .deck-part-row {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px !important;
+        width: 100% !important;
     }
-    
-    /* Forza centratura immagini */
-    .stImage { display: flex; justify-content: center; }
-    
-    /* Fix per i flag del deck (li mettiamo su una riga se c'è spazio) */
-    .stCheckbox { margin-top: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -82,7 +103,7 @@ def load_db():
     return df
 
 @st.cache_resource
-def get_img(url, size=(150, 150)):
+def get_img(url, size=(160, 160)):
     if not url or url == "n/a": return None
     h = hashlib.md5(url.encode()).hexdigest()
     path = os.path.join("images", f"{h}.png")
@@ -102,51 +123,53 @@ st.sidebar.title("🔧 Officina X")
 utente = st.sidebar.selectbox("Utente", ["Antonio", "Andrea", "Fabio"])
 
 # =========================
-# TABS
+# UI TABS
 # =========================
 tab_add, tab_inv, tab_deck = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 with tab_add:
-    search_q = st.text_input("Cerca beyblade o componenti...", key="search_bar")
+    search_q = st.text_input("Cerca beyblade o componenti...", key="search_main")
     
     filtered = df
     if len(search_q) >= 2:
         filtered = df[df['_search'].str.contains(search_q.lower())]
     else:
-        filtered = df.head(5)
+        filtered = df.head(4)
 
     for i, (_, row) in enumerate(filtered.iterrows()):
-        # Creiamo la card intera con HTML
-        st.markdown(f"""
-            <div class="bey-card">
-                <div class="bey-name-header">{row['name']}</div>
-            </div>
-        """, unsafe_allow_html=True)
+        # INIZIO CARD UNIFICATA
+        st.markdown(f'<div class="bey-card-total">', unsafe_allow_html=True)
+        st.markdown(f'<div class="bey-header">{row["name"]}</div>', unsafe_allow_html=True)
         
-        # L'immagine e i tasti devono stare dentro il container, 
-        # Streamlit non permette di mettere bottoni "dentro" una stringa HTML, 
-        # quindi usiamo un trucco di margini negativi o container puliti.
+        img = get_img(row['blade_image'] or row['beyblade_page_image'])
+        if img: st.image(img, width=160)
         
-        with st.container():
-            # Immagine
-            img = get_img(row['blade_image'] or row['beyblade_page_image'])
-            if img: st.image(img, width=150)
-            
-            # Lista componenti
-            comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"), 
-                     ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"), 
-                     ("ratchet_integrated_bit", "ratchet_integrated_bit")]
-            
-            for field, inv_key in comps:
-                val = row[field]
-                if val and val != "n/a":
-                    c_txt, c_btn = st.columns([0.8, 0.2])
-                    c_txt.markdown(f"**{val}**")
-                    if c_btn.button("＋", key=f"add_{i}_{field}"):
+        comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"), 
+                 ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"), 
+                 ("ratchet_integrated_bit", "ratchet_integrated_bit")]
+        
+        for field, inv_key in comps:
+            val = row[field]
+            if val and val != "n/a":
+                # Layout per bloccare il tasto accanto al nome
+                col_name, col_btn = st.columns([0.8, 0.2])
+                with col_name:
+                    st.markdown(f"<div class='comp-name-text'>{val}</div>", unsafe_allow_html=True)
+                with col_btn:
+                    if st.button("＋", key=f"add_{i}_{field}"):
                         st.session_state.inventario[inv_key][val] = st.session_state.inventario[inv_key].get(val, 0) + 1
                         st.toast(f"Aggiunto {val}")
 
-            st.button("Aggiungi tutto", key=f"all_{i}", use_container_width=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        # Fix tasto Aggiungi Tutto
+        if st.button("Aggiungi tutto", key=f"all_btn_{i}", use_container_width=True):
+            for field, inv_key in comps:
+                v = row[field]
+                if v and v != "n/a":
+                    st.session_state.inventario[inv_key][v] = st.session_state.inventario[inv_key].get(v, 0) + 1
+            st.toast(f"Aggiunto {row['name']} completo!")
+            
+        st.markdown('</div>', unsafe_allow_html=True) # FINE CARD UNIFICATA
 
 with tab_inv:
     st.header(f"Inventario di {utente}")
@@ -159,24 +182,24 @@ with tab_inv:
                 for nome, qta in validi.items():
                     c1, c2, c3 = st.columns([0.6, 0.2, 0.2])
                     c1.write(f"{nome} (x{qta})")
-                    if c2.button("＋", key=f"p_{tipo}_{nome}"):
+                    if c2.button("＋", key=f"inv_p_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] += 1
                         st.rerun()
-                    if c3.button("－", key=f"m_{tipo}_{nome}"):
+                    if c3.button("－", key=f"inv_m_{tipo}_{nome}"):
                         st.session_state.inventario[tipo][nome] -= 1
                         st.rerun()
 
 with tab_deck:
-    col_h, col_b = st.columns([2, 1])
-    col_h.header(f"Deck di {utente}")
-    if col_b.button("➕ Nuovo Deck"):
+    st.header(f"Deck di {utente}")
+    if st.button("➕ Nuovo Deck", use_container_width=True):
         st.session_state.decks.append({"name": f"Deck {len(st.session_state.decks)+1}"})
 
     for d_idx, deck in enumerate(st.session_state.decks):
         with st.expander(f"📂 {deck['name']}", expanded=True):
             for b_idx in range(3):
-                st.markdown(f"### Beyblade {b_idx+1}")
+                st.markdown(f"#### Beyblade {b_idx+1}")
                 
+                # Flag sulla stessa riga
                 f1, f2, f3 = st.columns(3)
                 v_cx = f1.checkbox("CX", key=f"cx_{d_idx}_{b_idx}")
                 v_rib = f2.checkbox("RIB", key=f"rib_{d_idx}_{b_idx}")
@@ -194,7 +217,7 @@ with tab_deck:
                         inv_k = "lock_bit" if db_key == "lock_chip" else db_key
                         opts = [""] + sorted(list(st.session_state.inventario.get(inv_k, {}).keys()))
                     
-                    # Layout orizzontale per smartphone: Menu a sinistra, immagine a destra
+                    # Layout Deck forzato: Menu e Immagine
                     cd1, cd2 = st.columns([0.7, 0.3])
                     scelta = cd1.selectbox(label, opts, key=f"s_{d_idx}_{b_idx}_{db_key}")
                     if scelta:
