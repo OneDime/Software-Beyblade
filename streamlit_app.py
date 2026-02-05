@@ -86,13 +86,18 @@ def get_img(url):
 
 def add_to_inv(tipo, nome):
     if nome and nome != "n/a":
-        # Inizializza il dizionario della categoria se non esiste
+        # Accesso sicuro al dizionario annidato
         if nome not in st.session_state.inventario[tipo]:
             st.session_state.inventario[tipo][nome] = 0
         st.session_state.inventario[tipo][nome] += 1
 
+# Inizializzazione Inventario
 if 'inventario' not in st.session_state:
-    st.session_state.inventario = {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}
+    st.session_state.inventario = {
+        "lock_bit": {}, "blade": {}, "main_blade": {}, 
+        "assist_blade": {}, "ratchet": {}, "bit": {}, 
+        "ratchet_integrated_bit": {}
+    }
 
 df = load_db()
 
@@ -108,7 +113,8 @@ with tab1:
 
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            st.markdown(f<div class='bey-name'>{row['name']}</div>, unsafe_allow_html=True)
+            # FIX SYNTAX ERROR QUI SOTTO
+            st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
             
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
             if img: st.image(img, width=150)
@@ -139,28 +145,28 @@ with tab1:
 with tab2:
     st.markdown("<div class='bey-name'>Magazzino Pezzi</div>", unsafe_allow_html=True)
     
-    # Verifichiamo se c'è qualcosa in inventario
-    vuoto = True
+    # Controllo se l'inventario ha dati
+    has_content = False
     for cat in st.session_state.inventario:
         if any(q > 0 for q in st.session_state.inventario[cat].values()):
-            vuoto = False
+            has_content = True
             break
             
-    if vuoto:
-        st.info("L'inventario è vuoto. Torna nel tab 'Aggiungi' per inserire i tuoi Beyblade.")
+    if not has_content:
+        st.info("L'inventario è vuoto. Torna nel tab 'Aggiungi' per inserire i tuoi pezzi.")
     else:
         for categoria, pezzi in st.session_state.inventario.items():
-            # Mostra la categoria solo se contiene pezzi con quantità > 0
             pezzi_validi = {n: q for n, q in pezzi.items() if q > 0}
             if pezzi_validi:
                 with st.container(border=True):
                     # Titolo Categoria
-                    st.markdown(f"<div class='bey-name' style='color: #94a3b8; font-size: 1.1rem;'>{categoria.replace('_', ' ').upper()}</div>", unsafe_allow_html=True)
+                    cat_display = categoria.replace('_', ' ').upper()
+                    st.markdown(f"<div class='bey-name' style='color: #94a3b8; font-size: 1.1rem;'>{cat_display}</div>", unsafe_allow_html=True)
                     
                     for nome, qta in pezzi_validi.items():
                         st.markdown(f"<div class='comp-name'>{nome}</div>", unsafe_allow_html=True)
                         
-                        # Tasti di gestione quantità (+ e -)
+                        # Tasti di gestione quantità (Colonne per tenerli affiancati)
                         c1, c2 = st.columns(2)
                         with c1:
                             if st.button(f"－ ({qta})", key=f"min_{categoria}_{nome}"):
@@ -171,6 +177,6 @@ with tab2:
                                 st.session_state.inventario[categoria][nome] += 1
                                 st.rerun()
 
-# --- TAB 3: DECK BUILDER (STRUTTURA BASE) ---
+# --- TAB 3: DECK BUILDER ---
 with tab3:
     st.info("Area Deck Builder in fase di allestimento...")
