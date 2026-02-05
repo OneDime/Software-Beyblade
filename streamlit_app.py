@@ -72,6 +72,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =========================
+# COMPONENTE CUSTOM
+# =========================
+_click = components.declare_component("bey_click", path=None)
+
+def bey_card(html):
+    return _click(html=html)
+
+# =========================
 # DATA
 # =========================
 @st.cache_data
@@ -95,7 +103,7 @@ if "inventario" not in st.session_state:
 tab_add, tab_inv, _ = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 # =========================
-# TAB AGGIUNGI (HTML PURO)
+# TAB AGGIUNGI
 # =========================
 with tab_add:
     search = st.text_input("Cerca...")
@@ -137,7 +145,7 @@ with tab_add:
         </div>
         """
 
-        res = components.html(html, height=420)
+        res = bey_card(html)
 
         if res:
             if res == "ALL":
