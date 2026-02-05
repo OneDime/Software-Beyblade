@@ -5,7 +5,7 @@ import os
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE (TASTI COMPATTI 30PX)
+# CONFIGURAZIONE & STILE (TASTI 30PX - FULL WIDTH)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -14,7 +14,7 @@ st.markdown("""
     /* Sfondo Grigio-Blu molto scuro */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
-    /* Centratura forzata di tutti gli elementi */
+    /* Centratura forzata */
     [data-testid="stVerticalBlock"] {
         text-align: center;
         align-items: center;
@@ -32,36 +32,38 @@ st.markdown("""
     /* Titolo Beyblade Centrato */
     .bey-name { 
         font-weight: bold; 
-        font-size: 1.3rem; 
+        font-size: 1.4rem; 
         color: #60a5fa; 
         text-transform: uppercase;
         margin-bottom: 8px;
         text-align: center;
     }
 
-    /* Nomi Componenti Centrati */
+    /* Nomi Componenti Centrati - Distanziamento ridotto */
     .comp-name {
-        font-size: 0.95rem;
+        font-size: 1.1rem; /* Font ripristinato */
         color: #cbd5e1;
-        margin-top: 12px;
-        margin-bottom: 4px;
+        margin-top: 7px;   /* Ridotto di altri 5px */
+        margin-bottom: 2px;
         text-align: center;
         width: 100%;
         display: block;
     }
 
-    /* BOTTONI LARGHI AL 100% - Altezza 30px */
+    /* BOTTONI: Altezza 30px, Larghezza 100% FORZATA */
     div.stButton > button {
         width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
         display: block !important;
         background-color: #334155 !important;
         color: white !important;
         border: 1px solid #475569 !important;
-        height: 30px !important; /* Ridotto a 30px come richiesto */
-        font-size: 0.9rem !important;
+        height: 30px !important; 
+        font-size: 1.1rem !important; /* Font ripristinato */
         border-radius: 4px !important;
-        line-height: 1 !important;
-        padding: 0 !important;
+        padding: 0px !important;
+        line-height: 30px !important; /* Centra il testo verticalmente nei 30px */
     }
     
     /* Centratura Immagini */
@@ -109,15 +111,12 @@ with tab1:
 
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            # 1. NOME CENTRATO
             st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
             
-            # 2. IMMAGINE CENTRATA
             img = get_img(row['blade_image'] or row['beyblade_page_image'])
             if img:
                 st.image(img, width=150)
             
-            # 3. TASTO AGGIUNGI TUTTO (30px)
             components = [
                 ("lock_chip", "lock_bit"),
                 ("blade", "blade"),
@@ -136,9 +135,8 @@ with tab1:
                         add_to_inv(inv_key, val)
                 st.toast(f"Set {row['name']} aggiunto!")
 
-            st.markdown("<hr style='border-top: 1px solid #475569; width: 100%; margin: 12px 0;'>", unsafe_allow_html=True)
+            st.markdown("<hr style='border-top: 1px solid #475569; width: 100%; margin: 10px 0;'>", unsafe_allow_html=True)
 
-            # 4. COMPONENTI SINGOLI (Tasti 30px)
             for comp_key, inv_key in components:
                 val = row[comp_key]
                 if val and val != "n/a":
