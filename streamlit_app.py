@@ -135,28 +135,8 @@ with tab2:
 
 # --- TAB 3: DECK BUILDER ---
 with tab3:
-    # 1. Expander Generale del Deck
-    with st.expander(f"{st.session_state.deck_name.upper()} (3 SLOT)", expanded=True):
-        
-        # Logica per la modifica del nome
-        if not st.session_state.editing_name:
-            if st.button("📝 Modifica Nome Deck"):
-                st.session_state.editing_name = True
-                st.rerun()
-        else:
-            new_name = st.text_input("Nuovo nome:", st.session_state.deck_name)
-            col_save, col_cancel = st.columns([1, 1])
-            with col_save:
-                if st.button("Salva"):
-                    st.session_state.deck_name = new_name
-                    st.session_state.editing_name = False
-                    st.rerun()
-            with col_cancel:
-                if st.button("Annulla"):
-                    st.session_state.editing_name = False
-                    st.rerun()
-
-        st.write("---")
+    # 1. Expander Generale del Deck (Senza "(3 slot)")
+    with st.expander(f"{st.session_state.deck_name.upper()}", expanded=True):
         
         def get_options(cat, theory=False):
             if theory:
@@ -196,3 +176,23 @@ with tab3:
                     st.selectbox("Main Blade", get_options("main_blade", is_theory), key=f"mb_{idx}")
                     st.selectbox("Assist Blade", get_options("assist_blade", is_theory), key=f"ab_{idx}")
                     st.selectbox("RIB", get_options("ratchet_integrated_bit", is_theory), key=f"rib_{idx}")
+
+        # 3. Sezione Modifica Nome spostata in fondo
+        st.markdown("<br>", unsafe_allow_html=True)
+        if not st.session_state.editing_name:
+            if st.button("📝 Modifica Nome Deck"):
+                st.session_state.editing_name = True
+                st.rerun()
+        else:
+            with st.container():
+                new_name = st.text_input("Nuovo nome:", st.session_state.deck_name)
+                col_save, col_cancel = st.columns([1, 1])
+                with col_save:
+                    if st.button("Salva"):
+                        st.session_state.deck_name = new_name
+                        st.session_state.editing_name = False
+                        st.rerun()
+                with col_cancel:
+                    if st.button("Annulla"):
+                        st.session_state.editing_name = False
+                        st.rerun()
