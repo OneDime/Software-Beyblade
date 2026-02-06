@@ -38,15 +38,21 @@ st.markdown("""
 # =========================
 # FUNZIONI SALVATAGGIO CLOUD
 # =========================
+def get_conn():
+    # Estraiamo i segreti e puliamo la chiave privata
+    conf = dict(st.secrets["connections"]["gsheets"])
+    if "private_key" in conf:
+        conf["private_key"] = conf["private_key"].replace("\\n", "\n")
+    
+    # Rimuoviamo 'type' dai segreti per passarlo solo come classe della connessione
+    if "type" in conf:
+        del conf["type"]
+        
+    return st.connection("gsheets", type=GSheetsConnection, **conf)
+
 def save_cloud():
     try:
-        # Pulizia forzata della private key per evitare errori di padding/PEM
-        conf = dict(st.secrets["connections"]["gsheets"])
-        if "private_key" in conf:
-            conf["private_key"] = conf["private_key"].replace("\\n", "\n")
-            
-        conn = st.connection("gsheets", type=GSheetsConnection, **conf)
-        
+        conn = get_conn()
         inv_list = []
         deck_list = []
         for u, data in st.session_state.users.items():
@@ -61,11 +67,7 @@ def save_cloud():
 
 def load_cloud():
     try:
-        conf = dict(st.secrets["connections"]["gsheets"])
-        if "private_key" in conf:
-            conf["private_key"] = conf["private_key"].replace("\\n", "\n")
-
-        conn = st.connection("gsheets", type=GSheetsConnection, **conf)
+        conn = get_conn()
         sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
         
         df_inv = conn.read(spreadsheet=sheet_url, worksheet="inventario", ttl=0)
