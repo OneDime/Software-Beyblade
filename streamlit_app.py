@@ -34,6 +34,8 @@ st.markdown("""
     div.stButton > button { width: auto !important; min-width: 150px !important; height: 30px !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; border-radius: 4px !important; }
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
     [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
+    .slot-header { color: #60a5fa; font-weight: bold; margin-bottom: 5px; font-size: 1.2rem; }
+    .duplicate-warning { color: #fbbf24; font-weight: bold; margin-bottom: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -79,9 +81,6 @@ def save_cloud():
         st.toast("✅ Dati salvati!", icon="💾")
     else: st.error("❌ Errore sincronizzazione")
 
-# =========================
-# INIZIALIZZAZIONE
-# =========================
 if 'users' not in st.session_state:
     force_load()
 
@@ -97,9 +96,6 @@ if 'user_sel' not in st.session_state:
     user_dialog()
     st.stop()
 
-# =========================
-# DATI & IMMAGINI
-# =========================
 @st.cache_data
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame(), {}
@@ -126,19 +122,15 @@ df_db, global_img_map = load_db()
 user_sel = st.session_state.user_sel
 user_data = st.session_state.users[user_sel]
 
-# Sidebar
 st.sidebar.title(f"👤 {user_sel}")
 if st.sidebar.button("🔄 Forza Aggiornamento Cloud"):
     force_load(); st.rerun()
 
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
-# =========================
-# UI PRINCIPALE
-# =========================
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI (INALTERATO) ---
+# --- TAB 1 (INALTERATA) ---
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
@@ -164,7 +156,7 @@ with tab1:
                         user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                         save_cloud()
 
-# --- TAB 2: INVENTARIO ---
+# --- TAB 2 ---
 with tab2:
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
     op = 1 if "Aggiungi" in modo else -1
@@ -188,27 +180,28 @@ with tab3:
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
     
     for d_idx, deck in enumerate(user_data["decks"]):
-        # Raccolta duplicati
         all_selected = []
         for s in deck["slots"].values():
             all_selected.extend([v for v in s.values() if v and v != "-"])
 
-        # Expander DECK (sempre aperto di default)
         with st.expander(deck['name'].upper(), expanded=True):
             for s_idx in range(3):
                 s_key = str(s_idx)
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 curr = deck["slots"][s_key]
                 
-                # Calcolo Titolo con alert duplicati
-                titolo_base = [v for v in curr.values() if v and v != "-"]
-                ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
-                titolo = " ".join(titolo_base).strip() or f"SLOT {s_idx+1}"
-                if ha_duplicati: titolo += " ⚠️"
-                
-                # EXPANDER NATIVO: Rimosso il parametro 'expanded'
-                # Streamlit userà la 'key' per ricordare se l'utente l'ha aperto o chiuso
-                with st.expander(titolo.upper()):
+                # TITOLO STATICO per evitare che l'expander si chiuda al rerun
+                # Il nome del Beyblade lo mettiamo dentro l'expander
+                with st.expander(f"SLOT {s_idx+1}"):
+                    # Visualizzazione Nome e Alert Duplicati
+                    titolo_base = [v for v in curr.values() if v and v != "-"]
+                    nome_bey = " ".join(titolo_base).strip() or "Svuota"
+                    ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
+                    
+                    st.markdown(f"<div class='slot-header'>{nome_bey.upper()}</div>", unsafe_allow_html=True)
+                    if ha_duplicati:
+                        st.markdown("<div class='duplicate-warning'>⚠️ ATTENZIONE: COMPONENTI DUPLICATE NEL DECK</div>", unsafe_allow_html=True)
+
                     tipo = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}")
                     is_th = "Theory" in tipo
                     
@@ -221,12 +214,10 @@ with tab3:
                         if current_val != "-" and all_selected.count(current_val) > 1:
                             display_label = f"{label} ⚠️"
                             
-                        w_key = f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}"
-                        res = st.selectbox(display_label, opts, index=opts.index(current_val), key=w_key)
-                        
+                        res = st.selectbox(display_label, opts, index=opts.index(current_val), key=f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}")
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res
-                            st.rerun() # Ricarica solo per aggiornare i titoli e i ⚠️
+                            st.rerun()
 
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         update_comp("Blade", "blade", "b")
@@ -252,7 +243,6 @@ with tab3:
                             img_obj = get_img(global_img_map.get(v))
                             if img_obj: cols[i % 5].image(img_obj)
 
-            # Pulsanti Deck
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
                 st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
@@ -260,7 +250,6 @@ with tab3:
                 save_cloud()
             if c3.button("Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
                 user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
-            
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
                 n_name = st.text_input("Nuovo nome:", deck['name'], key=f"i_{d_idx}")
                 if st.button("OK", key=f"o_{d_idx}"):
