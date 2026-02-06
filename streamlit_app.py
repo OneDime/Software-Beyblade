@@ -11,11 +11,15 @@ from PIL import Image
 # =========================
 # CONFIGURAZIONE & STILE
 # =========================
-st.set_page_config(page_title="Officina Beyblade X", layout="wide")
+# Forziamo il tema scuro tramite configuration (valido per alcune versioni di Streamlit)
+st.set_page_config(page_title="Officina Beyblade X", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
     <style>
+    /* Forzatura Dark Mode Globale */
+    :root { color-scheme: dark; }
     .stApp { background-color: #0f172a; color: #f1f5f9; }
+    
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
     [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
     div[data-testid="stVerticalBlockBorderWrapper"] {
@@ -138,9 +142,8 @@ if st.sidebar.button("🔄 Forza Sync Cloud"):
     force_load()
     st.rerun()
 
-# --- NUOVO PULSANTE AGGIORNA DATABASE ---
 if st.sidebar.button("📂 Aggiorna Database CSV"):
-    st.cache_data.clear() # Svuota la cache per ricaricare il CSV aggiornato
+    st.cache_data.clear()
     st.toast("Database ricaricato!", icon="📂")
     time.sleep(1)
     st.rerun()
