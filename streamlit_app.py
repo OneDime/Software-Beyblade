@@ -70,7 +70,7 @@ def save_cloud():
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
     github_action("inv", inv_data, "PUT")
     github_action("decks", deck_data, "PUT")
-    st.sidebar.success("Sincronizzato!")
+    st.toast("💾 Sincronizzato su GitHub!", icon="✅")
 
 def load_cloud():
     inv_cloud = github_action("inv", method="GET")
@@ -111,7 +111,7 @@ def get_img(url, size=(100, 100)):
     return None
 
 # =========================
-# INIZIALIZZAZIONE
+# INIZIALIZZAZIONE & POPUP UTENTE
 # =========================
 if 'users' not in st.session_state:
     cloud = load_cloud()
@@ -119,20 +119,28 @@ if 'users' not in st.session_state:
     else:
         st.session_state.users = {u: {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]} for u in ["Antonio", "Andrea", "Fabio"]}
 
-# --- PUNTO 1: CONFIGURAZIONE URL ---
-user_list = ["Antonio", "Andrea", "Fabio"]
-q_params = st.query_params
-initial_user = q_params.get("user", "Antonio")
-if initial_user not in user_list: initial_user = "Antonio"
+# --- NUOVA GESTIONE ACCESSO ---
+@st.dialog("Accesso Officina")
+def user_dialog():
+    st.write("Seleziona il tuo profilo:")
+    for u in ["Antonio", "Andrea", "Fabio"]:
+        if st.button(u, use_container_width=True, key=f"select_{u}"):
+            st.session_state.user_sel = u
+            st.rerun()
 
-st.sidebar.title("👤 Account")
-user_sel = st.sidebar.radio("Seleziona Utente:", user_list, index=user_list.index(initial_user))
+if 'user_sel' not in st.session_state:
+    user_dialog()
+    st.stop()
 
-if user_sel != initial_user:
-    st.query_params["user"] = user_sel
+user_sel = st.session_state.user_sel
+user_data = st.session_state.users[user_sel]
+
+# Sidebar per info e logout
+st.sidebar.title(f"👤 {user_sel}")
+if st.sidebar.button("Esci / Cambia Utente"):
+    del st.session_state.user_sel
     st.rerun()
 
-user_data = st.session_state.users[user_sel]
 if 'exp_state' not in st.session_state: st.session_state.exp_state = {}
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 df_db, global_img_map = load_db()
@@ -143,6 +151,7 @@ df_db, global_img_map = load_db()
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
+# --- TAB 1: AGGIUNGI (INALTERATO) ---
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
@@ -168,6 +177,7 @@ with tab1:
                         user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                         save_cloud(); st.toast(f"Aggiunto: {val}")
 
+# --- TAB 2: INVENTARIO (INALTERATO) ---
 with tab2:
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     op = 1 if "Aggiungi" in modo else -1
@@ -180,6 +190,7 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
+# --- TAB 3: DECK BUILDER (AGGIUNTO TASTO SALVA) ---
 with tab3:
     def get_options(cat, theory=False):
         if theory:
@@ -195,44 +206,47 @@ with tab3:
                 sels = deck["slots"].get(s_key, {})
                 titolo = " ".join([v for v in sels.values() if v and v != "-"]) or f"SLOT {s_idx+1}"
                 exp_key = f"{user_sel}-{d_idx}-{s_idx}"
-                
                 with st.expander(titolo.upper(), expanded=st.session_state.exp_state.get(exp_key, False)):
-                    # --- PUNTO 2: SALVATAGGIO FORZATO CON on_change ---
-                    tipo = st.selectbox("Sistema", tipologie, key=f"ty_{exp_key}", on_change=save_cloud)
+                    tipo = st.selectbox("Sistema", tipologie, key=f"ty_{exp_key}")
                     is_th, curr = "Theory" in tipo, {}
-                    
                     if "BX/UX" in tipo and "+RIB" not in tipo:
-                        curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}", on_change=save_cloud)
-                        curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}", on_change=save_cloud)
-                        curr['bi'] = st.selectbox("Bit", get_options("bit", is_th), key=f"bi_{exp_key}", on_change=save_cloud)
+                        curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
+                        curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}")
+                        curr['bi'] = st.selectbox("Bit", get_options("bit", is_th), key=f"bi_{exp_key}")
                     elif "CX" in tipo and "+RIB" not in tipo:
-                        curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_th), key=f"lb_{exp_key}", on_change=save_cloud)
-                        curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_th), key=f"mb_{exp_key}", on_change=save_cloud)
-                        curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_th), key=f"ab_{exp_key}", on_change=save_cloud)
-                        curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}", on_change=save_cloud)
-                        curr['bi'] = st.selectbox("Bit", get_options("bit", is_th), key=f"bi_{exp_key}", on_change=save_cloud)
+                        curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_th), key=f"lb_{exp_key}")
+                        curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_th), key=f"mb_{exp_key}")
+                        curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_th), key=f"ab_{exp_key}")
+                        curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}")
+                        curr['bi'] = st.selectbox("Bit", get_options("bit", is_th), key=f"bi_{exp_key}")
                     elif "+RIB" in tipo:
                         if "CX" in tipo:
-                            curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_th), key=f"lb_{exp_key}", on_change=save_cloud)
-                            curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_th), key=f"mb_{exp_key}", on_change=save_cloud)
-                            curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_th), key=f"ab_{exp_key}", on_change=save_cloud)
-                        else: curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}", on_change=save_cloud)
-                        curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_th), key=f"rib_{exp_key}", on_change=save_cloud)
+                            curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_th), key=f"lb_{exp_key}")
+                            curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_th), key=f"mb_{exp_key}")
+                            curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_th), key=f"ab_{exp_key}")
+                        else: curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
+                        curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_th), key=f"rib_{exp_key}")
                     
                     cols = st.columns(5)
                     for idx, (k, v) in enumerate(curr.items()):
                         if v != "-":
                             img_obj = get_img(global_img_map.get(v))
                             if img_obj: cols[idx].image(img_obj)
-                    
                     if deck["slots"].get(s_key) != curr:
                         deck["slots"][s_key] = curr
-                        st.session_state.exp_state[exp_key] = True
-                        st.rerun()
+                        st.session_state.exp_state[exp_key] = True; st.rerun()
 
-            c1, c2, _ = st.columns([0.2, 0.2, 0.6])
+            # --- PULSANTI DI AZIONE ---
+            c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("📝 Rinomina", key=f"ren_{user_sel}_{d_idx}"): st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
-            if c2.button("🗑️ Elimina", key=f"del_{user_sel}_{d_idx}", type="primary"): user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
+            
+            # PUNTO 2: IL TASTO SALVA RICHIESTO
+            if c2.button("💾 Salva Deck", key=f"save_btn_{user_sel}_{d_idx}"):
+                save_cloud()
+                st.rerun()
+                
+            if c3.button("🗑️ Elimina", key=f"del_{user_sel}_{d_idx}", type="primary"): user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
+            
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
                 n_name = st.text_input("Nuovo nome:", deck['name'], key=f"edit_input_{d_idx}")
                 if st.button("Conferma", key=f"confirm_{d_idx}"):
