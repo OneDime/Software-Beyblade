@@ -190,25 +190,15 @@ with tab3:
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
     
     for d_idx, deck in enumerate(user_data["decks"]):
-        # Conteggio duplicati nel deck attuale
-        all_selected = []
-        for s in deck["slots"].values():
-            all_selected.extend([v for v in s.values() if v and v != "-"] )
-        
         with st.expander(deck['name'].upper(), expanded=True):
             for s_idx in range(3):
                 s_key = str(s_idx)
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 curr = deck["slots"][s_key]
-                
-                # Titolo con avviso se ci sono duplicati nello slot
-                titolo_parti = [v for v in curr.values() if v and v != "-"]
-                avviso_slot = " ⚠️" if any(all_selected.count(p) > 1 for p in titolo_parti) else ""
-                titolo = " ".join(titolo_parti).strip() or f"SLOT {s_idx+1}"
-                
+                titolo = " ".join([v for v in curr.values() if v and v != "-"]).strip() or f"SLOT {s_idx+1}"
                 exp_id = f"exp_{user_sel}_{d_idx}_{s_idx}"
                 
-                with st.expander(f"{titolo.upper()}{avviso_slot}", expanded=st.session_state.exp_state.get(exp_id, False)):
+                with st.expander(titolo.upper(), expanded=st.session_state.exp_state.get(exp_id, False)):
                     tipo = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}")
                     is_th = "Theory" in tipo
                     
@@ -216,19 +206,11 @@ with tab3:
                         opts = get_options(cat, is_th)
                         current_val = curr.get(k_comp, "-")
                         if current_val not in opts: current_val = "-"
-                        
-                        # Aggiungi triangolo se il pezzo è già in un altro slot
-                        display_label = label
-                        if current_val != "-" and all_selected.count(current_val) > 1:
-                            display_label = f"{label} ⚠️"
-                        
                         w_key = f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}"
-                        res = st.selectbox(display_label, opts, index=opts.index(current_val), key=w_key)
-                        
+                        res = st.selectbox(label, opts, index=opts.index(current_val), key=w_key)
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res
                             st.session_state.exp_state[exp_id] = True
-                            st.rerun() # Rerunning to update the duplicate counts immediately
 
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         update_comp("Blade", "blade", "b")
