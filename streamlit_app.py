@@ -30,7 +30,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB
+# LOGICA GITHUB (STANDARDIZZATA)
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -59,11 +59,13 @@ def github_action(file_key, data=None, method="GET"):
     return None
 
 def save_all():
+    # Salva sia inventario che deck in un colpo solo per sicurezza
     inv_data = {u: d["inv"] for u, d in st.session_state.users.items()}
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
     github_action("inv", inv_data, "PUT")
     github_action("decks", deck_data, "PUT")
-    st.success("✅ Tutto salvato su GitHub!")
+    # Feedback visivo discreto (toast) invece di bloccare tutto
+    st.toast("✅ Salvataggio completato su GitHub!", icon="💾")
 
 def load_cloud():
     inv_cloud = github_action("inv", method="GET")
@@ -123,6 +125,7 @@ df_db, global_img_map = load_db()
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
+# --- TAB 1: AGGIUNGI (INTOCCATO) ---
 with tab1:
     search_q = st.text_input("Cerca componente...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
@@ -139,9 +142,11 @@ with tab1:
                     val = row[ck]
                     if val and val != "n/a": user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                 save_all()
+                st.rerun() 
 
+# --- TAB 2: INVENTARIO (LOGICA FUNZIONANTE) ---
 with tab2:
-    st.info("Le modifiche qui sono salvate automaticamente.")
+    st.info("Le modifiche sono salvate automaticamente.")
     for cat, items in user_data["inv"].items():
         if items:
             with st.expander(cat.replace('_', ' ').upper()):
@@ -151,14 +156,16 @@ with tab2:
                     if c2.button("🗑️", key=f"del_inv_{user_sel}_{cat}_{n}"):
                         user_data["inv"][cat][n] -= 1
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
-                        save_all(); st.rerun()
+                        save_all()
+                        st.rerun()
 
+# --- TAB 3: DECK BUILDER (LOGICA FIXATA) ---
 with tab3:
-    # TASTO SALVATAGGIO CRITICO
-    if st.button("💾 SALVA TUTTE LE MODIFICHE AI DECK", type="primary"):
-        save_all()
+    # Rimosso il tasto "SALVA" gigante perché ora salviamo ad ogni modifica, come nell'inventario.
+    st.info("Ogni modifica alle tendine viene salvata immediatamente su GitHub.")
 
     def get_options(cat, theory=False):
+        # Opzioni dal CSV (Theory) o dall'Inventario Utente
         if theory:
             csv_m = {"lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade", "assist_blade": "assist_blade", "ratchet": "ratchet", "bit": "bit", "ratchet_integrated_bit": "ratchet_integrated_bit"}
             return ["-"] + sorted([x for x in df_db[csv_m.get(cat, cat)].unique().tolist() if x and x != "n/a"])
@@ -172,51 +179,84 @@ with tab3:
                 s_key = str(s_idx)
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 
-                # Sincronizzazione valori
+                # Valori attuali nello slot
                 vals = deck["slots"][s_key]
-                t_label = " ".join([v for v in vals.values() if v != "-"]) or f"Slot {s_idx+1}"
+                
+                # Titolo dinamico
+                parti_presenti = [v for v in vals.values() if v and v != "-"]
+                t_label = " ".join(parti_presenti) if parti_presenti else f"Slot {s_idx+1}"
                 
                 with st.expander(t_label.upper()):
-                    tipo = st.selectbox("Sistema", tipologie, key=f"sist_{user_sel}_{d_idx}_{s_idx}")
-                    th = "Theory" in tipo
+                    # Selettore Sistema
+                    # LOGICA: Controllo -> Se cambia -> Aggiorno -> Salvo -> Rerun
+                    current_tipo = st.session_state.get(f"sist_{user_sel}_{d_idx}_{s_idx}", "BX/UX") # Default fittizio, gestito dalla selectbox
+                    sel_tipo = st.selectbox("Sistema", tipologie, key=f"sist_widget_{user_sel}_{d_idx}_{s_idx}")
                     
-                    # Funzione di selezione interna (aggiorna subito lo stato locale)
-                    def selector(label, cat, k):
-                        opts = get_options(cat, th)
-                        curr = vals.get(k, "-")
-                        idx = opts.index(curr) if curr in opts else 0
-                        sel = st.selectbox(label, opts, index=idx, key=f"sel_{k}_{user_sel}_{d_idx}_{s_idx}")
-                        deck["slots"][s_key][k] = sel
-                        return sel
+                    # Nota: Il tipo di sistema non lo stiamo salvando nel JSON (basandoci sul codice originale), 
+                    # serve solo a filtrare la vista corrente.
+                    is_th = "Theory" in sel_tipo
+                    
+                    # Funzione SMART SELECT:
+                    # Questa funzione replica la logica dell'inventario: Azione -> Salva -> Rerun
+                    def smart_select(label, cat, key_part):
+                        options = get_options(cat, is_th)
+                        current_val = vals.get(key_part, "-")
+                        
+                        # Calcolo indice per visualizzare correttamante la selectbox
+                        try:
+                            idx = options.index(current_val)
+                        except ValueError:
+                            idx = 0
+                        
+                        # Widget Selectbox
+                        selection = st.selectbox(label, options, index=idx, key=f"sel_{d_idx}_{s_idx}_{key_part}")
+                        
+                        # IL CUORE DEL FIX:
+                        # Se la selezione fatta dall'utente è diversa da quella in memoria:
+                        if selection != current_val:
+                            deck["slots"][s_key][key_part] = selection # 1. Aggiorno memoria
+                            save_all()                                 # 2. Salvo su Cloud
+                            st.rerun()                                 # 3. Ricarico pagina
+                        
+                        return selection
 
-                    if "BX/UX" in tipo and "+RIB" not in tipo:
-                        selector("Blade", "blade", "b")
-                        selector("Ratchet", "ratchet", "r")
-                        selector("Bit", "bit", "bi")
-                    elif "CX" in tipo and "+RIB" not in tipo:
-                        selector("Lock Bit", "lock_bit", "lb")
-                        selector("Main Blade", "main_blade", "mb")
-                        selector("Assist Blade", "assist_blade", "ab")
-                        selector("Ratchet", "ratchet", "r")
-                        selector("Bit", "bit", "bi")
-                    elif "+RIB" in tipo:
-                        if "CX" in tipo:
-                            selector("Lock Bit", "lock_bit", "lb")
-                            selector("Main Blade", "main_blade", "mb")
-                            selector("Assist Blade", "assist_blade", "ab")
-                        else: selector("Blade", "blade", "b")
-                        selector("RIB", "ratchet_integrated_bit", "rib")
+                    # Logica di visualizzazione in base al sistema scelto
+                    if "BX/UX" in sel_tipo and "+RIB" not in sel_tipo:
+                        smart_select("Blade", "blade", "b")
+                        smart_select("Ratchet", "ratchet", "r")
+                        smart_select("Bit", "bit", "bi")
+                    elif "CX" in sel_tipo and "+RIB" not in sel_tipo:
+                        smart_select("Lock Bit", "lock_bit", "lb")
+                        smart_select("Main Blade", "main_blade", "mb")
+                        smart_select("Assist Blade", "assist_blade", "ab")
+                        smart_select("Ratchet", "ratchet", "r")
+                        smart_select("Bit", "bit", "bi")
+                    elif "+RIB" in sel_tipo:
+                        if "CX" in sel_tipo:
+                            smart_select("Lock Bit", "lock_bit", "lb")
+                            smart_select("Main Blade", "main_blade", "mb")
+                            smart_select("Assist Blade", "assist_blade", "ab")
+                        else: smart_select("Blade", "blade", "b")
+                        smart_select("RIB", "ratchet_integrated_bit", "rib")
 
-                    # Immagini
+                    # Anteprima Immagini
                     cols = st.columns(5)
-                    for i, (k, v) in enumerate(deck["slots"][s_key].items()):
+                    col_idx = 0
+                    for k, v in deck["slots"][s_key].items():
                         if v != "-":
                             img_obj = get_img(global_img_map.get(v))
-                            if img_obj: cols[i % 5].image(img_obj)
+                            if img_obj: 
+                                cols[col_idx % 5].image(img_obj)
+                                col_idx += 1
 
+            # Tasto Elimina Deck (Logica Inventario: Azione -> Salva -> Rerun)
             if st.button(f"🗑️ Elimina {deck['name']}", key=f"del_dk_{d_idx}"):
-                user_data["decks"].pop(d_idx); save_all(); st.rerun()
+                user_data["decks"].pop(d_idx)
+                save_all()
+                st.rerun()
 
+    # Tasto Crea Deck (Logica Inventario)
     if st.button("➕ Crea Nuovo Deck"):
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {str(i): {} for i in range(3)}})
+        save_all()
         st.rerun()
