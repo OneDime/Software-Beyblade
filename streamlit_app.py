@@ -38,22 +38,23 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI SALVATAGGIO (BLINDATE)
+# FUNZIONI SALVATAGGIO (FIX PEM KEY)
 # =========================
 def get_conn():
-    """Versione Ultra-Pulita: ignora i secrets di Streamlit per evitare conflitti di argomenti."""
-    # Creiamo la connessione senza passare alcun parametro inizialmente
+    """Iniezione manuale delle credenziali con pulizia profonda della chiave PEM."""
     conn = st.connection("gsheets", type=GSheetsConnection)
-    
-    # Prendiamo i dati grezzi dai secrets
     s = st.secrets["connections"]["gsheets"]
     
-    # Costruiamo il dizionario credenziali standard di Google
+    # Pulizia estrema della private_key per evitare InvalidPadding
+    raw_key = s["private_key"]
+    # Rimuove eventuali virgolette esterne, gestisce i letterali \n e assicura il formato PEM
+    clean_key = raw_key.replace("\\n", "\n").replace('"', '').strip()
+    
     conf = {
         "type": "service_account",
         "project_id": s["project_id"],
         "private_key_id": s["private_key_id"],
-        "private_key": s["private_key"].replace("\\n", "\n"),
+        "private_key": clean_key,
         "client_email": s["client_email"],
         "client_id": s["client_id"],
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
@@ -62,8 +63,6 @@ def get_conn():
         "client_x509_cert_url": s["client_x509_cert_url"]
     }
     
-    # Sovrascriviamo manualmente la configurazione interna del connettore
-    # Questo bypassa il controllo degli argomenti di Streamlit
     conn._service_account_info = conf
     return conn
 
@@ -79,7 +78,7 @@ def save_cloud():
         conn.update(spreadsheet=url, worksheet="inventario", data=pd.DataFrame(inv_list))
         conn.update(spreadsheet=url, worksheet="decks", data=pd.DataFrame(deck_list))
     except Exception as e:
-        st.sidebar.error(f"Errore Salvataggio: {e}")
+        st.sidebar.error(f"Errore: {e}")
 
 def load_cloud():
     try:
