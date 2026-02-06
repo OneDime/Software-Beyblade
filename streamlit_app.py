@@ -37,7 +37,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB
+# LOGICA GITHUB (PUNTO 1: RINFORZATA)
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -49,28 +49,37 @@ def github_action(file_key, data=None, method="GET"):
     try:
         r = requests.get(url, headers=headers)
         sha = r.json().get("sha") if r.status_code == 200 else None
+        
         if method == "GET":
             if r.status_code == 200:
                 content = base64.b64decode(r.json()["content"]).decode('utf-8')
                 return json.loads(content)
             return None
+        
         elif method == "PUT":
             payload = {
                 "message": f"Update {FILES[file_key]}",
                 "content": base64.b64encode(json.dumps(data, indent=4).encode('utf-8')).decode('utf-8'),
                 "sha": sha
             }
-            requests.put(url, headers=headers, json=payload)
+            res = requests.put(url, headers=headers, json=payload)
+            return res.status_code in [200, 201]
     except Exception as e:
         st.error(f"GitHub Error: {e}")
-    return None
+    return False
 
 def save_cloud():
+    # Salvataggio esplicito di tutto lo stato attuale
     inv_data = {u: d["inv"] for u, d in st.session_state.users.items()}
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
-    github_action("inv", inv_data, "PUT")
-    github_action("decks", deck_data, "PUT")
-    st.toast("💾 Sincronizzato su GitHub!", icon="✅")
+    
+    ok_inv = github_action("inv", inv_data, "PUT")
+    ok_deck = github_action("decks", deck_data, "PUT")
+    
+    if ok_inv and ok_deck:
+        st.toast("💾 Dati salvati con successo su Cloud!", icon="✅")
+    else:
+        st.error("❌ Errore durante il salvataggio su GitHub. Controlla i segreti.")
 
 def load_cloud():
     inv_cloud = github_action("inv", method="GET")
@@ -86,7 +95,7 @@ def load_cloud():
     return None
 
 # =========================
-# LOGICA DATI & IMMAGINI
+# DATI & IMMAGINI (INALTERATO)
 # =========================
 @st.cache_data
 def load_db():
@@ -111,7 +120,7 @@ def get_img(url, size=(100, 100)):
     return None
 
 # =========================
-# INIZIALIZZAZIONE & POPUP UTENTE
+# INIZIALIZZAZIONE & POPUP
 # =========================
 if 'users' not in st.session_state:
     cloud = load_cloud()
@@ -119,7 +128,6 @@ if 'users' not in st.session_state:
     else:
         st.session_state.users = {u: {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]} for u in ["Antonio", "Andrea", "Fabio"]}
 
-# --- NUOVA GESTIONE ACCESSO ---
 @st.dialog("Accesso Officina")
 def user_dialog():
     st.write("Seleziona il tuo profilo:")
@@ -135,7 +143,6 @@ if 'user_sel' not in st.session_state:
 user_sel = st.session_state.user_sel
 user_data = st.session_state.users[user_sel]
 
-# Sidebar per info e logout
 st.sidebar.title(f"👤 {user_sel}")
 if st.sidebar.button("Esci / Cambia Utente"):
     del st.session_state.user_sel
@@ -151,7 +158,7 @@ df_db, global_img_map = load_db()
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI (INALTERATO) ---
+# --- TAB 1: AGGIUNGI (INALTERATO - CODICE STABILE) ---
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
@@ -167,7 +174,7 @@ with tab1:
                 for ck, ik in comps:
                     val = row[ck]
                     if val and val != "n/a": user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
-                save_cloud(); st.toast("Aggiunto!")
+                save_cloud()
             st.markdown("<hr>", unsafe_allow_html=True)
             for ck, ik in comps:
                 val = row[ck]
@@ -175,7 +182,7 @@ with tab1:
                     st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
                     if st.button("＋", key=f"btn_{i}_{ck}"):
                         user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
-                        save_cloud(); st.toast(f"Aggiunto: {val}")
+                        save_cloud()
 
 # --- TAB 2: INVENTARIO (INALTERATO) ---
 with tab2:
@@ -190,7 +197,7 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
-# --- TAB 3: DECK BUILDER (AGGIUNTO TASTO SALVA) ---
+# --- TAB 3: DECK BUILDER (PUNTO 2: FIX SALVATAGGIO) ---
 with tab3:
     def get_options(cat, theory=False):
         if theory:
@@ -199,6 +206,7 @@ with tab3:
         return ["-"] + sorted(list(user_data["inv"][cat].keys()))
     
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
+    
     for d_idx, deck in enumerate(user_data["decks"]):
         with st.expander(f"{deck['name'].upper()}", expanded=True):
             for s_idx in range(3):
@@ -206,9 +214,11 @@ with tab3:
                 sels = deck["slots"].get(s_key, {})
                 titolo = " ".join([v for v in sels.values() if v and v != "-"]) or f"SLOT {s_idx+1}"
                 exp_key = f"{user_sel}-{d_idx}-{s_idx}"
+                
                 with st.expander(titolo.upper(), expanded=st.session_state.exp_state.get(exp_key, False)):
                     tipo = st.selectbox("Sistema", tipologie, key=f"ty_{exp_key}")
                     is_th, curr = "Theory" in tipo, {}
+                    
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
                         curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}")
@@ -227,29 +237,44 @@ with tab3:
                         else: curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
                         curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_th), key=f"rib_{exp_key}")
                     
+                    # Visualizzazione immagini immediata (in Session State)
                     cols = st.columns(5)
                     for idx, (k, v) in enumerate(curr.items()):
                         if v != "-":
                             img_obj = get_img(global_img_map.get(v))
                             if img_obj: cols[idx].image(img_obj)
+                    
+                    # Aggiorna lo stato locale senza salvare ancora su Cloud
                     if deck["slots"].get(s_key) != curr:
                         deck["slots"][s_key] = curr
-                        st.session_state.exp_state[exp_key] = True; st.rerun()
+                        st.session_state.exp_state[exp_key] = True
+                        st.rerun()
 
             # --- PULSANTI DI AZIONE ---
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
-            if c1.button("📝 Rinomina", key=f"ren_{user_sel}_{d_idx}"): st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
             
-            # PUNTO 2: IL TASTO SALVA RICHIESTO
-            if c2.button("💾 Salva Deck", key=f"save_btn_{user_sel}_{d_idx}"):
+            if c1.button("📝 Rinomina", key=f"ren_{user_sel}_{d_idx}"):
+                st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"
+                st.rerun()
+            
+            # IL TASTO SALVA: Ora chiama save_cloud() che è stato potenziato
+            if c2.button("💾 SALVA DECK", key=f"save_btn_{user_sel}_{d_idx}"):
+                save_cloud()
+                
+            if c3.button("🗑️ Elimina", key=f"del_{user_sel}_{d_idx}", type="primary"):
+                user_data["decks"].pop(d_idx)
                 save_cloud()
                 st.rerun()
-                
-            if c3.button("🗑️ Elimina", key=f"del_{user_sel}_{d_idx}", type="primary"): user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
             
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
                 n_name = st.text_input("Nuovo nome:", deck['name'], key=f"edit_input_{d_idx}")
                 if st.button("Conferma", key=f"confirm_{d_idx}"):
-                    deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
+                    deck['name'] = n_name
+                    st.session_state.edit_name_idx = None
+                    save_cloud()
+                    st.rerun()
 
-    if st.button("➕ Nuovo Deck"): user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {str(i): {} for i in range(3)}}); save_cloud(); st.rerun()
+    if st.button("➕ Nuovo Deck"):
+        user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {str(i): {} for i in range(3)}})
+        save_cloud()
+        st.rerun()
