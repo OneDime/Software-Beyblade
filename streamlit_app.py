@@ -84,6 +84,8 @@ def save_cloud():
 # =========================
 if 'users' not in st.session_state:
     force_load()
+if 'exp_state' not in st.session_state:
+    st.session_state.exp_state = {}
 
 @st.dialog("Accesso Officina")
 def user_dialog():
@@ -186,89 +188,72 @@ with tab3:
         return ["-"] + sorted(list(user_data["inv"][cat].keys()))
     
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
-    sys_map = {
-        "BX/UX": ["b", "r", "bi"],
-        "CX": ["lb", "mb", "ab", "r", "bi"],
-        "BX/UX+RIB": ["b", "rib"],
-        "CX+RIB": ["lb", "mb", "ab", "rib"]
-    }
-
+    
     for d_idx, deck in enumerate(user_data["decks"]):
-        # Raccolta pezzi attivi per controllo duplicati
-        all_active_parts = []
+        # Conteggio duplicati nel deck attuale
+        all_selected = []
         for s in deck["slots"].values():
-            s_type = s.get("_sys", "BX/UX").replace(" Theory", "")
-            active_keys = sys_map.get(s_type, [])
-            all_active_parts.extend([s.get(k) for k in active_keys if s.get(k) and s.get(k) != "-"])
-
+            all_selected.extend([v for v in s.values() if v and v != "-"] )
+        
         with st.expander(deck['name'].upper(), expanded=True):
             for s_idx in range(3):
                 s_key = str(s_idx)
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 curr = deck["slots"][s_key]
                 
-                # Calcolo Titolo Pulito (senza il sistema)
-                c_base_type = curr.get("_sys", "BX/UX").replace(" Theory", "")
-                active_keys = sys_map.get(c_base_type, [])
-                titolo_parti = [curr.get(k) for k in active_keys if curr.get(k) and curr.get(k) != "-"]
-                avviso_slot = " ⚠️" if any(all_active_parts.count(p) > 1 for p in titolo_parti) else ""
-                titolo_testo = " ".join(titolo_parti).strip() or f"SLOT {s_idx+1}"
-
-                # Expander Beyblade
-                with st.expander(f"{titolo_testo.upper()}{avviso_slot}"):
-                    # SISTEMA DENTRO IL BEYBLADE
-                    new_sys = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}", index=tipologie.index(curr.get("_sys", tipologie[0])))
-                    if new_sys != curr.get("_sys"):
-                        curr["_sys"] = new_sys
-                        st.rerun()
-
-                    is_th = "Theory" in new_sys
+                # Titolo con avviso se ci sono duplicati nello slot
+                titolo_parti = [v for v in curr.values() if v and v != "-"]
+                avviso_slot = " ⚠️" if any(all_selected.count(p) > 1 for p in titolo_parti) else ""
+                titolo = " ".join(titolo_parti).strip() or f"SLOT {s_idx+1}"
+                
+                exp_id = f"exp_{user_sel}_{d_idx}_{s_idx}"
+                
+                with st.expander(f"{titolo.upper()}{avviso_slot}", expanded=st.session_state.exp_state.get(exp_id, False)):
+                    tipo = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}")
+                    is_th = "Theory" in tipo
                     
                     def update_comp(label, cat, k_comp):
                         opts = get_options(cat, is_th)
                         current_val = curr.get(k_comp, "-")
                         if current_val not in opts: current_val = "-"
                         
+                        # Aggiungi triangolo se il pezzo è già in un altro slot
                         display_label = label
-                        if current_val != "-" and all_active_parts.count(current_val) > 1:
+                        if current_val != "-" and all_selected.count(current_val) > 1:
                             display_label = f"{label} ⚠️"
                         
-                        res = st.selectbox(display_label, opts, index=opts.index(current_val), key=f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}")
+                        w_key = f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}"
+                        res = st.selectbox(display_label, opts, index=opts.index(current_val), key=w_key)
+                        
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res
-                            # Niente rerun qui per non far collassare l'expander
+                            st.session_state.exp_state[exp_id] = True
+                            st.rerun() # Rerunning to update the duplicate counts immediately
 
-                    # Menu condizionali
-                    if "BX/UX" in c_base_type and "+RIB" not in c_base_type:
+                    if "BX/UX" in tipo and "+RIB" not in tipo:
                         update_comp("Blade", "blade", "b")
                         update_comp("Ratchet", "ratchet", "r")
                         update_comp("Bit", "bit", "bi")
-                    elif "CX" in c_base_type and "+RIB" not in c_base_type:
+                    elif "CX" in tipo and "+RIB" not in tipo:
                         update_comp("Lock Bit", "lock_bit", "lb")
                         update_comp("Main Blade", "main_blade", "mb")
                         update_comp("Assist Blade", "assist_blade", "ab")
                         update_comp("Ratchet", "ratchet", "r")
                         update_comp("Bit", "bit", "bi")
-                    elif "+RIB" in c_base_type:
-                        if "CX" in c_base_type:
+                    elif "+RIB" in tipo:
+                        if "CX" in tipo:
                             update_comp("Lock Bit", "lock_bit", "lb")
                             update_comp("Main Blade", "main_blade", "mb")
                             update_comp("Assist Blade", "assist_blade", "ab")
                         else: update_comp("Blade", "blade", "b")
                         update_comp("RIB", "ratchet_integrated_bit", "rib")
 
-                    # Anteprima immagini (solo componenti attive)
                     cols = st.columns(5)
-                    img_idx = 0
-                    for k in active_keys:
-                        v = curr.get(k)
+                    for i, (k, v) in enumerate(curr.items()):
                         if v and v != "-":
                             img_obj = get_img(global_img_map.get(v))
-                            if img_obj:
-                                cols[img_idx % 5].image(img_obj)
-                                img_idx += 1
+                            if img_obj: cols[i % 5].image(img_obj)
 
-            # Pulsanti Deck
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
                 st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
@@ -276,7 +261,6 @@ with tab3:
                 save_cloud()
             if c3.button("Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
                 user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
-            
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
                 n_name = st.text_input("Nuovo nome:", deck['name'], key=f"i_{d_idx}")
                 if st.button("OK", key=f"o_{d_idx}"):
