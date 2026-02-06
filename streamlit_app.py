@@ -38,7 +38,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB (ESTREMA)
+# LOGICA GITHUB (PULITA)
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -47,40 +47,34 @@ FILES = {"inv": "inventario.json", "decks": "decks.json"}
 def github_action(file_key, data=None, method="GET"):
     ts = int(time.time())
     url = f"https://api.github.com/repos/{REPO}/contents/{FILES[file_key]}"
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github.v3+json",
-        "Cache-Control": "no-cache"
-    }
+    headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
     
     try:
-        # Recupero SHA fresco
-        r_check = requests.get(f"{url}?t={ts}", headers=headers)
-        sha = r_check.json().get("sha") if r_check.status_code == 200 else None
+        # Prendi sempre lo SHA più recente prima di fare qualsiasi cosa
+        r_get = requests.get(f"{url}?t={ts}", headers=headers)
+        current_sha = r_get.json().get("sha") if r_get.status_code == 200 else None
         
         if method == "GET":
-            if r_check.status_code == 200:
-                content = base64.b64decode(r_check.json()["content"]).decode('utf-8')
+            if r_get.status_code == 200:
+                content = base64.b64decode(r_get.json()["content"]).decode('utf-8')
                 return json.loads(content)
             return None
         
         elif method == "PUT":
             payload = {
-                "message": f"Update {FILES[file_key]} [ts: {ts}]",
+                "message": f"App Update {FILES[file_key]}",
                 "content": base64.b64encode(json.dumps(data, indent=4).encode('utf-8')).decode('utf-8'),
-                "sha": sha
+                "sha": current_sha
             }
             res = requests.put(url, headers=headers, json=payload)
             return res.status_code in [200, 201]
-    except Exception as e:
-        st.error(f"GitHub Error: {e}")
+    except:
+        return False
     return False
 
 def force_load():
-    """Forza il ricaricamento totale dei dati dal Cloud al Session State"""
     inv_cloud = github_action("inv", method="GET")
     deck_cloud = github_action("decks", method="GET")
-    
     new_users = {}
     for u in ["Antonio", "Andrea", "Fabio"]:
         new_users[u] = {
@@ -90,14 +84,12 @@ def force_load():
     st.session_state.users = new_users
 
 def save_cloud():
-    # Salviamo lo stato attuale di TUTTI gli utenti
     inv_data = {u: d["inv"] for u, d in st.session_state.users.items()}
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
-    
     if github_action("inv", inv_data, "PUT") and github_action("decks", deck_data, "PUT"):
-        st.toast("✅ Cloud Sincronizzato!", icon="💾")
+        st.toast("✅ Salvato su GitHub!", icon="💾")
     else:
-        st.error("❌ Errore sincronizzazione Cloud.")
+        st.error("❌ Errore di connessione GitHub.")
 
 # =========================
 # INIZIALIZZAZIONE
@@ -105,14 +97,13 @@ def save_cloud():
 if 'users' not in st.session_state:
     force_load()
 
-@st.dialog("Accesso Officina")
+@st.dialog("Benvenuto in Officina")
 def user_dialog():
-    st.write("Seleziona profilo:")
+    st.write("Seleziona il tuo profilo per caricare i tuoi dati:")
     for u in ["Antonio", "Andrea", "Fabio"]:
-        if st.button(u, use_container_width=True, key=f"login_{u}"):
+        if st.button(u, use_container_width=True):
             st.session_state.user_sel = u
-            # Ad ogni login/cambio utente, rinfreschiamo i dati dal cloud per sicurezza
-            force_load()
+            force_load() # Carica i dati freschi appena scegli l'utente
             st.rerun()
 
 if 'user_sel' not in st.session_state:
@@ -150,12 +141,10 @@ user_data = st.session_state.users[user_sel]
 
 # Sidebar
 st.sidebar.title(f"👤 {user_sel}")
-if st.sidebar.button("🔄 Ricarica dal Cloud"):
-    force_load()
-    st.rerun()
+if st.sidebar.button("🔄 Sync Cloud"):
+    force_load(); st.rerun()
 if st.sidebar.button("🚪 Cambia Utente"):
-    del st.session_state.user_sel
-    st.rerun()
+    del st.session_state.user_sel; st.rerun()
 
 if 'exp_state' not in st.session_state: st.session_state.exp_state = {}
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
@@ -163,7 +152,6 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 # =========================
 # UI PRINCIPALE
 # =========================
-st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 # --- TAB 1: AGGIUNGI (INALTERATO) ---
@@ -194,7 +182,7 @@ with tab1:
 
 # --- TAB 2: INVENTARIO ---
 with tab2:
-    modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
+    modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
     op = 1 if "Aggiungi" in modo else -1
     for cat, items in user_data["inv"].items():
         if items:
@@ -222,11 +210,9 @@ with tab3:
                 sels = deck["slots"].get(s_key, {})
                 titolo = " ".join([v for v in sels.values() if v and v != "-"]) or f"SLOT {s_idx+1}"
                 exp_key = f"{user_sel}-{d_idx}-{s_idx}"
-                
                 with st.expander(titolo.upper(), expanded=st.session_state.exp_state.get(exp_key, False)):
                     tipo = st.selectbox("Sistema", tipologie, key=f"ty_{exp_key}")
                     is_th, curr = "Theory" in tipo, {}
-                    
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
                         curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}")
@@ -253,13 +239,13 @@ with tab3:
                     
                     if deck["slots"].get(s_key) != curr:
                         deck["slots"][s_key] = curr
-                        st.session_state.exp_state[exp_key] = True
-                        st.rerun()
+                        st.session_state.exp_state[exp_key] = True; st.rerun()
 
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("📝 Rinomina", key=f"ren_{user_sel}_{d_idx}"):
                 st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
             
+            # IL TASTO SALVA
             if c2.button("💾 SALVA DECK", key=f"save_btn_{user_sel}_{d_idx}"):
                 save_cloud()
                 
