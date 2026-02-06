@@ -84,8 +84,6 @@ def save_cloud():
 # =========================
 if 'users' not in st.session_state:
     force_load()
-if 'exp_state' not in st.session_state:
-    st.session_state.exp_state = {}
 
 @st.dialog("Accesso Officina")
 def user_dialog():
@@ -190,7 +188,6 @@ with tab3:
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
     
     for d_idx, deck in enumerate(user_data["decks"]):
-        # Raccolta di tutti i pezzi attualmente selezionati nel deck per trovare duplicati
         all_selected = []
         for s in deck["slots"].values():
             all_selected.extend([v for v in s.values() if v and v != "-"])
@@ -201,15 +198,13 @@ with tab3:
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 curr = deck["slots"][s_key]
                 
-                # Calcolo Titolo con avviso duplicati
                 titolo_base = [v for v in curr.values() if v and v != "-"]
                 ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
                 titolo = " ".join(titolo_base).strip() or f"SLOT {s_idx+1}"
                 if ha_duplicati: titolo += " ⚠️"
                 
-                exp_id = f"exp_{user_sel}_{d_idx}_{s_idx}"
-                
-                with st.expander(titolo.upper(), expanded=st.session_state.exp_state.get(exp_id, False)):
+                # RIMOSSO expanded=st.session_state.exp_state per lasciare il controllo manuale
+                with st.expander(titolo.upper()):
                     tipo = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}")
                     is_th = "Theory" in tipo
                     
@@ -218,7 +213,6 @@ with tab3:
                         current_val = curr.get(k_comp, "-")
                         if current_val not in opts: current_val = "-"
                         
-                        # Aggiunta allerta all'etichetta del selettore
                         display_label = label
                         if current_val != "-" and all_selected.count(current_val) > 1:
                             display_label = f"{label} ⚠️"
@@ -228,8 +222,7 @@ with tab3:
                         
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res
-                            st.session_state.exp_state[exp_id] = True
-                            st.rerun() # Forza aggiornamento immediato del titolo e degli allerta
+                            st.rerun()
 
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         update_comp("Blade", "blade", "b")
