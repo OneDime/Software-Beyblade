@@ -15,19 +15,24 @@
             "name": "DECK 1",
             "slots": {
                 "0": {
-                    "b": "-",
+                    "b": "GolemRock",
                     "r": "-",
-                    "bi": "-"
+                    "bi": "-",
+                    "lb": "-",
+                    "mb": "-",
+                    "ab": "-",
+                    "tipo": "BX/UX+RIB",
+                    "rib": "Operate"
                 },
                 "1": {
-                    "b": "-",
-                    "r": "-",
-                    "bi": "-"
+                    "b": "TyrannoBeat",
+                    "r": "9-70",
+                    "bi": "Point"
                 },
                 "2": {
-                    "b": "-",
-                    "r": "-",
-                    "bi": "-"
+                    "b": "WizardRod",
+                    "r": "9-60",
+                    "bi": "Free Ball"
                 }
             }
         }
