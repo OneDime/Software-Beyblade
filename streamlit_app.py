@@ -31,11 +31,13 @@ st.markdown("""
         font-weight: bold;
         color: #f1f5f9;
         font-size: 1.1rem;
+        text-transform: uppercase;
     }
     .bey-summary-alert {
         color: #fbbf24;
         font-weight: bold;
         margin-left: 10px;
+        font-size: 0.9rem;
     }
     
     /* Layout Generale */
@@ -144,7 +146,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1 (INALTERATA) ---
+# --- TAB 1 (AGGIUNGI - INTOCCABILE) ---
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
@@ -192,15 +194,13 @@ with tab3:
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
     
     for d_idx, deck in enumerate(user_data["decks"]):
-        # 1. Calcolo tutti i pezzi del deck per i duplicati
         all_selected = []
         for s in deck["slots"].values():
             all_selected.extend([v for v in s.values() if v and v != "-"])
 
-        # 2. Expander Principale (Deck)
         with st.expander(deck['name'].upper(), expanded=True):
             
-            # SEZIONE NOMI (Sopra gli expander)
+            # SEZIONE NOMI (Senza "BEY #:")
             for s_idx in range(3):
                 curr = deck["slots"].get(str(s_idx), {})
                 comp_list = [v for v in curr.values() if v and v != "-"]
@@ -210,14 +210,14 @@ with tab3:
                 alert_html = "<span class='bey-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
                 st.markdown(f"""
                     <div class='bey-summary-box'>
-                        <span class='bey-summary-name'>BEY {s_idx+1}: {nome_bey.upper()}</span>
+                        <span class='bey-summary-name'>{nome_bey}</span>
                         {alert_html}
                     </div>
                 """, unsafe_allow_html=True)
             
             st.markdown("<hr>", unsafe_allow_html=True)
 
-            # SEZIONE CONFIGURAZIONE (Expander statici)
+            # SEZIONE CONFIGURAZIONE
             for s_idx in range(3):
                 s_key = str(s_idx)
                 curr = deck["slots"][s_key]
@@ -231,7 +231,6 @@ with tab3:
                         current_val = curr.get(k_comp, "-")
                         if current_val not in opts: current_val = "-"
                         
-                        # Alert visivo nel selectbox
                         display_label = label
                         if current_val != "-" and all_selected.count(current_val) > 1:
                             display_label = f"{label} ⚠️"
@@ -241,7 +240,6 @@ with tab3:
                             curr[k_comp] = res
                             st.rerun()
 
-                    # Campi dinamici in base al tipo
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         update_comp("Blade", "blade", "b")
                         update_comp("Ratchet", "ratchet", "r")
@@ -260,14 +258,12 @@ with tab3:
                         else: update_comp("Blade", "blade", "b")
                         update_comp("RIB", "ratchet_integrated_bit", "rib")
 
-                    # Immagini
                     cols = st.columns(5)
                     for i, (k, v) in enumerate(curr.items()):
                         if v and v != "-":
                             img_obj = get_img(global_img_map.get(v))
                             if img_obj: cols[i % 5].image(img_obj)
 
-            # Pulsanti di gestione Deck
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("Rinomina Deck", key=f"r_{user_sel}_{d_idx}"):
                 st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
