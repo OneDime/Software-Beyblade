@@ -34,13 +34,24 @@ st.markdown("""
     div.stButton > button { width: auto !important; min-width: 150px !important; height: 30px !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; border-radius: 4px !important; }
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
     [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
-    .slot-header { color: #60a5fa; font-weight: bold; margin-bottom: 5px; font-size: 1.2rem; }
-    .duplicate-warning { color: #fbbf24; font-weight: bold; margin-bottom: 10px; }
+    
+    /* Nuovi stili per i nomi fuori dagli expander */
+    .slot-summary-box {
+        background-color: #0f172a;
+        border-left: 4px solid #60a5fa;
+        padding: 8px 12px;
+        margin: 4px 0px;
+        border-radius: 4px;
+        text-align: left;
+        width: 100%;
+    }
+    .slot-summary-name { font-weight: bold; color: #f1f5f9; text-transform: uppercase; }
+    .slot-summary-alert { color: #fbbf24; font-weight: bold; margin-left: 8px; font-size: 0.85rem; }
     </style>
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB (Invariata)
+# LOGICA GITHUB
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -185,55 +196,60 @@ with tab3:
             all_selected.extend([v for v in s.values() if v and v != "-"])
 
         with st.expander(deck['name'].upper(), expanded=True):
+            # 1. VISUALIZZAZIONE NOMI (Sopra gli expander slot)
+            for s_idx in range(3):
+                curr = deck["slots"].get(str(s_idx), {})
+                titolo_base = [v for v in curr.values() if v and v != "-"]
+                nome_bey = " ".join(titolo_base).strip() or f"Slot {s_idx+1} Vuoto"
+                ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
+                alert_html = "<span class='slot-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
+                st.markdown(f"<div class='slot-summary-box'><span class='slot-summary-name'>{nome_bey}</span>{alert_html}</div>", unsafe_allow_html=True)
+            
+            st.markdown("<hr>", unsafe_allow_html=True)
+
+            # 2. CONFIGURAZIONE SLOT
             for s_idx in range(3):
                 s_key = str(s_idx)
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 curr = deck["slots"][s_key]
                 
-                # TITOLO STATICO per evitare che l'expander si chiuda al rerun
-                # Il nome del Beyblade lo mettiamo dentro l'expander
                 with st.expander(f"SLOT {s_idx+1}"):
-                    # Visualizzazione Nome e Alert Duplicati
-                    titolo_base = [v for v in curr.values() if v and v != "-"]
-                    nome_bey = " ".join(titolo_base).strip() or "Svuota"
-                    ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
-                    
-                    st.markdown(f"<div class='slot-header'>{nome_bey.upper()}</div>", unsafe_allow_html=True)
-                    if ha_duplicati:
-                        st.markdown("<div class='duplicate-warning'>⚠️ ATTENZIONE: COMPONENTI DUPLICATE NEL DECK</div>", unsafe_allow_html=True)
-
+                    # Regola svuotamento chirurgico sistema
+                    old_tipo = st.session_state.get(f"old_t_{user_sel}_{d_idx}_{s_idx}", "BX/UX")
                     tipo = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}")
+                    
+                    if tipo != old_tipo:
+                        valid_keys = []
+                        if "BX/UX" in tipo and "+RIB" not in tipo: valid_keys = ["b", "r", "bi"]
+                        elif "CX" in tipo and "+RIB" not in tipo: valid_keys = ["lb", "mb", "ab", "r", "bi"]
+                        elif "+RIB" in tipo:
+                            if "CX" in tipo: valid_keys = ["lb", "mb", "ab", "rib"]
+                            else: valid_keys = ["b", "rib"]
+                        
+                        for k in ["b", "r", "bi", "lb", "mb", "ab", "rib"]:
+                            if k not in valid_keys: curr[k] = "-"
+                        st.session_state[f"old_t_{user_sel}_{d_idx}_{s_idx}"] = tipo
+                        st.rerun()
+
                     is_th = "Theory" in tipo
                     
                     def update_comp(label, cat, k_comp):
                         opts = get_options(cat, is_th)
                         current_val = curr.get(k_comp, "-")
                         if current_val not in opts: current_val = "-"
-                        
-                        display_label = label
-                        if current_val != "-" and all_selected.count(current_val) > 1:
-                            display_label = f"{label} ⚠️"
-                            
+                        display_label = f"{label} ⚠️" if current_val != "-" and all_selected.count(current_val) > 1 else label
                         res = st.selectbox(display_label, opts, index=opts.index(current_val), key=f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}")
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res
                             st.rerun()
 
                     if "BX/UX" in tipo and "+RIB" not in tipo:
-                        update_comp("Blade", "blade", "b")
-                        update_comp("Ratchet", "ratchet", "r")
-                        update_comp("Bit", "bit", "bi")
+                        update_comp("Blade", "blade", "b"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
                     elif "CX" in tipo and "+RIB" not in tipo:
-                        update_comp("Lock Bit", "lock_bit", "lb")
-                        update_comp("Main Blade", "main_blade", "mb")
-                        update_comp("Assist Blade", "assist_blade", "ab")
-                        update_comp("Ratchet", "ratchet", "r")
-                        update_comp("Bit", "bit", "bi")
+                        update_comp("Lock Bit", "lock_bit", "lb"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
                     elif "+RIB" in tipo:
                         if "CX" in tipo:
-                            update_comp("Lock Bit", "lock_bit", "lb")
-                            update_comp("Main Blade", "main_blade", "mb")
-                            update_comp("Assist Blade", "assist_blade", "ab")
+                            update_comp("Lock Bit", "lock_bit", "lb"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab")
                         else: update_comp("Blade", "blade", "b")
                         update_comp("RIB", "ratchet_integrated_bit", "rib")
 
@@ -246,8 +262,7 @@ with tab3:
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
                 st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
-            if c2.button("Salva Deck", key=f"s_{user_sel}_{d_idx}"):
-                save_cloud()
+            if c2.button("Salva Deck", key=f"s_{user_sel}_{d_idx}"): save_cloud()
             if c3.button("Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
                 user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
