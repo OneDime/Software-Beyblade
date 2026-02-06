@@ -7,37 +7,54 @@ from PIL import Image
 from streamlit_gsheets import GSheetsConnection
 
 # =========================
-# CONFIGURAZIONE & STILE (INTOCCABILE)
+# CONFIGURAZIONE & STILE (RIPRISTINATO)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
-    .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; }
-    [data-testid="stVerticalBlock"] { text-align: center; align-items: center; }
+    /* Titolo Principale Centrato */
+    .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
+    
+    /* Centratura globale dei blocchi verticali */
+    [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
+    
+    /* Container dei Beyblade */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
         border-radius: 12px !important;
         margin-bottom: 15px !important;
         padding: 10px !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
-    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; }
-    .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; display: block; }
-    hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; }
-    div.stButton > button { width: auto !important; min-width: 150px !important; }
+    
+    /* Testi Centrati */
+    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; width: 100%; }
+    .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; margin-top: 5px; }
+    
+    hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; width: 100%; }
+    
+    /* Bottoni */
+    div.stButton > button {
+        width: auto !important; min-width: 150px !important;
+        height: 30px !important; background-color: #334155 !important; color: white !important;
+        border: 1px solid #475569 !important; border-radius: 4px !important;
+    }
+    
+    .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
+    [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
     </style>
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI SALVATAGGIO (VERSIONE INFALLIBILE)
+# FUNZIONI SALVATAGGIO (VERSIONE CRUD FIX)
 # =========================
 def get_conn():
-    """Crea una connessione forzando le credenziali tramite file temporaneo."""
     s = st.secrets["connections"]["gsheets"]
-    
-    # Costruiamo il dizionario credenziali standard
     creds_dict = {
         "type": "service_account",
         "project_id": s["project_id"],
@@ -50,9 +67,7 @@ def get_conn():
         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
         "client_x509_cert_url": s["client_x509_cert_url"]
     }
-    
-    # Creiamo la connessione passando esplicitamente le credenziali
-    # Questo metodo è il più documentato per forzare l'autenticazione CRUD
+    # Usiamo gsheets_v4 per resettare ogni cache precedente
     return st.connection("gsheets_v4", type=GSheetsConnection, service_account_info=creds_dict)
 
 def save_cloud():
@@ -64,10 +79,9 @@ def save_cloud():
             deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
         
         url = st.secrets["connections"]["gsheets"]["spreadsheet"]
-        # L'uso di st.connection con service_account_info abilita automaticamente CRUD
         conn.update(spreadsheet=url, worksheet="inventario", data=pd.DataFrame(inv_list))
         conn.update(spreadsheet=url, worksheet="decks", data=pd.DataFrame(deck_list))
-        st.sidebar.success("Dati salvati nel Cloud!")
+        st.sidebar.success("Sincronizzato!")
     except Exception as e:
         st.sidebar.error(f"Errore: {e}")
 
@@ -77,7 +91,6 @@ def load_cloud():
         url = st.secrets["connections"]["gsheets"]["spreadsheet"]
         df_inv = conn.read(spreadsheet=url, worksheet="inventario", ttl=0)
         df_deck = conn.read(spreadsheet=url, worksheet="decks", ttl=0)
-        
         new_users = {}
         for u in ["Antonio", "Andrea", "Fabio"]:
             u_inv = df_inv[df_inv["Utente"] == u]["Dati"].values
@@ -134,7 +147,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 df_db, global_img_map = load_db()
 
 # =========================
-# UI PRINCIPALE (TAB AGGIUNGI INTOCCATA)
+# UI PRINCIPALE (TAB AGGIUNGI RIPRISTINATA)
 # =========================
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
