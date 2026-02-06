@@ -1,19 +1,19 @@
 {
     "Antonio": [
         {
-            "name": "DECK 1",
+            "name": "Culo",
             "slots": {
                 "0": {
                     "tipo": "BX/UX",
-                    "b": "-",
-                    "r": "-",
-                    "bi": "-"
+                    "b": "AeroPegasus",
+                    "r": "3-70",
+                    "bi": "Accel"
                 },
                 "1": {
                     "tipo": "BX/UX",
-                    "b": "-",
-                    "r": "-",
-                    "bi": "-"
+                    "b": "BearScratch",
+                    "r": "5-60",
+                    "bi": "Accel"
                 },
                 "2": {
                     "tipo": "BX/UX",
