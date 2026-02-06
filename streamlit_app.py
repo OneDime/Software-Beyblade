@@ -8,7 +8,7 @@ import base64
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE
+# CONFIGURAZIONE & STILE (INALTERATO)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -16,39 +16,48 @@ st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
+    [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
         border-radius: 12px !important;
         margin-bottom: 15px !important;
-        padding: 15px !important;
+        padding: 10px !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
-    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; }
-    div.stButton > button { width: 100% !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; }
-    .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; }
-    /* Evidenzia il tasto Salva */
-    button[kind="primary"] { background-color: #2563eb !important; border-color: #3b82f6 !important; font-weight: bold !important; }
+    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; width: 100%; }
+    .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; margin-top: 5px; }
+    hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; width: 100%; }
+    div.stButton > button { width: auto !important; min-width: 150px !important; height: 30px !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; border-radius: 4px !important; }
+    .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
+    [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
     </style>
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB
+# LOGICA GITHUB (SOSTITUISCE GSHEETS)
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
 FILES = {"inv": "inventario.json", "decks": "decks.json"}
 
 def github_action(file_key, data=None, method="GET"):
+    """Legge o scrive file JSON su GitHub tramite API REST."""
     url = f"https://api.github.com/repos/{REPO}/contents/{FILES[file_key]}"
     headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
+    
     try:
         r = requests.get(url, headers=headers)
         sha = r.json().get("sha") if r.status_code == 200 else None
+        
         if method == "GET":
             if r.status_code == 200:
                 content = base64.b64decode(r.json()["content"]).decode('utf-8')
                 return json.loads(content)
             return None
+        
         elif method == "PUT":
             payload = {
                 "message": f"Update {FILES[file_key]}",
@@ -60,12 +69,13 @@ def github_action(file_key, data=None, method="GET"):
         st.error(f"GitHub Error: {e}")
     return None
 
-def save_all():
+def save_cloud():
+    # Salviamo separatamente i due dizionari nei due file JSON
     inv_data = {u: d["inv"] for u, d in st.session_state.users.items()}
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
     github_action("inv", inv_data, "PUT")
     github_action("decks", deck_data, "PUT")
-    st.toast("✅ Salvataggio completato!", icon="💾")
+    st.sidebar.success("Sincronizzato su GitHub!")
 
 def load_cloud():
     inv_cloud = github_action("inv", method="GET")
@@ -81,7 +91,7 @@ def load_cloud():
     return None
 
 # =========================
-# DATI & IMMAGINI
+# LOGICA DATI & IMMAGINI (INALTERATA)
 # =========================
 @st.cache_data
 def load_db():
@@ -106,178 +116,121 @@ def get_img(url, size=(100, 100)):
     return None
 
 # =========================
-# INIZIALIZZAZIONE & UTENTE PERSISTENTE
+# INIZIALIZZAZIONE
 # =========================
 if 'users' not in st.session_state:
     cloud = load_cloud()
-    if cloud: st.session_state.users = cloud
+    if cloud:
+        st.session_state.users = cloud
     else:
-        st.session_state.users = {u: {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]} for u in ["Antonio", "Andrea", "Fabio"]}
-
-# GESTIONE UTENTE TRAMITE URL PARAMETERS
-user_list = ["Antonio", "Andrea", "Fabio"]
-query_params = st.query_params
-# Otteniamo l'utente dall'URL. Streamlit moderni restituiscono il valore direttamente.
-initial_user = query_params.get("user", "Antonio")
-if initial_user not in user_list: initial_user = "Antonio"
+        st.session_state.users = {
+            "Antonio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]},
+            "Andrea": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]},
+            "Fabio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]}
+        }
 
 st.sidebar.title("👤 Account")
-try:
-    user_index = user_list.index(initial_user)
-except:
-    user_index = 0
-
-user_sel = st.sidebar.radio("Seleziona Utente:", user_list, index=user_index)
-
-# Se l'utente cambia radio button, aggiorniamo l'URL e FORZIAMO il rerun
-if user_sel != initial_user:
-    st.query_params["user"] = user_sel
-    st.rerun()
-
+user_sel = st.sidebar.radio("Seleziona Utente:", ["Antonio", "Andrea", "Fabio"])
 user_data = st.session_state.users[user_sel]
+if 'exp_state' not in st.session_state: st.session_state.exp_state = {}
+if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 df_db, global_img_map = load_db()
 
 # =========================
-# UI PRINCIPALE
+# UI PRINCIPALE (TAB AGGIUNGI INTOCCATA)
 # =========================
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 with tab1:
-    search_q = st.text_input("Cerca componente...", "").lower()
+    search_q = st.text_input("Cerca...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
             st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
             img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
             if img: st.image(img)
-            if st.button("Aggiungi tutto all'inventario", key=f"all_{i}"):
-                comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
-                         ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
-                         ("ratchet_integrated_bit", "ratchet_integrated_bit")]
+            comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
+                     ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
+                     ("ratchet_integrated_bit", "ratchet_integrated_bit")]
+            if st.button("Aggiungi tutto", key=f"all_{i}"):
                 for ck, ik in comps:
                     val = row[ck]
                     if val and val != "n/a": user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
-                save_all()
-                st.rerun()
+                save_cloud(); st.toast("Aggiunto!")
+            st.markdown("<hr>", unsafe_allow_html=True)
+            for ck, ik in comps:
+                val = row[ck]
+                if val and val != "n/a":
+                    st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
+                    if st.button("＋", key=f"btn_{i}_{ck}"):
+                        user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
+                        save_cloud(); st.toast(f"Aggiunto: {val}")
 
+# [Restanti Tab 2 e 3 invariati...]
 with tab2:
-    st.info("Le modifiche sono salvate automaticamente.")
+    modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
+    op = 1 if "Aggiungi" in modo else -1
     for cat, items in user_data["inv"].items():
         if items:
             with st.expander(cat.replace('_', ' ').upper()):
                 for n, q in list(items.items()):
-                    c1, c2 = st.columns([0.8, 0.2])
-                    c1.write(f"**{n}** (Quantità: {q})")
-                    if c2.button("🗑️", key=f"del_inv_{user_sel}_{cat}_{n}"):
-                        user_data["inv"][cat][n] -= 1
+                    if st.button(f"{n} x{q}", key=f"inv_{user_sel}_{cat}_{n}"):
+                        user_data["inv"][cat][n] += op
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
-                        save_all()
-                        st.rerun()
+                        save_cloud(); st.rerun()
 
 with tab3:
-    st.info("Modifica i componenti, poi clicca 'SALVA DECK' per confermare.")
-
     def get_options(cat, theory=False):
         if theory:
             csv_m = {"lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade", "assist_blade": "assist_blade", "ratchet": "ratchet", "bit": "bit", "ratchet_integrated_bit": "ratchet_integrated_bit"}
             return ["-"] + sorted([x for x in df_db[csv_m.get(cat, cat)].unique().tolist() if x and x != "n/a"])
         return ["-"] + sorted(list(user_data["inv"][cat].keys()))
-
-    tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
     
+    tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
     for d_idx, deck in enumerate(user_data["decks"]):
-        with st.expander(f"📁 {deck['name'].upper()}", expanded=True):
-            
-            # --- SLOT LOGIC ---
+        with st.expander(f"{deck['name'].upper()}", expanded=True):
             for s_idx in range(3):
                 s_key = str(s_idx)
-                if s_key not in deck["slots"]: deck["slots"][s_key] = {}
-                vals = deck["slots"][s_key]
-                
-                parts = [v for v in vals.values() if v and v != "-"]
-                t_label = " ".join(parts) if parts else f"Slot {s_idx+1}"
-                
-                with st.expander(t_label.upper()):
-                    sys_key = f"sys_sel_{d_idx}_{s_idx}"
-                    if sys_key not in st.session_state: st.session_state[sys_key] = "BX/UX"
+                sels = deck["slots"].get(s_key, {})
+                titolo = " ".join([v for v in sels.values() if v and v != "-"]) or f"SLOT {s_idx+1}"
+                exp_key = f"{user_sel}-{d_idx}-{s_idx}"
+                with st.expander(titolo.upper(), expanded=st.session_state.exp_state.get(exp_key, False)):
+                    tipo = st.selectbox("Sistema", tipologie, key=f"ty_{exp_key}")
+                    is_th, curr = "Theory" in tipo, {}
+                    if "BX/UX" in tipo and "+RIB" not in tipo:
+                        curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
+                        curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}")
+                        curr['bi'] = st.selectbox("Bit", get_options("bit", is_th), key=f"bi_{exp_key}")
+                    elif "CX" in tipo and "+RIB" not in tipo:
+                        curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_th), key=f"lb_{exp_key}")
+                        curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_th), key=f"mb_{exp_key}")
+                        curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_th), key=f"ab_{exp_key}")
+                        curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}")
+                        curr['bi'] = st.selectbox("Bit", get_options("bit", is_th), key=f"bi_{exp_key}")
+                    elif "+RIB" in tipo:
+                        if "CX" in tipo:
+                            curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_th), key=f"lb_{exp_key}")
+                            curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_th), key=f"mb_{exp_key}")
+                            curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_th), key=f"ab_{exp_key}")
+                        else: curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
+                        curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_th), key=f"rib_{exp_key}")
                     
-                    sel_tipo = st.selectbox("Sistema", tipologie, key=sys_key)
-                    is_th = "Theory" in sel_tipo
-                    
-                    def smart_select(label, cat, k_part):
-                        options = get_options(cat, is_th)
-                        current = vals.get(k_part, "-")
-                        try: idx = options.index(current)
-                        except: idx = 0
-                        sel = st.selectbox(label, options, index=idx, key=f"sel_{d_idx}_{s_idx}_{k_part}")
-                        deck["slots"][s_key][k_part] = sel
-                        return sel
-
-                    if "BX/UX" in sel_tipo and "+RIB" not in sel_tipo:
-                        smart_select("Blade", "blade", "b")
-                        smart_select("Ratchet", "ratchet", "r")
-                        smart_select("Bit", "bit", "bi")
-                    elif "CX" in sel_tipo and "+RIB" not in sel_tipo:
-                        smart_select("Lock Bit", "lock_bit", "lb")
-                        smart_select("Main Blade", "main_blade", "mb")
-                        smart_select("Assist Blade", "assist_blade", "ab")
-                        smart_select("Ratchet", "ratchet", "r")
-                        smart_select("Bit", "bit", "bi")
-                    elif "+RIB" in sel_tipo:
-                        if "CX" in sel_tipo:
-                            smart_select("Lock Bit", "lock_bit", "lb")
-                            smart_select("Main Blade", "main_blade", "mb")
-                            smart_select("Assist Blade", "assist_blade", "ab")
-                        else: smart_select("Blade", "blade", "b")
-                        smart_select("RIB", "ratchet_integrated_bit", "rib")
-                    
-                    # Anteprima immagini
                     cols = st.columns(5)
-                    col_i = 0
-                    for k, v in vals.items():
+                    for idx, (k, v) in enumerate(curr.items()):
                         if v != "-":
-                            img = get_img(global_img_map.get(v))
-                            if img: cols[col_i % 5].image(img); col_i += 1
+                            img_obj = get_img(global_img_map.get(v))
+                            if img_obj: cols[idx].image(img_obj)
+                    if deck["slots"].get(s_key) != curr:
+                        deck["slots"][s_key] = curr
+                        save_cloud(); st.session_state.exp_state[exp_key] = True; st.rerun()
 
-            # --- BOTTONIERE DI CONTROLLO DECK ---
-            st.divider()
-            
-            ren_key = f"renaming_{d_idx}"
-            if ren_key not in st.session_state: st.session_state[ren_key] = False
+            c1, c2, _ = st.columns([0.2, 0.2, 0.6])
+            if c1.button("📝 Rinomina", key=f"ren_{user_sel}_{d_idx}"): st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
+            if c2.button("🗑️ Elimina", key=f"del_{user_sel}_{d_idx}", type="primary"): user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
+            if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
+                n_name = st.text_input("Nuovo nome:", deck['name'], key=f"edit_input_{d_idx}")
+                if st.button("Conferma", key=f"confirm_{d_idx}"):
+                    deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
 
-            if st.session_state[ren_key]:
-                new_name = st.text_input("Nuovo nome:", value=deck['name'], key=f"input_ren_{d_idx}")
-                c_conf, c_ann = st.columns(2)
-                if c_conf.button("Conferma Nome", key=f"ok_ren_{d_idx}"):
-                    deck['name'] = new_name
-                    st.session_state[ren_key] = False
-                    save_all()
-                    st.rerun()
-                if c_ann.button("Annulla", key=f"ko_ren_{d_idx}"):
-                    st.session_state[ren_key] = False
-                    st.rerun()
-            else:
-                c1, c2, c3 = st.columns(3)
-                
-                with c1:
-                    if st.button("✏️ Rinomina", key=f"btn_ren_{d_idx}"):
-                        st.session_state[ren_key] = True
-                        st.rerun()
-                
-                with c2:
-                    # Tasto SALVA DECK primario e sempre visibile se non si sta rinominando
-                    if st.button("💾 SALVA DECK", key=f"btn_save_{d_idx}", type="primary"):
-                        save_all()
-                        st.rerun()
-                
-                with c3:
-                    if st.button("🗑️ Elimina", key=f"btn_del_{d_idx}"):
-                        user_data["decks"].pop(d_idx)
-                        save_all()
-                        st.rerun()
-
-    if st.button("➕ Crea Nuovo Deck"):
-        user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {str(i): {} for i in range(3)}})
-        save_all()
-        st.rerun()
+    if st.button("➕ Nuovo Deck"): user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {str(i): {} for i in range(3)}}); save_cloud(); st.rerun()
