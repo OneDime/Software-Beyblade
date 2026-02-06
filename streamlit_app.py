@@ -21,7 +21,6 @@ st.markdown("""
         background-color: #1e293b !important;
         border-radius: 12px !important;
         margin-bottom: 15px !important;
-        padding: 10px !important;
     }
     .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; }
     .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; }
@@ -39,21 +38,21 @@ st.markdown("""
 # FUNZIONI SALVATAGGIO CLOUD
 # =========================
 def get_conn():
-    # Carichiamo i segreti
-    secrets_dict = dict(st.secrets["connections"]["gsheets"])
+    # Estraiamo i segreti
+    raw_secrets = dict(st.secrets["connections"]["gsheets"])
     
-    # Lista rigorosa dei parametri accettati dal Service Account di Google
-    # Qualsiasi altra cosa (project_id, spreadsheet, type) causa errore se passata qui
-    allowed_keys = [
-        "project_id", "private_key_id", "private_key", 
+    # Lista rigida dei campi ammessi dal connettore per l'autenticazione
+    # Qualsiasi altro campo (come spreadsheet o project_id in certi contesti) rompe la connessione
+    auth_keys = [
+        "type", "project_id", "private_key_id", "private_key", 
         "client_email", "client_id", "auth_uri", "token_uri", 
         "auth_provider_x509_cert_url", "client_x509_cert_url", "universe_domain"
     ]
     
-    # Creiamo un nuovo dizionario con SOLO le chiavi ammesse
-    creds = {k: secrets_dict[k] for k in allowed_keys if k in secrets_dict}
+    # Filtriamo solo i parametri di autenticazione
+    creds = {k: raw_secrets[k] for k in auth_keys if k in raw_secrets}
     
-    # Pulizia specifica della chiave privata
+    # Pulizia manuale della chiave privata per gestire i newline
     if "private_key" in creds:
         creds["private_key"] = creds["private_key"].replace("\\n", "\n")
         
@@ -68,6 +67,7 @@ def save_cloud():
             inv_list.append({"Utente": u, "Dati": json.dumps(data["inv"])})
             deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
         
+        # L'URL viene usato solo qui, non nella fase di connessione
         sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
         
         conn.update(spreadsheet=sheet_url, worksheet="inventario", data=pd.DataFrame(inv_list))
