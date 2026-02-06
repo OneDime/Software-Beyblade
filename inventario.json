@@ -44,7 +44,8 @@
             "MammothTusk": 1,
             "TyrannoRoar": 1,
             "TyrannoBeat": 1,
-            "ShinobiKnife": 1
+            "ShinobiKnife": 1,
+            "DranSword": 1
         },
         "main_blade": {
             "Brush": 1
@@ -57,7 +58,7 @@
             "1-60": 2,
             "4-80": 2,
             "9-70": 1,
-            "3-60": 1,
+            "3-60": 2,
             "9-60": 1,
             "4-70": 1
         },
@@ -68,7 +69,8 @@
             "Taper": 1,
             "Gear Flat": 1,
             "Quake": 1,
-            "High Needle": 1
+            "High Needle": 1,
+            "Flat": 1
         },
         "ratchet_integrated_bit": {}
     }
