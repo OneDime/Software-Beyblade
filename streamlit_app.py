@@ -34,8 +34,6 @@ st.markdown("""
     div.stButton > button { width: auto !important; min-width: 150px !important; height: 30px !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; border-radius: 4px !important; }
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
     [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
-    /* Fix per allineare checkbox e titolo */
-    .stCheckbox { margin-bottom: -20px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -86,8 +84,6 @@ def save_cloud():
 # =========================
 if 'users' not in st.session_state:
     force_load()
-if 'exp_states' not in st.session_state:
-    st.session_state.exp_states = {}
 
 @st.dialog("Accesso Officina")
 def user_dialog():
@@ -142,7 +138,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 # =========================
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI (INTOCCABILE) ---
+# --- TAB 1: AGGIUNGI (INALTERATO) ---
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
@@ -192,40 +188,28 @@ with tab3:
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
     
     for d_idx, deck in enumerate(user_data["decks"]):
+        # Raccolta duplicati
         all_selected = []
         for s in deck["slots"].values():
             all_selected.extend([v for v in s.values() if v and v != "-"])
 
+        # Expander DECK (sempre aperto di default)
         with st.expander(deck['name'].upper(), expanded=True):
             for s_idx in range(3):
                 s_key = str(s_idx)
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 curr = deck["slots"][s_key]
                 
-                # Identificatore unico per questo expander
-                exp_key = f"exp_{user_sel}_{d_idx}_{s_idx}"
-                
-                # Calcolo Titolo
+                # Calcolo Titolo con alert duplicati
                 titolo_base = [v for v in curr.values() if v and v != "-"]
                 ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
                 titolo = " ".join(titolo_base).strip() or f"SLOT {s_idx+1}"
                 if ha_duplicati: titolo += " ⚠️"
                 
-                # PERSISTENZA STATO: se non esiste nel session_state, lo inizializziamo a False
-                if exp_key not in st.session_state.exp_states:
-                    st.session_state.exp_states[exp_key] = False
-                
-                # Visualizziamo l'expander legandolo allo stato salvato
-                is_expanded = st.session_state.exp_states[exp_key]
-                
-                with st.expander(titolo.upper(), expanded=is_expanded):
-                    # Se l'utente interagisce, vogliamo che rimanga aperto
-                    # Un trucco efficace in Streamlit è aggiornare lo stato al primo widget interno
+                # EXPANDER NATIVO: Rimosso il parametro 'expanded'
+                # Streamlit userà la 'key' per ricordare se l'utente l'ha aperto o chiuso
+                with st.expander(titolo.upper()):
                     tipo = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}")
-                    
-                    # Se cambio sistema, assicuro che lo stato rimanga True (aperto)
-                    st.session_state.exp_states[exp_key] = True
-                    
                     is_th = "Theory" in tipo
                     
                     def update_comp(label, cat, k_comp):
@@ -242,9 +226,7 @@ with tab3:
                         
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res
-                            # Forza il rerun mantenendo lo stato aperto
-                            st.session_state.exp_states[exp_key] = True
-                            st.rerun()
+                            st.rerun() # Ricarica solo per aggiornare i titoli e i ⚠️
 
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         update_comp("Blade", "blade", "b")
@@ -269,12 +251,8 @@ with tab3:
                         if v and v != "-":
                             img_obj = get_img(global_img_map.get(v))
                             if img_obj: cols[i % 5].image(img_obj)
-                    
-                    # Pulsante per CHIUDERE manualmente lo slot e salvarne lo stato
-                    if st.button("Chiudi Slot", key=f"close_{exp_key}"):
-                        st.session_state.exp_states[exp_key] = False
-                        st.rerun()
 
+            # Pulsanti Deck
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
                 st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
@@ -282,6 +260,7 @@ with tab3:
                 save_cloud()
             if c3.button("Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
                 user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
+            
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
                 n_name = st.text_input("Nuovo nome:", deck['name'], key=f"i_{d_idx}")
                 if st.button("OK", key=f"o_{d_idx}"):
