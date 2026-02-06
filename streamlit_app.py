@@ -38,13 +38,10 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI SALVATAGGIO (FIX DUPLICATO TYPE)
+# FUNZIONI SALVATAGGIO (FIX DEFINITIVO)
 # =========================
 def get_conn():
     s = st.secrets["connections"]["gsheets"]
-    
-    # Costruiamo il dizionario credenziali ESCLUDENDO 'type'
-    # Streamlit userà il 'type' passato esplicitamente (GSheetsConnection)
     creds = {
         "project_id": s["project_id"],
         "private_key_id": s["private_key_id"],
@@ -56,19 +53,15 @@ def get_conn():
         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
         "client_x509_cert_url": s["client_x509_cert_url"]
     }
-    
-    # Usiamo un nome univoco "gs_work" per evitare conflitti con la config automatica
-    return st.connection("gs_work", type=GSheetsConnection, **creds)
+    return st.connection("gs_final", type=GSheetsConnection, **creds)
 
 def save_cloud():
     try:
         conn = get_conn()
-        inv_list = []
-        deck_list = []
+        inv_list, deck_list = [], []
         for u, data in st.session_state.users.items():
             inv_list.append({"Utente": u, "Dati": json.dumps(data["inv"])})
             deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
-        
         url = st.secrets["connections"]["gsheets"]["spreadsheet"]
         conn.update(spreadsheet=url, worksheet="inventario", data=pd.DataFrame(inv_list))
         conn.update(spreadsheet=url, worksheet="decks", data=pd.DataFrame(deck_list))
@@ -81,7 +74,6 @@ def load_cloud():
         url = st.secrets["connections"]["gsheets"]["spreadsheet"]
         df_inv = conn.read(spreadsheet=url, worksheet="inventario", ttl=0)
         df_deck = conn.read(spreadsheet=url, worksheet="decks", ttl=0)
-        
         new_users = {}
         for u in ["Antonio", "Andrea", "Fabio"]:
             u_inv = df_inv[df_inv["Utente"] == u]["Dati"].values
@@ -91,8 +83,7 @@ def load_cloud():
                 "decks": json.loads(u_deck[0]) if len(u_deck) > 0 else [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]
             }
         return new_users
-    except:
-        return None
+    except: return None
 
 # =========================
 # LOGICA DATI & IMMAGINI
@@ -116,8 +107,7 @@ def get_img(url, size=(100, 100)):
     if not url or url == "n/a": return None
     h = hashlib.md5(url.encode()).hexdigest()
     path = os.path.join("images", f"{h}.png")
-    if os.path.exists(path):
-        return Image.open(path).resize(size, Image.Resampling.LANCZOS)
+    if os.path.exists(path): return Image.open(path).resize(size, Image.Resampling.LANCZOS)
     return None
 
 # =========================
@@ -134,14 +124,12 @@ if 'users' not in st.session_state:
 st.sidebar.title("👤 Account")
 user_sel = st.sidebar.radio("Seleziona Utente:", ["Antonio", "Andrea", "Fabio"])
 user_data = st.session_state.users[user_sel]
-
 if 'exp_state' not in st.session_state: st.session_state.exp_state = {}
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
-
 df_db, global_img_map = load_db()
 
 # =========================
-# UI PRINCIPALE (TAB AGGIUNGI INTOCCATA)
+# UI PRINCIPALE
 # =========================
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
@@ -161,8 +149,7 @@ with tab1:
                 for ck, ik in comps:
                     val = row[ck]
                     if val and val != "n/a": user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
-                save_cloud()
-                st.toast("Aggiunto!")
+                save_cloud(); st.toast("Aggiunto!")
             st.markdown("<hr>", unsafe_allow_html=True)
             for ck, ik in comps:
                 val = row[ck]
@@ -170,7 +157,71 @@ with tab1:
                     st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
                     if st.button("＋", key=f"btn_{i}_{ck}"):
                         user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
-                        save_cloud()
-                        st.toast(f"Aggiunto: {val}")
+                        save_cloud(); st.toast(f"Aggiunto: {val}")
 
-# (Resto del codice invariato...)
+with tab2:
+    modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
+    op = 1 if "Aggiungi" in modo else -1
+    for cat, items in user_data["inv"].items():
+        if items:
+            with st.expander(cat.replace('_', ' ').upper()):
+                for n, q in list(items.items()):
+                    if st.button(f"{n} x{q}", key=f"inv_{user_sel}_{cat}_{n}"):
+                        user_data["inv"][cat][n] += op
+                        if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
+                        save_cloud(); st.rerun()
+
+with tab3:
+    def get_options(cat, theory=False):
+        if theory:
+            csv_m = {"lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade", "assist_blade": "assist_blade", "ratchet": "ratchet", "bit": "bit", "ratchet_integrated_bit": "ratchet_integrated_bit"}
+            return ["-"] + sorted([x for x in df_db[csv_m.get(cat, cat)].unique().tolist() if x and x != "n/a"])
+        return ["-"] + sorted(list(user_data["inv"][cat].keys()))
+    
+    tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
+    for d_idx, deck in enumerate(user_data["decks"]):
+        with st.expander(f"{deck['name'].upper()}", expanded=True):
+            for s_idx in range(3):
+                s_key = str(s_idx)
+                sels = deck["slots"].get(s_key, {})
+                titolo = " ".join([v for v in sels.values() if v and v != "-"]) or f"SLOT {s_idx+1}"
+                exp_key = f"{user_sel}-{d_idx}-{s_idx}"
+                with st.expander(titolo.upper(), expanded=st.session_state.exp_state.get(exp_key, False)):
+                    tipo = st.selectbox("Sistema", tipologie, key=f"ty_{exp_key}")
+                    is_th, curr = "Theory" in tipo, {}
+                    if "BX/UX" in tipo and "+RIB" not in tipo:
+                        curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
+                        curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}")
+                        curr['bi'] = st.selectbox("Bit", get_options("bit", is_th), key=f"bi_{exp_key}")
+                    elif "CX" in tipo and "+RIB" not in tipo:
+                        curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_th), key=f"lb_{exp_key}")
+                        curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_th), key=f"mb_{exp_key}")
+                        curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_th), key=f"ab_{exp_key}")
+                        curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}")
+                        curr['bi'] = st.selectbox("Bit", get_options("bit", is_th), key=f"bi_{exp_key}")
+                    elif "+RIB" in tipo:
+                        if "CX" in tipo:
+                            curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_th), key=f"lb_{exp_key}")
+                            curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_th), key=f"mb_{exp_key}")
+                            curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_th), key=f"ab_{exp_key}")
+                        else: curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
+                        curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_th), key=f"rib_{exp_key}")
+                    
+                    cols = st.columns(5)
+                    for idx, (k, v) in enumerate(curr.items()):
+                        if v != "-":
+                            img_obj = get_img(global_img_map.get(v))
+                            if img_obj: cols[idx].image(img_obj)
+                    if deck["slots"].get(s_key) != curr:
+                        deck["slots"][s_key] = curr
+                        save_cloud(); st.session_state.exp_state[exp_key] = True; st.rerun()
+
+            c1, c2, _ = st.columns([0.2, 0.2, 0.6])
+            if c1.button("📝 Rinomina", key=f"ren_{user_sel}_{d_idx}"): st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
+            if c2.button("🗑️ Elimina", key=f"del_{user_sel}_{d_idx}", type="primary"): user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
+            if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
+                n_name = st.text_input("Nuovo nome:", deck['name'], key=f"edit_input_{d_idx}")
+                if st.button("Conferma", key=f"confirm_{d_idx}"):
+                    deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
+
+    if st.button("➕ Nuovo Deck"): user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {str(i): {} for i in range(3)}}); save_cloud(); st.rerun()
