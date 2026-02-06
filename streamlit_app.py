@@ -17,44 +17,30 @@ st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
-    
-    /* Box Beyblade Header */
-    .bey-summary-box {
-        background-color: #1e293b;
-        border-left: 5px solid #60a5fa;
-        padding: 10px;
-        margin: 5px 0px;
-        border-radius: 4px;
-        text-align: left;
-    }
-    .bey-summary-name {
-        font-weight: bold;
-        color: #f1f5f9;
-        font-size: 1.1rem;
-    }
-    .bey-summary-alert {
-        color: #fbbf24;
-        font-weight: bold;
-        margin-left: 10px;
-    }
-    
-    /* Layout Generale */
-    [data-testid="stVerticalBlock"] { gap: 0.5rem !important; }
+    [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
         border-radius: 12px !important;
         margin-bottom: 15px !important;
         padding: 10px !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
-    .stExpander { border: 1px solid #334155 !important; background-color: #0f172a !important; margin-bottom: 5px !important; }
+    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; width: 100%; }
+    .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; margin-top: 5px; }
+    hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; width: 100%; }
+    div.stButton > button { width: auto !important; min-width: 150px !important; height: 30px !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; border-radius: 4px !important; }
+    .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
     [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
-    hr { opacity: 0.2; margin: 10px 0; }
+    .slot-header { color: #60a5fa; font-weight: bold; margin-bottom: 5px; font-size: 1.2rem; }
+    .duplicate-warning { color: #fbbf24; font-weight: bold; margin-bottom: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB
+# LOGICA GITHUB (Invariata)
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -150,7 +136,7 @@ with tab1:
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            st.markdown(f"**{row['name']}**")
+            st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
             img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
             if img: st.image(img)
             comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
@@ -161,10 +147,12 @@ with tab1:
                     val = row[ck]
                     if val and val != "n/a": user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                 save_cloud()
+            st.markdown("<hr>", unsafe_allow_html=True)
             for ck, ik in comps:
                 val = row[ck]
                 if val and val != "n/a":
-                    if st.button(f"＋ {val}", key=f"btn_{i}_{ck}"):
+                    st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
+                    if st.button("＋", key=f"btn_{i}_{ck}"):
                         user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                         save_cloud()
 
@@ -192,37 +180,28 @@ with tab3:
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
     
     for d_idx, deck in enumerate(user_data["decks"]):
-        # 1. Calcolo tutti i pezzi del deck per i duplicati
         all_selected = []
         for s in deck["slots"].values():
             all_selected.extend([v for v in s.values() if v and v != "-"])
 
-        # 2. Expander Principale (Deck)
         with st.expander(deck['name'].upper(), expanded=True):
-            
-            # SEZIONE NOMI (Sopra gli expander)
-            for s_idx in range(3):
-                curr = deck["slots"].get(str(s_idx), {})
-                comp_list = [v for v in curr.values() if v and v != "-"]
-                nome_bey = " ".join(comp_list).strip() or f"Slot {s_idx+1} Vuoto"
-                ha_duplicati = any(all_selected.count(p) > 1 for p in comp_list)
-                
-                alert_html = "<span class='bey-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
-                st.markdown(f"""
-                    <div class='bey-summary-box'>
-                        <span class='bey-summary-name'>BEY {s_idx+1}: {nome_bey.upper()}</span>
-                        {alert_html}
-                    </div>
-                """, unsafe_allow_html=True)
-            
-            st.markdown("<hr>", unsafe_allow_html=True)
-
-            # SEZIONE CONFIGURAZIONE (Expander statici)
             for s_idx in range(3):
                 s_key = str(s_idx)
+                if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 curr = deck["slots"][s_key]
                 
-                with st.expander(f"⚙️ CONFIGURA SLOT {s_idx+1}"):
+                # TITOLO STATICO per evitare che l'expander si chiuda al rerun
+                # Il nome del Beyblade lo mettiamo dentro l'expander
+                with st.expander(f"SLOT {s_idx+1}"):
+                    # Visualizzazione Nome e Alert Duplicati
+                    titolo_base = [v for v in curr.values() if v and v != "-"]
+                    nome_bey = " ".join(titolo_base).strip() or "Svuota"
+                    ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
+                    
+                    st.markdown(f"<div class='slot-header'>{nome_bey.upper()}</div>", unsafe_allow_html=True)
+                    if ha_duplicati:
+                        st.markdown("<div class='duplicate-warning'>⚠️ ATTENZIONE: COMPONENTI DUPLICATE NEL DECK</div>", unsafe_allow_html=True)
+
                     tipo = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}")
                     is_th = "Theory" in tipo
                     
@@ -231,7 +210,6 @@ with tab3:
                         current_val = curr.get(k_comp, "-")
                         if current_val not in opts: current_val = "-"
                         
-                        # Alert visivo nel selectbox
                         display_label = label
                         if current_val != "-" and all_selected.count(current_val) > 1:
                             display_label = f"{label} ⚠️"
@@ -241,7 +219,6 @@ with tab3:
                             curr[k_comp] = res
                             st.rerun()
 
-                    # Campi dinamici in base al tipo
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         update_comp("Blade", "blade", "b")
                         update_comp("Ratchet", "ratchet", "r")
@@ -260,27 +237,24 @@ with tab3:
                         else: update_comp("Blade", "blade", "b")
                         update_comp("RIB", "ratchet_integrated_bit", "rib")
 
-                    # Immagini
                     cols = st.columns(5)
                     for i, (k, v) in enumerate(curr.items()):
                         if v and v != "-":
                             img_obj = get_img(global_img_map.get(v))
                             if img_obj: cols[i % 5].image(img_obj)
 
-            # Pulsanti di gestione Deck
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
-            if c1.button("Rinomina Deck", key=f"r_{user_sel}_{d_idx}"):
+            if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
                 st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
-            if c2.button("💾 Salva", key=f"s_{user_sel}_{d_idx}"):
+            if c2.button("Salva Deck", key=f"s_{user_sel}_{d_idx}"):
                 save_cloud()
-            if c3.button("🗑️ Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
+            if c3.button("Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
                 user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
-            
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
-                n_name = st.text_input("Nuovo nome Deck:", deck['name'], key=f"i_{d_idx}")
-                if st.button("Conferma", key=f"o_{d_idx}"):
+                n_name = st.text_input("Nuovo nome:", deck['name'], key=f"i_{d_idx}")
+                if st.button("OK", key=f"o_{d_idx}"):
                     deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
 
-    if st.button("＋ Nuovo Deck"):
+    if st.button("Nuovo Deck"):
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{}, "1":{}, "2":{}}})
         save_cloud(); st.rerun()
