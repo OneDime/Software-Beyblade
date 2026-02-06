@@ -3,20 +3,17 @@
         "lock_bit": {},
         "blade": {
             "BearScratch": 1,
-            "AeroPegasus": 1,
-            "BlackShell": 1
+            "AeroPegasus": 1
         },
         "main_blade": {},
         "assist_blade": {},
         "ratchet": {
             "3-70": 1,
-            "5-60": 1,
-            "4-60": 1
+            "5-60": 1
         },
         "bit": {
             "Accel": 1,
-            "Flat": 1,
-            "Dot": 1
+            "Flat": 1
         },
         "ratchet_integrated_bit": {}
     },
