@@ -8,35 +8,17 @@ import base64
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE
+# CONFIGURAZIONE & STILE (PULITO)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
-    /* Sfondo generale */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
     
-    /* MODIFICA COLORI DEFINITIVA: Forza il grigio chiaro su testi specifici */
-    
-    /* Forza il colore sui Tab */
-    [data-baseweb="tab"] * {
-        color: #e2e8f0 !important;
-    }
-
-    /* Forza il colore sulle etichette dei Radio (Aggiungi/Rimuovi) */
-    [data-testid="stRadio"] label * {
-        color: #e2e8f0 !important;
-    }
-
-    /* Forza il colore sulle scritte della Sidebar (Account / Seleziona Utente) */
-    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] * {
-        color: #e2e8f0 !important;
-    }
-
-    /* Layout (INALTERATO) */
     [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
+    
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
@@ -47,17 +29,24 @@ st.markdown("""
         flex-direction: column;
         align-items: center;
     }
+    
     .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; width: 100%; }
     .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; margin-top: 5px; }
     hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; width: 100%; }
-    div.stButton > button { width: auto !important; min-width: 150px !important; height: 30px !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; border-radius: 4px !important; }
+    
+    div.stButton > button {
+        width: auto !important; min-width: 150px !important;
+        height: 30px !important; background-color: #334155 !important; color: white !important;
+        border: 1px solid #475569 !important; border-radius: 4px !important;
+    }
+    
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
     [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
     </style>
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB (NON TOCCARE)
+# LOGICA GITHUB (CONFERMATA FUNZIONANTE)
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -152,7 +141,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 df_db, global_img_map = load_db()
 
 # =========================
-# UI PRINCIPALE
+# UI PRINCIPALE (TAB AGGIUNGI INTOCCATA)
 # =========================
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
@@ -183,7 +172,6 @@ with tab1:
                         save_cloud(); st.toast(f"Aggiunto: {val}")
 
 with tab2:
-    # Radio buttons
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     op = 1 if "Aggiungi" in modo else -1
     for cat, items in user_data["inv"].items():
@@ -195,7 +183,6 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
-# [Tab 3 rimane invariato per brevità...]
 with tab3:
     def get_options(cat, theory=False):
         if theory:
