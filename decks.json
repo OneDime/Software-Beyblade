@@ -3,25 +3,9 @@
         {
             "name": "DECK 1",
             "slots": {
-                "0": {
-                    "b": "BlackShell",
-                    "r": "5-60",
-                    "bi": "Flat",
-                    "_sys": "BX/UX+RIB Theory",
-                    "rib": "Turbo"
-                },
-                "1": {
-                    "b": "BearScratch",
-                    "r": "5-60",
-                    "bi": "Accel",
-                    "_sys": "BX/UX"
-                },
-                "2": {
-                    "b": "-",
-                    "r": "-",
-                    "bi": "-",
-                    "_sys": "BX/UX"
-                }
+                "0": {},
+                "1": {},
+                "2": {}
             }
         }
     ],
