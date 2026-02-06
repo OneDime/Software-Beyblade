@@ -3,7 +3,9 @@
         "lock_bit": {
             "Wizard": 1
         },
-        "blade": {},
+        "blade": {
+            "WizardRod": 1
+        },
         "main_blade": {
             "Arc": 1
         },
@@ -11,10 +13,12 @@
             "Round": 1
         },
         "ratchet": {
-            "4-55": 1
+            "4-55": 1,
+            "1-60": 1
         },
         "bit": {
-            "Low Orb": 1
+            "Low Orb": 1,
+            "Rush": 1
         },
         "ratchet_integrated_bit": {}
     },
