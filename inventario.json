@@ -40,7 +40,8 @@
         "blade": {
             "DranDagger": 1,
             "WizardRod": 2,
-            "WizardArrow": 1
+            "WizardArrow": 1,
+            "MammothTusk": 1
         },
         "main_blade": {
             "Brush": 1
