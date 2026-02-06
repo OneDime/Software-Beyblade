@@ -38,23 +38,20 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI SALVATAGGIO (FIX PEM KEY)
+# FUNZIONI SALVATAGGIO (LOGICA BLINDATA)
 # =========================
 def get_conn():
-    """Iniezione manuale delle credenziali con pulizia profonda della chiave PEM."""
+    """Connessione manuale: evita conflitti di parametri con Streamlit."""
+    # Inizializziamo senza argomenti per evitare il crash 'unexpected keyword argument'
     conn = st.connection("gsheets", type=GSheetsConnection)
     s = st.secrets["connections"]["gsheets"]
     
-    # Pulizia estrema della private_key per evitare InvalidPadding
-    raw_key = s["private_key"]
-    # Rimuove eventuali virgolette esterne, gestisce i letterali \n e assicura il formato PEM
-    clean_key = raw_key.replace("\\n", "\n").replace('"', '').strip()
-    
+    # Ricostruiamo il profilo credenziali iniettandolo manualmente
     conf = {
         "type": "service_account",
         "project_id": s["project_id"],
         "private_key_id": s["private_key_id"],
-        "private_key": clean_key,
+        "private_key": s["private_key"], # Presa direttamente dalla versione multi-riga dei Secrets
         "client_email": s["client_email"],
         "client_id": s["client_id"],
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
@@ -78,7 +75,7 @@ def save_cloud():
         conn.update(spreadsheet=url, worksheet="inventario", data=pd.DataFrame(inv_list))
         conn.update(spreadsheet=url, worksheet="decks", data=pd.DataFrame(deck_list))
     except Exception as e:
-        st.sidebar.error(f"Errore: {e}")
+        st.sidebar.error(f"Errore Cloud: {e}")
 
 def load_cloud():
     try:
