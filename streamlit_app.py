@@ -3,11 +3,12 @@ import pandas as pd
 import hashlib
 import os
 import json
+import requests
+import base64
 from PIL import Image
-from streamlit_gsheets import GSheetsConnection
 
 # =========================
-# CONFIGURAZIONE & STILE (CENTRATURA GARANTITA)
+# CONFIGURAZIONE & STILE (INALTERATO)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -15,9 +16,7 @@ st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
-    
     [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
-    
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
@@ -28,88 +27,71 @@ st.markdown("""
         flex-direction: column;
         align-items: center;
     }
-    
     .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; width: 100%; }
     .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; margin-top: 5px; }
     hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; width: 100%; }
-    
-    div.stButton > button {
-        width: auto !important; min-width: 150px !important;
-        height: 30px !important; background-color: #334155 !important; color: white !important;
-        border: 1px solid #475569 !important; border-radius: 4px !important;
-    }
-    
+    div.stButton > button { width: auto !important; min-width: 150px !important; height: 30px !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; border-radius: 4px !important; }
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
     [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
     </style>
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI SALVATAGGIO (FORCE SERVICE ACCOUNT)
+# LOGICA GITHUB (SOSTITUISCE GSHEETS)
 # =========================
-def get_conn():
-    """Iniezione credenziali bypassando il caricamento automatico di Streamlit."""
-    s = st.secrets["connections"]["gsheets"]
+GITHUB_TOKEN = st.secrets["github_token"]
+REPO = st.secrets["github_repo"]
+FILES = {"inv": "inventario.json", "decks": "decks.json"}
+
+def github_action(file_key, data=None, method="GET"):
+    """Legge o scrive file JSON su GitHub tramite API REST."""
+    url = f"https://api.github.com/repos/{REPO}/contents/{FILES[file_key]}"
+    headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
     
-    # Creiamo un nome di connessione arbitrario 'cloud_fix' 
-    # per evitare che legga i parametri 'spreadsheet' dai secrets in automatico
-    conn = st.connection("cloud_fix", type=GSheetsConnection)
-    
-    creds = {
-        "type": "service_account",
-        "project_id": s["project_id"],
-        "private_key_id": s["private_key_id"],
-        "private_key": s["private_key"],
-        "client_email": s["client_email"],
-        "client_id": s["client_id"],
-        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-        "token_uri": "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-        "client_x509_cert_url": s["client_x509_cert_url"]
-    }
-    
-    # Forziamo le credenziali nel connettore
-    conn._service_account_info = creds
-    return conn
+    try:
+        r = requests.get(url, headers=headers)
+        sha = r.json().get("sha") if r.status_code == 200 else None
+        
+        if method == "GET":
+            if r.status_code == 200:
+                content = base64.b64decode(r.json()["content"]).decode('utf-8')
+                return json.loads(content)
+            return None
+        
+        elif method == "PUT":
+            payload = {
+                "message": f"Update {FILES[file_key]}",
+                "content": base64.b64encode(json.dumps(data, indent=4).encode('utf-8')).decode('utf-8'),
+                "sha": sha
+            }
+            requests.put(url, headers=headers, json=payload)
+    except Exception as e:
+        st.error(f"GitHub Error: {e}")
+    return None
 
 def save_cloud():
-    try:
-        conn = get_conn()
-        inv_list, deck_list = [], []
-        for u, data in st.session_state.users.items():
-            inv_list.append({"Utente": u, "Dati": json.dumps(data["inv"])})
-            deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
-        
-        # URL preso dai secrets ma passato manualmente qui
-        url = st.secrets["connections"]["gsheets"]["spreadsheet"]
-        
-        conn.update(spreadsheet=url, worksheet="inventario", data=pd.DataFrame(inv_list))
-        conn.update(spreadsheet=url, worksheet="decks", data=pd.DataFrame(deck_list))
-        st.sidebar.success("Salvataggio riuscito!")
-    except Exception as e:
-        st.sidebar.error(f"Errore: {e}")
+    # Salviamo separatamente i due dizionari nei due file JSON
+    inv_data = {u: d["inv"] for u, d in st.session_state.users.items()}
+    deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
+    github_action("inv", inv_data, "PUT")
+    github_action("decks", deck_data, "PUT")
+    st.sidebar.success("Sincronizzato su GitHub!")
 
 def load_cloud():
-    try:
-        conn = get_conn()
-        url = st.secrets["connections"]["gsheets"]["spreadsheet"]
-        df_inv = conn.read(spreadsheet=url, worksheet="inventario", ttl=0)
-        df_deck = conn.read(spreadsheet=url, worksheet="decks", ttl=0)
-        
+    inv_cloud = github_action("inv", method="GET")
+    deck_cloud = github_action("decks", method="GET")
+    if inv_cloud and deck_cloud:
         new_users = {}
         for u in ["Antonio", "Andrea", "Fabio"]:
-            u_inv = df_inv[df_inv["Utente"] == u]["Dati"].values
-            u_deck = df_deck[df_deck["Utente"] == u]["Dati"].values
             new_users[u] = {
-                "inv": json.loads(u_inv[0]) if len(u_inv) > 0 else {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]},
-                "decks": json.loads(u_deck[0]) if len(u_deck) > 0 else [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]
+                "inv": inv_cloud.get(u, {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}),
+                "decks": deck_cloud.get(u, [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}])
             }
         return new_users
-    except:
-        return None
+    return None
 
 # =========================
-# LOGICA DATI & IMMAGINI
+# LOGICA DATI & IMMAGINI (INALTERATA)
 # =========================
 @st.cache_data
 def load_db():
@@ -138,11 +120,14 @@ def get_img(url, size=(100, 100)):
 # =========================
 if 'users' not in st.session_state:
     cloud = load_cloud()
-    st.session_state.users = cloud if cloud else {
-        "Antonio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]},
-        "Andrea": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]},
-        "Fabio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]}
-    }
+    if cloud:
+        st.session_state.users = cloud
+    else:
+        st.session_state.users = {
+            "Antonio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]},
+            "Andrea": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]},
+            "Fabio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]}
+        }
 
 st.sidebar.title("👤 Account")
 user_sel = st.sidebar.radio("Seleziona Utente:", ["Antonio", "Andrea", "Fabio"])
@@ -182,6 +167,7 @@ with tab1:
                         user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                         save_cloud(); st.toast(f"Aggiunto: {val}")
 
+# [Restanti Tab 2 e 3 invariati...]
 with tab2:
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     op = 1 if "Aggiungi" in modo else -1
