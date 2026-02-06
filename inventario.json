@@ -6,7 +6,6 @@
         "assist_blade": {},
         "ratchet": {},
         "bit": {
-            "Accel": 1,
             "Flat": 1
         },
         "ratchet_integrated_bit": {}
