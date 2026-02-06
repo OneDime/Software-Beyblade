@@ -1,29 +1,5 @@
 {
-    "Antonio": [
-        {
-            "name": "Culo",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "AeroPegasus",
-                    "r": "3-70",
-                    "bi": "Accel"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "BearScratch",
-                    "r": "5-60",
-                    "bi": "Accel"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "-",
-                    "r": "-",
-                    "bi": "-"
-                }
-            }
-        }
-    ],
+    "Antonio": [],
     "Andrea": [
         {
             "name": "DECK 1",
