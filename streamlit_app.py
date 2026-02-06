@@ -5,7 +5,7 @@ import os
 import json
 import requests
 import base64
-import time  # Necessario per il cache busting
+import time
 from PIL import Image
 
 # =========================
@@ -38,20 +38,23 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB (FIX CACHE)
+# LOGICA GITHUB (ESTREMA)
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
 FILES = {"inv": "inventario.json", "decks": "decks.json"}
 
 def github_action(file_key, data=None, method="GET"):
-    # Aggiungiamo un parametro dummy '?t=' per forzare GitHub a non usare la cache nel GET
     ts = int(time.time())
     url = f"https://api.github.com/repos/{REPO}/contents/{FILES[file_key]}"
-    headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json",
+        "Cache-Control": "no-cache"
+    }
     
     try:
-        # Recuperiamo sempre lo SHA attuale prima di ogni operazione
+        # Recupero SHA fresco
         r_check = requests.get(f"{url}?t={ts}", headers=headers)
         sha = r_check.json().get("sha") if r_check.status_code == 200 else None
         
@@ -63,7 +66,7 @@ def github_action(file_key, data=None, method="GET"):
         
         elif method == "PUT":
             payload = {
-                "message": f"Update {FILES[file_key]}",
+                "message": f"Update {FILES[file_key]} [ts: {ts}]",
                 "content": base64.b64encode(json.dumps(data, indent=4).encode('utf-8')).decode('utf-8'),
                 "sha": sha
             }
@@ -73,34 +76,51 @@ def github_action(file_key, data=None, method="GET"):
         st.error(f"GitHub Error: {e}")
     return False
 
+def force_load():
+    """Forza il ricaricamento totale dei dati dal Cloud al Session State"""
+    inv_cloud = github_action("inv", method="GET")
+    deck_cloud = github_action("decks", method="GET")
+    
+    new_users = {}
+    for u in ["Antonio", "Andrea", "Fabio"]:
+        new_users[u] = {
+            "inv": inv_cloud.get(u, {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}) if inv_cloud else {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]},
+            "decks": deck_cloud.get(u, [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]) if deck_cloud else [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]
+        }
+    st.session_state.users = new_users
+
 def save_cloud():
-    # Consolidiamo i dati prima dell'invio
+    # Salviamo lo stato attuale di TUTTI gli utenti
     inv_data = {u: d["inv"] for u, d in st.session_state.users.items()}
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
     
-    ok_inv = github_action("inv", inv_data, "PUT")
-    ok_deck = github_action("decks", deck_data, "PUT")
-    
-    if ok_inv and ok_deck:
-        st.toast("💾 Salvataggio Cloud completato!", icon="✅")
+    if github_action("inv", inv_data, "PUT") and github_action("decks", deck_data, "PUT"):
+        st.toast("✅ Cloud Sincronizzato!", icon="💾")
     else:
-        st.error("❌ Errore critico nel salvataggio GitHub.")
-
-def load_cloud():
-    inv_cloud = github_action("inv", method="GET")
-    deck_cloud = github_action("decks", method="GET")
-    if inv_cloud and deck_cloud:
-        new_users = {}
-        for u in ["Antonio", "Andrea", "Fabio"]:
-            new_users[u] = {
-                "inv": inv_cloud.get(u, {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}),
-                "decks": deck_cloud.get(u, [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}])
-            }
-        return new_users
-    return None
+        st.error("❌ Errore sincronizzazione Cloud.")
 
 # =========================
-# LOGICA DATI (INALTERATA)
+# INIZIALIZZAZIONE
+# =========================
+if 'users' not in st.session_state:
+    force_load()
+
+@st.dialog("Accesso Officina")
+def user_dialog():
+    st.write("Seleziona profilo:")
+    for u in ["Antonio", "Andrea", "Fabio"]:
+        if st.button(u, use_container_width=True, key=f"login_{u}"):
+            st.session_state.user_sel = u
+            # Ad ogni login/cambio utente, rinfreschiamo i dati dal cloud per sicurezza
+            force_load()
+            st.rerun()
+
+if 'user_sel' not in st.session_state:
+    user_dialog()
+    st.stop()
+
+# =========================
+# DATI & IMMAGINI
 # =========================
 @st.cache_data
 def load_db():
@@ -124,38 +144,21 @@ def get_img(url, size=(100, 100)):
     if os.path.exists(path): return Image.open(path).resize(size, Image.Resampling.LANCZOS)
     return None
 
-# =========================
-# INIZIALIZZAZIONE & DIALOG
-# =========================
-if 'users' not in st.session_state:
-    cloud = load_cloud()
-    if cloud: st.session_state.users = cloud
-    else:
-        st.session_state.users = {u: {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]} for u in ["Antonio", "Andrea", "Fabio"]}
-
-@st.dialog("Accesso Officina")
-def user_dialog():
-    st.write("Chi sta entrando in officina?")
-    for u in ["Antonio", "Andrea", "Fabio"]:
-        if st.button(u, use_container_width=True, key=f"sel_{u}"):
-            st.session_state.user_sel = u
-            st.rerun()
-
-if 'user_sel' not in st.session_state:
-    user_dialog()
-    st.stop()
-
+df_db, global_img_map = load_db()
 user_sel = st.session_state.user_sel
 user_data = st.session_state.users[user_sel]
 
+# Sidebar
 st.sidebar.title(f"👤 {user_sel}")
-if st.sidebar.button("Cambia Utente"):
+if st.sidebar.button("🔄 Ricarica dal Cloud"):
+    force_load()
+    st.rerun()
+if st.sidebar.button("🚪 Cambia Utente"):
     del st.session_state.user_sel
     st.rerun()
 
 if 'exp_state' not in st.session_state: st.session_state.exp_state = {}
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
-df_db, global_img_map = load_db()
 
 # =========================
 # UI PRINCIPALE
@@ -189,7 +192,7 @@ with tab1:
                         user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                         save_cloud()
 
-# --- TAB 2: INVENTARIO (INALTERATO) ---
+# --- TAB 2: INVENTARIO ---
 with tab2:
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     op = 1 if "Aggiungi" in modo else -1
@@ -202,7 +205,7 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
-# --- TAB 3: DECK BUILDER (FIX PERSISTENZA) ---
+# --- TAB 3: DECK BUILDER ---
 with tab3:
     def get_options(cat, theory=False):
         if theory:
@@ -255,17 +258,13 @@ with tab3:
 
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("📝 Rinomina", key=f"ren_{user_sel}_{d_idx}"):
-                st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"
-                st.rerun()
+                st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
             
-            # Tasto SALVA DECK (Manuale e sicuro)
             if c2.button("💾 SALVA DECK", key=f"save_btn_{user_sel}_{d_idx}"):
                 save_cloud()
                 
             if c3.button("🗑️ Elimina", key=f"del_{user_sel}_{d_idx}", type="primary"):
-                user_data["decks"].pop(d_idx)
-                save_cloud()
-                st.rerun()
+                user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
             
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
                 n_name = st.text_input("Nuovo nome:", deck['name'], key=f"edit_input_{d_idx}")
