@@ -7,7 +7,7 @@ from PIL import Image
 from streamlit_gsheets import GSheetsConnection
 
 # =========================
-# CONFIGURAZIONE & STILE
+# CONFIGURAZIONE & STILE (INALTERATO)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -16,6 +16,7 @@ st.markdown("""
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     [data-testid="stVerticalBlock"] { gap: 0.5rem !important; }
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; }
+    [data-testid="stVerticalBlock"] { text-align: center; align-items: center; }
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
@@ -31,6 +32,7 @@ st.markdown("""
         height: 30px !important; background-color: #334155 !important; color: white !important;
         border: 1px solid #475569 !important; border-radius: 4px !important;
     }
+    .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
     [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
     </style>
     """, unsafe_allow_html=True)
@@ -40,13 +42,7 @@ st.markdown("""
 # =========================
 def save_cloud():
     try:
-        # Pulizia forzata della private key per evitare errori di padding/PEM
-        conf = dict(st.secrets["connections"]["gsheets"])
-        if "private_key" in conf:
-            conf["private_key"] = conf["private_key"].replace("\\n", "\n")
-            
-        conn = st.connection("gsheets", type=GSheetsConnection, **conf)
-        
+        conn = st.connection("gsheets", type=GSheetsConnection)
         inv_list = []
         deck_list = []
         for u, data in st.session_state.users.items():
@@ -61,11 +57,7 @@ def save_cloud():
 
 def load_cloud():
     try:
-        conf = dict(st.secrets["connections"]["gsheets"])
-        if "private_key" in conf:
-            conf["private_key"] = conf["private_key"].replace("\\n", "\n")
-
-        conn = st.connection("gsheets", type=GSheetsConnection, **conf)
+        conn = st.connection("gsheets", type=GSheetsConnection)
         sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
         
         df_inv = conn.read(spreadsheet=sheet_url, worksheet="inventario", ttl=0)
