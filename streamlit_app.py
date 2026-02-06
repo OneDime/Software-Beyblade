@@ -8,7 +8,7 @@ import base64
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE (INALTERATO)
+# CONFIGURAZIONE & STILE
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -16,6 +16,13 @@ st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
+    
+    /* MODIFICA COLORI RICHIESTA: Grigio quasi bianco per Tab, Radio e Label Account */
+    .stTabs button p { color: #f8fafc !important; font-weight: 500; }
+    [data-testid="stWidgetLabel"] p { color: #f8fafc !important; }
+    .stRadio label { color: #f8fafc !important; }
+    
+    /* Centratura e Layout (INALTERATI) */
     [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
@@ -37,27 +44,23 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB (SOSTITUISCE GSHEETS)
+# LOGICA GITHUB
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
 FILES = {"inv": "inventario.json", "decks": "decks.json"}
 
 def github_action(file_key, data=None, method="GET"):
-    """Legge o scrive file JSON su GitHub tramite API REST."""
     url = f"https://api.github.com/repos/{REPO}/contents/{FILES[file_key]}"
     headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
-    
     try:
         r = requests.get(url, headers=headers)
         sha = r.json().get("sha") if r.status_code == 200 else None
-        
         if method == "GET":
             if r.status_code == 200:
                 content = base64.b64decode(r.json()["content"]).decode('utf-8')
                 return json.loads(content)
             return None
-        
         elif method == "PUT":
             payload = {
                 "message": f"Update {FILES[file_key]}",
@@ -70,7 +73,6 @@ def github_action(file_key, data=None, method="GET"):
     return None
 
 def save_cloud():
-    # Salviamo separatamente i due dizionari nei due file JSON
     inv_data = {u: d["inv"] for u, d in st.session_state.users.items()}
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
     github_action("inv", inv_data, "PUT")
@@ -91,7 +93,7 @@ def load_cloud():
     return None
 
 # =========================
-# LOGICA DATI & IMMAGINI (INALTERATA)
+# LOGICA DATI & IMMAGINI
 # =========================
 @st.cache_data
 def load_db():
@@ -137,7 +139,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 df_db, global_img_map = load_db()
 
 # =========================
-# UI PRINCIPALE (TAB AGGIUNGI INTOCCATA)
+# UI PRINCIPALE
 # =========================
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
@@ -167,7 +169,6 @@ with tab1:
                         user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                         save_cloud(); st.toast(f"Aggiunto: {val}")
 
-# [Restanti Tab 2 e 3 invariati...]
 with tab2:
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     op = 1 if "Aggiungi" in modo else -1
