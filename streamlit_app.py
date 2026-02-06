@@ -7,7 +7,7 @@ from PIL import Image
 from streamlit_gsheets import GSheetsConnection
 
 # =========================
-# CONFIGURAZIONE & STILE (INTOCCABILE)
+# CONFIGURAZIONE & STILE (INALTERATO)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -38,7 +38,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI SALVATAGGIO (GSHEETS)
+# FUNZIONI SALVATAGGIO CLOUD
 # =========================
 def save_cloud():
     try:
@@ -49,20 +49,25 @@ def save_cloud():
             inv_list.append({"Utente": u, "Dati": json.dumps(data["inv"])})
             deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
         
-        conn.update(spreadsheet=st.secrets["connections"]["gsheets"]["spreadsheet"], worksheet="inventario", data=pd.DataFrame(inv_list))
-        conn.update(spreadsheet=st.secrets["connections"]["gsheets"]["spreadsheet"], worksheet="decks", data=pd.DataFrame(deck_list))
+        sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
+        conn.update(spreadsheet=sheet_url, worksheet="inventario", data=pd.DataFrame(inv_list))
+        conn.update(spreadsheet=sheet_url, worksheet="decks", data=pd.DataFrame(deck_list))
     except Exception as e:
-        st.sidebar.warning("Salvataggio Cloud non riuscito (verifica permessi foglio)")
+        st.sidebar.error(f"Errore Salvataggio: {e}")
 
 def load_cloud():
     try:
         conn = st.connection("gsheets", type=GSheetsConnection)
-        df_inv = conn.read(worksheet="inventario", ttl=0)
-        df_deck = conn.read(worksheet="decks", ttl=0)
+        sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
+        
+        df_inv = conn.read(spreadsheet=sheet_url, worksheet="inventario", ttl=0)
+        df_deck = conn.read(spreadsheet=sheet_url, worksheet="decks", ttl=0)
+        
         new_users = {}
         for u in ["Antonio", "Andrea", "Fabio"]:
             u_inv = df_inv[df_inv["Utente"] == u]["Dati"].values
             u_deck = df_deck[df_deck["Utente"] == u]["Dati"].values
+            
             new_users[u] = {
                 "inv": json.loads(u_inv[0]) if len(u_inv) > 0 else {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]},
                 "decks": json.loads(u_deck[0]) if len(u_deck) > 0 else [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]
@@ -102,11 +107,14 @@ def get_img(url, size=(100, 100)):
 # =========================
 if 'users' not in st.session_state:
     cloud = load_cloud()
-    st.session_state.users = cloud if cloud else {
-        "Antonio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]},
-        "Andrea": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]},
-        "Fabio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]}
-    }
+    if cloud:
+        st.session_state.users = cloud
+    else:
+        st.session_state.users = {
+            "Antonio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]},
+            "Andrea": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]},
+            "Fabio": {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]}
+        }
 
 st.sidebar.title("👤 Account")
 user_sel = st.sidebar.radio("Seleziona Utente:", ["Antonio", "Andrea", "Fabio"])
@@ -115,7 +123,7 @@ user_data = st.session_state.users[user_sel]
 if 'exp_state' not in st.session_state: st.session_state.exp_state = {}
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
-df, global_img_map = load_db()
+df_data, global_img_map = load_db()
 
 # =========================
 # UI PRINCIPALE
@@ -125,7 +133,7 @@ tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Build
 
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
-    filtered = df[df['_search'].str.contains(search_q)] if search_q else df.head(3)
+    filtered = df_data[df_data['_search'].str.contains(search_q)] if search_q else df_data.head(3)
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
             st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
@@ -139,7 +147,7 @@ with tab1:
                     val = row[ck]
                     if val and val != "n/a": user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                 save_cloud()
-                st.toast("Aggiunto!")
+                st.toast("Aggiunto tutto!")
             st.markdown("<hr>", unsafe_allow_html=True)
             for ck, ik in comps:
                 val = row[ck]
@@ -166,8 +174,8 @@ with tab2:
 with tab3:
     def get_options(cat, theory=False):
         if theory:
-            csv_map = {"lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade", "assist_blade": "assist_blade", "ratchet": "ratchet", "bit": "bit", "ratchet_integrated_bit": "ratchet_integrated_bit"}
-            return ["-"] + sorted([x for x in df[csv_map.get(cat, cat)].unique().tolist() if x and x != "n/a"])
+            csv_m = {"lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade", "assist_blade": "assist_blade", "ratchet": "ratchet", "bit": "bit", "ratchet_integrated_bit": "ratchet_integrated_bit"}
+            return ["-"] + sorted([x for x in df_data[csv_m.get(cat, cat)].unique().tolist() if x and x != "n/a"])
         return ["-"] + sorted(list(user_data["inv"][cat].keys()))
 
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
@@ -176,7 +184,8 @@ with tab3:
         with st.expander(f"{deck['name'].upper()}", expanded=True):
             for s_idx in range(3):
                 s_key = str(s_idx)
-                sels = deck["slots"][s_key] if s_key in deck["slots"] else {}
+                if s_key not in deck["slots"]: deck["slots"][s_key] = {}
+                sels = deck["slots"][s_key]
                 titolo = " ".join([v for v in sels.values() if v and v != "-"]) or f"SLOT {s_idx+1}"
                 exp_key = f"{user_sel}-{d_idx}-{s_idx}"
                 
@@ -223,9 +232,10 @@ with tab3:
                 user_data["decks"].pop(d_idx)
                 save_cloud()
                 st.rerun()
+            
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
-                n_name = st.text_input("Nuovo nome:", deck['name'])
-                if st.button("Conferma"):
+                n_name = st.text_input("Nuovo nome:", value=deck['name'], key=f"inp_{user_sel}_{d_idx}")
+                if st.button("Conferma", key=f"conf_{user_sel}_{d_idx}"):
                     deck['name'] = n_name
                     st.session_state.edit_name_idx = None
                     save_cloud()
