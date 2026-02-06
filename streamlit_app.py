@@ -38,11 +38,19 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI SALVATAGGIO (FIX DEFINITIVO)
+# FUNZIONI SALVATAGGIO (BLINDATE)
 # =========================
 def get_conn():
+    """Versione Ultra-Pulita: ignora i secrets di Streamlit per evitare conflitti di argomenti."""
+    # Creiamo la connessione senza passare alcun parametro inizialmente
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    
+    # Prendiamo i dati grezzi dai secrets
     s = st.secrets["connections"]["gsheets"]
-    creds = {
+    
+    # Costruiamo il dizionario credenziali standard di Google
+    conf = {
+        "type": "service_account",
         "project_id": s["project_id"],
         "private_key_id": s["private_key_id"],
         "private_key": s["private_key"].replace("\\n", "\n"),
@@ -53,7 +61,11 @@ def get_conn():
         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
         "client_x509_cert_url": s["client_x509_cert_url"]
     }
-    return st.connection("gs_final", type=GSheetsConnection, **creds)
+    
+    # Sovrascriviamo manualmente la configurazione interna del connettore
+    # Questo bypassa il controllo degli argomenti di Streamlit
+    conn._service_account_info = conf
+    return conn
 
 def save_cloud():
     try:
@@ -62,11 +74,12 @@ def save_cloud():
         for u, data in st.session_state.users.items():
             inv_list.append({"Utente": u, "Dati": json.dumps(data["inv"])})
             deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
+        
         url = st.secrets["connections"]["gsheets"]["spreadsheet"]
         conn.update(spreadsheet=url, worksheet="inventario", data=pd.DataFrame(inv_list))
         conn.update(spreadsheet=url, worksheet="decks", data=pd.DataFrame(deck_list))
     except Exception as e:
-        st.sidebar.warning(f"Errore: {e}")
+        st.sidebar.error(f"Errore Salvataggio: {e}")
 
 def load_cloud():
     try:
@@ -74,6 +87,7 @@ def load_cloud():
         url = st.secrets["connections"]["gsheets"]["spreadsheet"]
         df_inv = conn.read(spreadsheet=url, worksheet="inventario", ttl=0)
         df_deck = conn.read(spreadsheet=url, worksheet="decks", ttl=0)
+        
         new_users = {}
         for u in ["Antonio", "Andrea", "Fabio"]:
             u_inv = df_inv[df_inv["Utente"] == u]["Dati"].values
@@ -83,7 +97,8 @@ def load_cloud():
                 "decks": json.loads(u_deck[0]) if len(u_deck) > 0 else [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]
             }
         return new_users
-    except: return None
+    except:
+        return None
 
 # =========================
 # LOGICA DATI & IMMAGINI
@@ -124,6 +139,7 @@ if 'users' not in st.session_state:
 st.sidebar.title("👤 Account")
 user_sel = st.sidebar.radio("Seleziona Utente:", ["Antonio", "Andrea", "Fabio"])
 user_data = st.session_state.users[user_sel]
+
 if 'exp_state' not in st.session_state: st.session_state.exp_state = {}
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 df_db, global_img_map = load_db()
