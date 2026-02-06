@@ -19,11 +19,17 @@
     },
     "Andrea": {
         "lock_bit": {},
-        "blade": {},
+        "blade": {
+            "BlackShell": 1
+        },
         "main_blade": {},
         "assist_blade": {},
-        "ratchet": {},
-        "bit": {},
+        "ratchet": {
+            "4-60": 1
+        },
+        "bit": {
+            "Dot": 1
+        },
         "ratchet_integrated_bit": {}
     },
     "Fabio": {
