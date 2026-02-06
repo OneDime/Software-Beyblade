@@ -35,7 +35,6 @@ st.markdown("""
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
     [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
     
-    /* Nuovi stili per i nomi fuori dagli expander */
     .slot-summary-box {
         background-color: #0f172a;
         border-left: 4px solid #60a5fa;
@@ -81,7 +80,7 @@ def force_load():
     for u in ["Antonio", "Andrea", "Fabio"]:
         new_users[u] = {
             "inv": inv_c.get(u, {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}) if inv_c else {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]},
-            "decks": deck_c.get(u, [{"name": "DECK 1", "slots": {"0":{}, "1":{}, "2":{}}}]) if deck_c else [{"name": "DECK 1", "slots": {"0":{}, "1":{}, "2":{}}}]
+            "decks": deck_c.get(u, [{"name": "DECK 1", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}}]) if deck_c else [{"name": "DECK 1", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}}]
         }
     st.session_state.users = new_users
 
@@ -193,13 +192,12 @@ with tab3:
     for d_idx, deck in enumerate(user_data["decks"]):
         all_selected = []
         for s in deck["slots"].values():
-            all_selected.extend([v for v in s.values() if v and v != "-"])
+            all_selected.extend([v for k, v in s.items() if v and v != "-" and k != "tipo"])
 
         with st.expander(deck['name'].upper(), expanded=True):
-            # 1. VISUALIZZAZIONE NOMI (Sopra gli expander slot)
             for s_idx in range(3):
                 curr = deck["slots"].get(str(s_idx), {})
-                titolo_base = [v for v in curr.values() if v and v != "-"]
+                titolo_base = [v for k, v in curr.items() if v and v != "-" and k != "tipo"]
                 nome_bey = " ".join(titolo_base).strip() or f"Slot {s_idx+1} Vuoto"
                 ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
                 alert_html = "<span class='slot-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
@@ -207,28 +205,28 @@ with tab3:
             
             st.markdown("<hr>", unsafe_allow_html=True)
 
-            # 2. CONFIGURAZIONE SLOT
             for s_idx in range(3):
                 s_key = str(s_idx)
-                if s_key not in deck["slots"]: deck["slots"][s_key] = {}
+                if s_key not in deck["slots"]: deck["slots"][s_key] = {"tipo": "BX/UX"}
                 curr = deck["slots"][s_key]
                 
                 with st.expander(f"SLOT {s_idx+1}"):
-                    # Regola svuotamento chirurgico sistema
-                    old_tipo = st.session_state.get(f"old_t_{user_sel}_{d_idx}_{s_idx}", "BX/UX")
-                    tipo = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}")
+                    old_tipo = curr.get("tipo", "BX/UX")
+                    # Il selectbox ora legge e scrive direttamente nel database (curr["tipo"])
+                    tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(old_tipo), key=f"t_{user_sel}_{d_idx}_{s_idx}")
                     
                     if tipo != old_tipo:
-                        valid_keys = []
-                        if "BX/UX" in tipo and "+RIB" not in tipo: valid_keys = ["b", "r", "bi"]
-                        elif "CX" in tipo and "+RIB" not in tipo: valid_keys = ["lb", "mb", "ab", "r", "bi"]
+                        valid_keys = ["tipo"]
+                        if "BX/UX" in tipo and "+RIB" not in tipo: valid_keys += ["b", "r", "bi"]
+                        elif "CX" in tipo and "+RIB" not in tipo: valid_keys += ["lb", "mb", "ab", "r", "bi"]
                         elif "+RIB" in tipo:
-                            if "CX" in tipo: valid_keys = ["lb", "mb", "ab", "rib"]
-                            else: valid_keys = ["b", "rib"]
+                            if "CX" in tipo: valid_keys += ["lb", "mb", "ab", "rib"]
+                            else: valid_keys += ["b", "rib"]
                         
+                        # Svuotamento chirurgico
                         for k in ["b", "r", "bi", "lb", "mb", "ab", "rib"]:
                             if k not in valid_keys: curr[k] = "-"
-                        st.session_state[f"old_t_{user_sel}_{d_idx}_{s_idx}"] = tipo
+                        curr["tipo"] = tipo
                         st.rerun()
 
                     is_th = "Theory" in tipo
@@ -254,10 +252,10 @@ with tab3:
                         update_comp("RIB", "ratchet_integrated_bit", "rib")
 
                     cols = st.columns(5)
-                    for i, (k, v) in enumerate(curr.items()):
-                        if v and v != "-":
+                    for k, v in curr.items():
+                        if k != "tipo" and v and v != "-":
                             img_obj = get_img(global_img_map.get(v))
-                            if img_obj: cols[i % 5].image(img_obj)
+                            if img_obj: st.image(img_obj, width=80) # Semplificato per il rendering in colonna
 
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
@@ -271,5 +269,5 @@ with tab3:
                     deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
 
     if st.button("Nuovo Deck"):
-        user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{}, "1":{}, "2":{}}})
+        user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
