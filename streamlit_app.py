@@ -39,14 +39,17 @@ st.markdown("""
 # FUNZIONI SALVATAGGIO CLOUD
 # =========================
 def get_conn():
-    # Estraiamo i segreti e puliamo la chiave privata
+    # Carichiamo tutti i segreti
     conf = dict(st.secrets["connections"]["gsheets"])
+    
+    # Puliamo la chiave privata se presente
     if "private_key" in conf:
         conf["private_key"] = conf["private_key"].replace("\\n", "\n")
     
-    # Rimuoviamo 'type' dai segreti per passarlo solo come classe della connessione
-    if "type" in conf:
-        del conf["type"]
+    # Rimuoviamo i parametri che NON sono credenziali ma istruzioni per il connettore
+    # 'type' e 'spreadsheet' vanno tolti dal dizionario degli argomenti extra (**kwargs)
+    conf.pop("type", None)
+    conf.pop("spreadsheet", None)
         
     return st.connection("gsheets", type=GSheetsConnection, **conf)
 
@@ -59,7 +62,9 @@ def save_cloud():
             inv_list.append({"Utente": u, "Dati": json.dumps(data["inv"])})
             deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
         
+        # Recuperiamo l'URL pulito dai segreti per usarlo solo qui
         sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
+        
         conn.update(spreadsheet=sheet_url, worksheet="inventario", data=pd.DataFrame(inv_list))
         conn.update(spreadsheet=sheet_url, worksheet="decks", data=pd.DataFrame(deck_list))
     except Exception as e:
@@ -70,6 +75,7 @@ def load_cloud():
         conn = get_conn()
         sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
         
+        # Specifichiamo l'URL esplicitamente durante la lettura
         df_inv = conn.read(spreadsheet=sheet_url, worksheet="inventario", ttl=0)
         df_deck = conn.read(spreadsheet=sheet_url, worksheet="decks", ttl=0)
         
