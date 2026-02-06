@@ -14,28 +14,24 @@ st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
+    /* Sfondo generale */
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
     
-    /* MODIFICA COLORI: Target ultra-specifici per Tab, Radio e Label */
+    /* MODIFICA COLORI DEFINITIVA: Forza il grigio chiaro su testi specifici */
     
-    /* 1. Testi dei TAB (Aggiungi, Inventario, Deck Builder) */
-    button[data-baseweb="tab"] div, 
-    button[data-baseweb="tab"] p,
-    [data-testid="stMain"] .stTabs [data-baseweb="tab"] {
-        color: #e2e8f0 !important; /* Grigio molto chiaro */
-    }
-
-    /* 2. Testi delle opzioni RADIO (Aggiungi/Rimuovi) */
-    [data-testid="stRadio"] label div,
-    [data-testid="stRadio"] label p,
-    div[role="radiogroup"] label {
+    /* Forza il colore sui Tab */
+    [data-baseweb="tab"] * {
         color: #e2e8f0 !important;
     }
 
-    /* 3. Etichette dei widget (Account / Seleziona Utente) */
-    [data-testid="stWidgetLabel"] p,
-    [data-testid="stSidebar"] label p {
+    /* Forza il colore sulle etichette dei Radio (Aggiungi/Rimuovi) */
+    [data-testid="stRadio"] label * {
+        color: #e2e8f0 !important;
+    }
+
+    /* Forza il colore sulle scritte della Sidebar (Account / Seleziona Utente) */
+    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] * {
         color: #e2e8f0 !important;
     }
 
@@ -61,7 +57,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB (INTACCATA E FUNZIONANTE)
+# LOGICA GITHUB (NON TOCCARE)
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -94,7 +90,7 @@ def save_cloud():
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
     github_action("inv", inv_data, "PUT")
     github_action("decks", deck_data, "PUT")
-    st.sidebar.success("Sincronizzato su GitHub!")
+    st.sidebar.success("Sincronizzato!")
 
 def load_cloud():
     inv_cloud = github_action("inv", method="GET")
@@ -187,6 +183,7 @@ with tab1:
                         save_cloud(); st.toast(f"Aggiunto: {val}")
 
 with tab2:
+    # Radio buttons
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True, label_visibility="collapsed")
     op = 1 if "Aggiungi" in modo else -1
     for cat, items in user_data["inv"].items():
@@ -198,6 +195,7 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
+# [Tab 3 rimane invariato per brevità...]
 with tab3:
     def get_options(cat, theory=False):
         if theory:
