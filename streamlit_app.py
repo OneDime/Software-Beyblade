@@ -26,6 +26,8 @@ st.markdown("""
     .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; }
     div.stButton > button { width: 100% !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; }
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; }
+    /* Evidenzia il tasto Salva */
+    button[kind="primary"] { background-color: #2563eb !important; border-color: #3b82f6 !important; font-weight: bold !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -114,21 +116,23 @@ if 'users' not in st.session_state:
 
 # GESTIONE UTENTE TRAMITE URL PARAMETERS
 user_list = ["Antonio", "Andrea", "Fabio"]
-# Leggiamo l'utente dall'URL, se c'è
 query_params = st.query_params
+# Otteniamo l'utente dall'URL. Streamlit moderni restituiscono il valore direttamente.
 initial_user = query_params.get("user", "Antonio")
 if initial_user not in user_list: initial_user = "Antonio"
-try:
-    user_index = user_list.index(initial_user)
-except ValueError:
-    user_index = 0
 
 st.sidebar.title("👤 Account")
+try:
+    user_index = user_list.index(initial_user)
+except:
+    user_index = 0
+
 user_sel = st.sidebar.radio("Seleziona Utente:", user_list, index=user_index)
 
-# Se l'utente cambia radio button, aggiorniamo l'URL
+# Se l'utente cambia radio button, aggiorniamo l'URL e FORZIAMO il rerun
 if user_sel != initial_user:
     st.query_params["user"] = user_sel
+    st.rerun()
 
 user_data = st.session_state.users[user_sel]
 df_db, global_img_map = load_db()
@@ -195,7 +199,6 @@ with tab3:
                 t_label = " ".join(parts) if parts else f"Slot {s_idx+1}"
                 
                 with st.expander(t_label.upper()):
-                    # Qui usiamo session_state per ricordare la scelta 'visiva' del sistema, senza salvarla nel JSON
                     sys_key = f"sys_sel_{d_idx}_{s_idx}"
                     if sys_key not in st.session_state: st.session_state[sys_key] = "BX/UX"
                     
@@ -207,7 +210,6 @@ with tab3:
                         current = vals.get(k_part, "-")
                         try: idx = options.index(current)
                         except: idx = 0
-                        # Modifichiamo SOLO la variabile locale 'deck' (memoria), NON chiamiamo save_all() qui
                         sel = st.selectbox(label, options, index=idx, key=f"sel_{d_idx}_{s_idx}_{k_part}")
                         deck["slots"][s_key][k_part] = sel
                         return sel
@@ -241,7 +243,6 @@ with tab3:
             # --- BOTTONIERE DI CONTROLLO DECK ---
             st.divider()
             
-            # Gestione Rinomina (Stato locale per mostrare input)
             ren_key = f"renaming_{d_idx}"
             if ren_key not in st.session_state: st.session_state[ren_key] = False
 
@@ -251,7 +252,7 @@ with tab3:
                 if c_conf.button("Conferma Nome", key=f"ok_ren_{d_idx}"):
                     deck['name'] = new_name
                     st.session_state[ren_key] = False
-                    save_all() # Salva il cambio nome
+                    save_all()
                     st.rerun()
                 if c_ann.button("Annulla", key=f"ko_ren_{d_idx}"):
                     st.session_state[ren_key] = False
@@ -259,21 +260,22 @@ with tab3:
             else:
                 c1, c2, c3 = st.columns(3)
                 
-                # 1. Rinomina
-                if c1.button("✏️ Rinomina", key=f"btn_ren_{d_idx}"):
-                    st.session_state[ren_key] = True
-                    st.rerun()
+                with c1:
+                    if st.button("✏️ Rinomina", key=f"btn_ren_{d_idx}"):
+                        st.session_state[ren_key] = True
+                        st.rerun()
                 
-                # 2. SALVA DECK (Il tasto richiesto)
-                if c2.button("💾 SALVA DECK", key=f"btn_save_{d_idx}", type="primary"):
-                    save_all()
-                    st.rerun()
+                with c2:
+                    # Tasto SALVA DECK primario e sempre visibile se non si sta rinominando
+                    if st.button("💾 SALVA DECK", key=f"btn_save_{d_idx}", type="primary"):
+                        save_all()
+                        st.rerun()
                 
-                # 3. Elimina
-                if c3.button("🗑️ Elimina", key=f"btn_del_{d_idx}"):
-                    user_data["decks"].pop(d_idx)
-                    save_all()
-                    st.rerun()
+                with c3:
+                    if st.button("🗑️ Elimina", key=f"btn_del_{d_idx}"):
+                        user_data["decks"].pop(d_idx)
+                        save_all()
+                        st.rerun()
 
     if st.button("➕ Crea Nuovo Deck"):
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {str(i): {} for i in range(3)}})
