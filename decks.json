@@ -1,31 +1,5 @@
 {
-    "Antonio": [
-        {
-            "name": "DECK 1",
-            "slots": {
-                "0": {
-                    "b": "AeroPegasus",
-                    "r": "3-70",
-                    "bi": "Accel"
-                },
-                "1": {
-                    "b": "BearScratch",
-                    "r": "5-60",
-                    "bi": "Flat"
-                },
-                "2": {
-                    "b": "BlackShell",
-                    "r": "-",
-                    "bi": "-",
-                    "rib": "Operate",
-                    "lb": "-",
-                    "mb": "-",
-                    "ab": "-",
-                    "tipo": "BX/UX+RIB Theory"
-                }
-            }
-        }
-    ],
+    "Antonio": [],
     "Andrea": [
         {
             "name": "DECK 1",
