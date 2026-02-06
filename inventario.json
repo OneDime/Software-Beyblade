@@ -5,7 +5,8 @@
         },
         "blade": {
             "WizardRod": 2,
-            "WhaleWave": 1
+            "WhaleWave": 1,
+            "CobaltDragoon": 1
         },
         "main_blade": {
             "Arc": 1
@@ -17,13 +18,15 @@
             "4-55": 1,
             "1-60": 1,
             "5-70": 1,
-            "5-80": 1
+            "5-80": 1,
+            "2-60": 1
         },
         "bit": {
             "Low Orb": 1,
             "Rush": 1,
             "Disk Ball": 1,
-            "Elevate": 1
+            "Elevate": 1,
+            "Cyclone": 1
         },
         "ratchet_integrated_bit": {}
     },
