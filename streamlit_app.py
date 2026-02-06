@@ -39,19 +39,25 @@ st.markdown("""
 # FUNZIONI SALVATAGGIO CLOUD
 # =========================
 def get_conn():
-    # Carichiamo tutti i segreti
-    conf = dict(st.secrets["connections"]["gsheets"])
+    # Carichiamo i segreti
+    secrets_dict = dict(st.secrets["connections"]["gsheets"])
     
-    # Puliamo la chiave privata se presente
-    if "private_key" in conf:
-        conf["private_key"] = conf["private_key"].replace("\\n", "\n")
+    # Lista rigorosa dei parametri accettati dal Service Account di Google
+    # Qualsiasi altra cosa (project_id, spreadsheet, type) causa errore se passata qui
+    allowed_keys = [
+        "project_id", "private_key_id", "private_key", 
+        "client_email", "client_id", "auth_uri", "token_uri", 
+        "auth_provider_x509_cert_url", "client_x509_cert_url", "universe_domain"
+    ]
     
-    # Rimuoviamo i parametri che NON sono credenziali ma istruzioni per il connettore
-    # 'type' e 'spreadsheet' vanno tolti dal dizionario degli argomenti extra (**kwargs)
-    conf.pop("type", None)
-    conf.pop("spreadsheet", None)
+    # Creiamo un nuovo dizionario con SOLO le chiavi ammesse
+    creds = {k: secrets_dict[k] for k in allowed_keys if k in secrets_dict}
+    
+    # Pulizia specifica della chiave privata
+    if "private_key" in creds:
+        creds["private_key"] = creds["private_key"].replace("\\n", "\n")
         
-    return st.connection("gsheets", type=GSheetsConnection, **conf)
+    return st.connection("gsheets", type=GSheetsConnection, **creds)
 
 def save_cloud():
     try:
@@ -62,7 +68,6 @@ def save_cloud():
             inv_list.append({"Utente": u, "Dati": json.dumps(data["inv"])})
             deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
         
-        # Recuperiamo l'URL pulito dai segreti per usarlo solo qui
         sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
         
         conn.update(spreadsheet=sheet_url, worksheet="inventario", data=pd.DataFrame(inv_list))
@@ -75,7 +80,6 @@ def load_cloud():
         conn = get_conn()
         sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
         
-        # Specifichiamo l'URL esplicitamente durante la lettura
         df_inv = conn.read(spreadsheet=sheet_url, worksheet="inventario", ttl=0)
         df_deck = conn.read(spreadsheet=sheet_url, worksheet="decks", ttl=0)
         
