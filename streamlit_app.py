@@ -7,7 +7,7 @@ from PIL import Image
 from streamlit_gsheets import GSheetsConnection
 
 # =========================
-# CONFIGURAZIONE & STILE (CENTRATURA RIPRISTINATA)
+# CONFIGURAZIONE & STILE (CENTRATURA GARANTITA)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -16,10 +16,8 @@ st.markdown("""
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
     
-    /* Centratura globale dei blocchi verticali */
     [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
     
-    /* Container dei Beyblade */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
@@ -47,13 +45,16 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI SALVATAGGIO (VERSIONE COMPATIBILE)
+# FUNZIONI SALVATAGGIO (FORCE SERVICE ACCOUNT)
 # =========================
 def get_conn():
-    """Iniezione credenziali compatibile con tutte le versioni di st.connection."""
+    """Iniezione credenziali bypassando il caricamento automatico di Streamlit."""
     s = st.secrets["connections"]["gsheets"]
     
-    # Prepariamo il dizionario delle credenziali
+    # Creiamo un nome di connessione arbitrario 'cloud_fix' 
+    # per evitare che legga i parametri 'spreadsheet' dai secrets in automatico
+    conn = st.connection("cloud_fix", type=GSheetsConnection)
+    
     creds = {
         "type": "service_account",
         "project_id": s["project_id"],
@@ -67,11 +68,7 @@ def get_conn():
         "client_x509_cert_url": s["client_x509_cert_url"]
     }
     
-    # Creiamo la connessione
-    conn = st.connection("gsheets", type=GSheetsConnection)
-    
-    # Iniezione forzata delle info del service account
-    # Questo metodo sovrascrive la modalità 'public' e abilita la scrittura
+    # Forziamo le credenziali nel connettore
     conn._service_account_info = creds
     return conn
 
@@ -83,13 +80,14 @@ def save_cloud():
             inv_list.append({"Utente": u, "Dati": json.dumps(data["inv"])})
             deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
         
+        # URL preso dai secrets ma passato manualmente qui
         url = st.secrets["connections"]["gsheets"]["spreadsheet"]
-        # Eseguiamo l'aggiornamento
+        
         conn.update(spreadsheet=url, worksheet="inventario", data=pd.DataFrame(inv_list))
         conn.update(spreadsheet=url, worksheet="decks", data=pd.DataFrame(deck_list))
-        st.sidebar.success("Sincronizzato correttamente!")
+        st.sidebar.success("Salvataggio riuscito!")
     except Exception as e:
-        st.sidebar.error(f"Errore di Salvataggio: {e}")
+        st.sidebar.error(f"Errore: {e}")
 
 def load_cloud():
     try:
@@ -154,7 +152,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 df_db, global_img_map = load_db()
 
 # =========================
-# UI PRINCIPALE
+# UI PRINCIPALE (TAB AGGIUNGI INTOCCATA)
 # =========================
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
