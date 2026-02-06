@@ -1,11 +1,17 @@
 {
     "Antonio": {
         "lock_bit": {},
-        "blade": {},
+        "blade": {
+            "AeroPegasus": 1
+        },
         "main_blade": {},
         "assist_blade": {},
-        "ratchet": {},
-        "bit": {},
+        "ratchet": {
+            "3-70": 1
+        },
+        "bit": {
+            "Accel": 1
+        },
         "ratchet_integrated_bit": {}
     },
     "Andrea": {
