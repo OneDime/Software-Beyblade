@@ -37,16 +37,16 @@
         "lock_bit": {},
         "blade": {
             "DranDagger": 1,
-            "WizardRod": 1
+            "WizardRod": 2
         },
         "main_blade": {},
         "assist_blade": {},
         "ratchet": {
             "4-60": 1,
-            "1-60": 1
+            "1-60": 2
         },
         "bit": {
-            "Rush": 2
+            "Rush": 3
         },
         "ratchet_integrated_bit": {}
     }
