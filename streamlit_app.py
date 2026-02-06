@@ -8,7 +8,7 @@ import base64
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE (PULITO)
+# CONFIGURAZIONE & STILE
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -46,7 +46,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB (CONFERMATA FUNZIONANTE)
+# LOGICA GITHUB
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -79,7 +79,7 @@ def save_cloud():
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
     github_action("inv", inv_data, "PUT")
     github_action("decks", deck_data, "PUT")
-    st.sidebar.success("Sincronizzato!")
+    st.sidebar.success("Dati salvati online!")
 
 def load_cloud():
     inv_cloud = github_action("inv", method="GET")
@@ -136,12 +136,13 @@ if 'users' not in st.session_state:
 st.sidebar.title("👤 Account")
 user_sel = st.sidebar.radio("Seleziona Utente:", ["Antonio", "Andrea", "Fabio"])
 user_data = st.session_state.users[user_sel]
+
 if 'exp_state' not in st.session_state: st.session_state.exp_state = {}
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 df_db, global_img_map = load_db()
 
 # =========================
-# UI PRINCIPALE (TAB AGGIUNGI INTOCCATA)
+# UI PRINCIPALE
 # =========================
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
@@ -191,16 +192,21 @@ with tab3:
         return ["-"] + sorted(list(user_data["inv"][cat].keys()))
     
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
+    
     for d_idx, deck in enumerate(user_data["decks"]):
-        with st.expander(f"{deck['name'].upper()}", expanded=True):
+        with st.expander(f"📁 {deck['name'].upper()}", expanded=True):
             for s_idx in range(3):
                 s_key = str(s_idx)
                 sels = deck["slots"].get(s_key, {})
                 titolo = " ".join([v for v in sels.values() if v and v != "-"]) or f"SLOT {s_idx+1}"
                 exp_key = f"{user_sel}-{d_idx}-{s_idx}"
-                with st.expander(titolo.upper(), expanded=st.session_state.exp_state.get(exp_key, False)):
+                
+                # Uso lo stato per non far chiudere l'expander al refresh
+                is_expanded = st.session_state.exp_state.get(exp_key, False)
+                with st.expander(titolo.upper(), expanded=is_expanded):
                     tipo = st.selectbox("Sistema", tipologie, key=f"ty_{exp_key}")
                     is_th, curr = "Theory" in tipo, {}
+                    
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
                         curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}")
@@ -219,21 +225,41 @@ with tab3:
                         else: curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
                         curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_th), key=f"rib_{exp_key}")
                     
+                    # Mostra immagini
                     cols = st.columns(5)
                     for idx, (k, v) in enumerate(curr.items()):
                         if v != "-":
                             img_obj = get_img(global_img_map.get(v))
                             if img_obj: cols[idx].image(img_obj)
+                    
+                    # FORZA SALVATAGGIO su cambio componente
                     if deck["slots"].get(s_key) != curr:
                         deck["slots"][s_key] = curr
-                        save_cloud(); st.session_state.exp_state[exp_key] = True; st.rerun()
+                        st.session_state.exp_state[exp_key] = True # Mantieni aperto
+                        save_cloud()
+                        st.rerun()
 
+            # Opzioni Deck
             c1, c2, _ = st.columns([0.2, 0.2, 0.6])
-            if c1.button("📝 Rinomina", key=f"ren_{user_sel}_{d_idx}"): st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
-            if c2.button("🗑️ Elimina", key=f"del_{user_sel}_{d_idx}", type="primary"): user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
+            if c1.button("📝 Rinomina", key=f"ren_{user_sel}_{d_idx}"):
+                st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"
+                st.rerun()
+            
+            # FORZA SALVATAGGIO su eliminazione
+            if c2.button("🗑️ Elimina Deck", key=f"del_{user_sel}_{d_idx}", type="primary"):
+                user_data["decks"].pop(d_idx)
+                save_cloud()
+                st.rerun()
+
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
                 n_name = st.text_input("Nuovo nome:", deck['name'], key=f"edit_input_{d_idx}")
-                if st.button("Conferma", key=f"confirm_{d_idx}"):
-                    deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
+                if st.button("Conferma Rinomina", key=f"confirm_{d_idx}"):
+                    deck['name'] = n_name
+                    st.session_state.edit_name_idx = None
+                    save_cloud() # FORZA SALVATAGGIO su rinomina
+                    st.rerun()
 
-    if st.button("➕ Nuovo Deck"): user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {str(i): {} for i in range(3)}}); save_cloud(); st.rerun()
+    if st.button("➕ Crea Nuovo Deck"):
+        user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {str(i): {} for i in range(3)}})
+        save_cloud()
+        st.rerun()
