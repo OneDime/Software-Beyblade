@@ -9,7 +9,7 @@ import time
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE (INALTERATO)
+# CONFIGURAZIONE & STILE
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -84,6 +84,8 @@ def save_cloud():
 # =========================
 if 'users' not in st.session_state:
     force_load()
+if 'exp_state' not in st.session_state:
+    st.session_state.exp_state = {}
 
 @st.dialog("Accesso")
 def user_dialog():
@@ -177,7 +179,7 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
-# --- TAB 3: DECK BUILDER ---
+# --- TAB 3: DECK BUILDER (FIX TITOLI E EXPANDER) ---
 with tab3:
     def get_options(cat, theory=False):
         if theory:
@@ -188,28 +190,36 @@ with tab3:
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
     
     for d_idx, deck in enumerate(user_data["decks"]):
-        with st.expander(f"🗃️ {deck['name'].upper()}", expanded=True):
+        with st.expander(deck['name'].upper(), expanded=True):
             for s_idx in range(3):
                 s_key = str(s_idx)
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 curr = deck["slots"][s_key]
+                
+                # Titolo pulito senza icone
                 titolo = " ".join([v for v in curr.values() if v and v != "-"]).strip() or f"SLOT {s_idx+1}"
                 
-                with st.expander(f"🔹 {titolo.upper()}"):
+                # Gestione stato expander per evitare chiusure
+                exp_id = f"exp_{user_sel}_{d_idx}_{s_idx}"
+                is_expanded = st.session_state.exp_state.get(exp_id, False)
+                
+                with st.expander(titolo.upper(), expanded=is_expanded):
                     tipo = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}")
                     is_th = "Theory" in tipo
                     
                     def update_comp(label, cat, k_comp):
                         opts = get_options(cat, is_th)
-                        # Cerchiamo il valore attuale nel session_state o nel deck
                         current_val = curr.get(k_comp, "-")
                         if current_val not in opts: current_val = "-"
                         
-                        # Widget
-                        res = st.selectbox(label, opts, index=opts.index(current_val), key=f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}")
+                        w_key = f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}"
+                        res = st.selectbox(label, opts, index=opts.index(current_val), key=w_key)
+                        
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res
-                            # Non salviamo qui, aspettiamo il tasto Salva Deck
+                            # Quando l'utente cambia qualcosa, segnamo che questo expander deve restare aperto
+                            st.session_state.exp_state[exp_id] = True
+                            # Non facciamo rerun qui per non essere troppo aggressivi, Streamlit gestirà il cambio stato
 
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         update_comp("Blade", "blade", "b")
@@ -240,6 +250,8 @@ with tab3:
                 st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
             
             if c2.button("💾 SALVA DECK", key=f"s_{user_sel}_{d_idx}"):
+                # Al salvataggio possiamo resettare gli stati degli expander se vuoi che si chiudano, 
+                # oppure lasciarli così. Qui li lasciamo aperti per conferma visiva.
                 save_cloud()
                 
             if c3.button("🗑️ Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
