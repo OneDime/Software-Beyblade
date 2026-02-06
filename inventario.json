@@ -36,15 +36,17 @@
     "Fabio": {
         "lock_bit": {},
         "blade": {
-            "DranDagger": 1
+            "DranDagger": 1,
+            "WizardRod": 1
         },
         "main_blade": {},
         "assist_blade": {},
         "ratchet": {
-            "4-60": 1
+            "4-60": 1,
+            "1-60": 1
         },
         "bit": {
-            "Rush": 1
+            "Rush": 2
         },
         "ratchet_integrated_bit": {}
     }
