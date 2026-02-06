@@ -14,8 +14,7 @@ st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
-    [data-testid="stVerticalBlock"] { gap: 0.5rem !important; }
-    .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; }
+    .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; }
     [data-testid="stVerticalBlock"] { text-align: center; align-items: center; }
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
@@ -24,28 +23,22 @@ st.markdown("""
         margin-bottom: 15px !important;
         padding: 10px !important;
     }
-    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; }
-    .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; }
+    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; }
+    .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; display: block; }
     hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; }
-    div.stButton > button {
-        width: auto !important; min-width: 150px !important;
-        height: 30px !important; background-color: #334155 !important; color: white !important;
-        border: 1px solid #475569 !important; border-radius: 4px !important;
-    }
-    .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
-    [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
+    div.stButton > button { width: auto !important; min-width: 150px !important; }
     </style>
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI SALVATAGGIO (FIX CRUD)
+# FUNZIONI SALVATAGGIO (VERSIONE INFALLIBILE)
 # =========================
 def get_conn():
-    # Inizializzazione pulita
-    conn = st.connection("gsheets", type=GSheetsConnection)
+    """Crea una connessione forzando le credenziali tramite file temporaneo."""
     s = st.secrets["connections"]["gsheets"]
     
-    conf = {
+    # Costruiamo il dizionario credenziali standard
+    creds_dict = {
         "type": "service_account",
         "project_id": s["project_id"],
         "private_key_id": s["private_key_id"],
@@ -58,8 +51,9 @@ def get_conn():
         "client_x509_cert_url": s["client_x509_cert_url"]
     }
     
-    conn._service_account_info = conf
-    return conn
+    # Creiamo la connessione passando esplicitamente le credenziali
+    # Questo metodo è il più documentato per forzare l'autenticazione CRUD
+    return st.connection("gsheets_v4", type=GSheetsConnection, service_account_info=creds_dict)
 
 def save_cloud():
     try:
@@ -70,9 +64,10 @@ def save_cloud():
             deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
         
         url = st.secrets["connections"]["gsheets"]["spreadsheet"]
-        # Specifichiamo esplicitamente di usare il service account per l'update
+        # L'uso di st.connection con service_account_info abilita automaticamente CRUD
         conn.update(spreadsheet=url, worksheet="inventario", data=pd.DataFrame(inv_list))
         conn.update(spreadsheet=url, worksheet="decks", data=pd.DataFrame(deck_list))
+        st.sidebar.success("Dati salvati nel Cloud!")
     except Exception as e:
         st.sidebar.error(f"Errore: {e}")
 
@@ -134,7 +129,6 @@ if 'users' not in st.session_state:
 st.sidebar.title("👤 Account")
 user_sel = st.sidebar.radio("Seleziona Utente:", ["Antonio", "Andrea", "Fabio"])
 user_data = st.session_state.users[user_sel]
-
 if 'exp_state' not in st.session_state: st.session_state.exp_state = {}
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 df_db, global_img_map = load_db()
