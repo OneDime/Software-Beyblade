@@ -25,9 +25,7 @@
         "main_blade": {},
         "assist_blade": {},
         "ratchet": {},
-        "bit": {
-            "Dot": 1
-        },
+        "bit": {},
         "ratchet_integrated_bit": {}
     }
 }
