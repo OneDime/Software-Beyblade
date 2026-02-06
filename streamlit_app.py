@@ -1,5 +1,4 @@
 import streamlit as st
-import pd as pd
 import pandas as pd
 import hashlib
 import os
@@ -19,24 +18,7 @@ st.markdown("""
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
     
-    /* STILE TAB AGGIUNGI (RIPRISTINATO) */
-    [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
-    div[data-testid="stVerticalBlockBorderWrapper"] {
-        border: 2px solid #334155 !important;
-        background-color: #1e293b !important;
-        border-radius: 12px !important;
-        margin-bottom: 15px !important;
-        padding: 10px !important;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; width: 100%; }
-    .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; margin-top: 5px; }
-    hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; width: 100%; }
-    div.stButton > button { width: auto !important; min-width: 150px !important; height: 30px !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; border-radius: 4px !important; }
-
-    /* STILE DECK BUILDER */
+    /* Box Beyblade Header */
     .bey-summary-box {
         background-color: #1e293b;
         border-left: 5px solid #60a5fa;
@@ -57,8 +39,19 @@ st.markdown("""
         margin-left: 10px;
         font-size: 0.9rem;
     }
+    
+    /* Layout Generale */
+    [data-testid="stVerticalBlock"] { gap: 0.5rem !important; }
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        border: 2px solid #334155 !important;
+        background-color: #1e293b !important;
+        border-radius: 12px !important;
+        margin-bottom: 15px !important;
+        padding: 10px !important;
+    }
     .stExpander { border: 1px solid #334155 !important; background-color: #0f172a !important; margin-bottom: 5px !important; }
     [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
+    hr { opacity: 0.2; margin: 10px 0; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -153,13 +146,13 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI (RIPRISTINATO) ---
+# --- TAB 1 (AGGIUNGI - INTOCCABILE) ---
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
+            st.markdown(f"**{row['name']}**")
             img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
             if img: st.image(img)
             comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
@@ -170,12 +163,10 @@ with tab1:
                     val = row[ck]
                     if val and val != "n/a": user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                 save_cloud()
-            st.markdown("<hr>", unsafe_allow_html=True)
             for ck, ik in comps:
                 val = row[ck]
                 if val and val != "n/a":
-                    st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
-                    if st.button("＋", key=f"btn_{i}_{ck}"):
+                    if st.button(f"＋ {val}", key=f"btn_{i}_{ck}"):
                         user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                         save_cloud()
 
@@ -208,54 +199,62 @@ with tab3:
             all_selected.extend([v for v in s.values() if v and v != "-"])
 
         with st.expander(deck['name'].upper(), expanded=True):
+            
+            # SEZIONE NOMI (Senza "BEY #:")
             for s_idx in range(3):
                 curr = deck["slots"].get(str(s_idx), {})
                 comp_list = [v for v in curr.values() if v and v != "-"]
                 nome_bey = " ".join(comp_list).strip() or f"Slot {s_idx+1} Vuoto"
                 ha_duplicati = any(all_selected.count(p) > 1 for p in comp_list)
-                alert_html = f"<span class='bey-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
-                st.markdown(f"<div class='bey-summary-box'><span class='bey-summary-name'>{nome_bey}</span>{alert_html}</div>", unsafe_allow_html=True)
+                
+                alert_html = "<span class='bey-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
+                st.markdown(f"""
+                    <div class='bey-summary-box'>
+                        <span class='bey-summary-name'>{nome_bey}</span>
+                        {alert_html}
+                    </div>
+                """, unsafe_allow_html=True)
             
             st.markdown("<hr>", unsafe_allow_html=True)
 
+            # SEZIONE CONFIGURAZIONE
             for s_idx in range(3):
                 s_key = str(s_idx)
                 curr = deck["slots"][s_key]
+                
                 with st.expander(f"⚙️ CONFIGURA SLOT {s_idx+1}"):
-                    old_tipo = st.session_state.get(f"old_t_{user_sel}_{d_idx}_{s_idx}", "BX/UX")
                     tipo = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}")
-                    
-                    if tipo != old_tipo:
-                        valid_keys = []
-                        if "BX/UX" in tipo and "+RIB" not in tipo: valid_keys = ["b", "r", "bi"]
-                        elif "CX" in tipo and "+RIB" not in tipo: valid_keys = ["lb", "mb", "ab", "r", "bi"]
-                        elif "+RIB" in tipo:
-                            if "CX" in tipo: valid_keys = ["lb", "mb", "ab", "rib"]
-                            else: valid_keys = ["b", "rib"]
-                        all_keys = ["b", "r", "bi", "lb", "mb", "ab", "rib"]
-                        for k in all_keys:
-                            if k not in valid_keys: curr[k] = "-"
-                        st.session_state[f"old_t_{user_sel}_{d_idx}_{s_idx}"] = tipo
-                        st.rerun()
-
                     is_th = "Theory" in tipo
+                    
                     def update_comp(label, cat, k_comp):
                         opts = get_options(cat, is_th)
                         current_val = curr.get(k_comp, "-")
                         if current_val not in opts: current_val = "-"
-                        display_label = f"{label} ⚠️" if current_val != "-" and all_selected.count(current_val) > 1 else label
+                        
+                        display_label = label
+                        if current_val != "-" and all_selected.count(current_val) > 1:
+                            display_label = f"{label} ⚠️"
+                            
                         res = st.selectbox(display_label, opts, index=opts.index(current_val), key=f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}")
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res
                             st.rerun()
 
                     if "BX/UX" in tipo and "+RIB" not in tipo:
-                        update_comp("Blade", "blade", "b"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                        update_comp("Blade", "blade", "b")
+                        update_comp("Ratchet", "ratchet", "r")
+                        update_comp("Bit", "bit", "bi")
                     elif "CX" in tipo and "+RIB" not in tipo:
-                        update_comp("Lock Bit", "lock_bit", "lb"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                        update_comp("Lock Bit", "lock_bit", "lb")
+                        update_comp("Main Blade", "main_blade", "mb")
+                        update_comp("Assist Blade", "assist_blade", "ab")
+                        update_comp("Ratchet", "ratchet", "r")
+                        update_comp("Bit", "bit", "bi")
                     elif "+RIB" in tipo:
                         if "CX" in tipo:
-                            update_comp("Lock Bit", "lock_bit", "lb"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab")
+                            update_comp("Lock Bit", "lock_bit", "lb")
+                            update_comp("Main Blade", "main_blade", "mb")
+                            update_comp("Assist Blade", "assist_blade", "ab")
                         else: update_comp("Blade", "blade", "b")
                         update_comp("RIB", "ratchet_integrated_bit", "rib")
 
@@ -268,9 +267,11 @@ with tab3:
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("Rinomina Deck", key=f"r_{user_sel}_{d_idx}"):
                 st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
-            if c2.button("💾 Salva", key=f"s_{user_sel}_{d_idx}"): save_cloud()
+            if c2.button("💾 Salva", key=f"s_{user_sel}_{d_idx}"):
+                save_cloud()
             if c3.button("🗑️ Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
                 user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
+            
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
                 n_name = st.text_input("Nuovo nome Deck:", deck['name'], key=f"i_{d_idx}")
                 if st.button("Conferma", key=f"o_{d_idx}"):
