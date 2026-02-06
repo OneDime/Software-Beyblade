@@ -37,7 +37,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB (NON TOCCARE)
+# LOGICA GITHUB
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -66,7 +66,6 @@ def github_action(file_key, data=None, method="GET"):
     return None
 
 def save_cloud():
-    # Aggiorna lo stato dei deck prima di salvare
     inv_data = {u: d["inv"] for u, d in st.session_state.users.items()}
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
     github_action("inv", inv_data, "PUT")
@@ -175,66 +174,62 @@ with tab3:
                 s_key = str(s_idx)
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 
-                # Chiave unica globale per il widget
-                exp_key = f"{user_sel}_{d_idx}_{s_idx}"
-                
-                # Recuperiamo i valori attuali dallo stato dei deck
                 curr_vals = deck["slots"][s_key]
                 titolo = " ".join([v for v in curr_vals.values() if v and v != "-"]) or f"SLOT {s_idx+1}"
+                exp_key = f"exp_{user_sel}_{d_idx}_{s_idx}"
                 
                 with st.expander(titolo.upper(), expanded=st.session_state.exp_state.get(exp_key, False)):
                     tipo = st.selectbox("Sistema", tipologie, key=f"sys_{exp_key}")
                     is_th = "Theory" in tipo
                     
-                    # Costruiamo il dizionario delle selezioni
+                    def smart_select(label, cat, key_part):
+                        opts = get_options(cat, is_th)
+                        val = curr_vals.get(key_part, "-")
+                        # Se il valore salvato non è nelle opzioni, resetta a "-"
+                        idx = opts.index(val) if val in opts else 0
+                        return st.selectbox(label, opts, index=idx, key=f"{key_part}_{exp_key}")
+
                     new_vals = {}
                     if "BX/UX" in tipo and "+RIB" not in tipo:
-                        new_vals['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
-                        new_vals['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}")
-                        new_vals['bi'] = st.selectbox("Bit", get_options("bit", is_th), key=f"bi_{exp_key}")
+                        new_vals['b'] = smart_select("Blade", "blade", 'b')
+                        new_vals['r'] = smart_select("Ratchet", "ratchet", 'r')
+                        new_vals['bi'] = smart_select("Bit", "bit", 'bi')
                     elif "CX" in tipo and "+RIB" not in tipo:
-                        new_vals['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_th), key=f"lb_{exp_key}")
-                        new_vals['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_th), key=f"mb_{exp_key}")
-                        new_vals['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_th), key=f"ab_{exp_key}")
-                        new_vals['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}")
-                        new_vals['bi'] = st.selectbox("Bit", get_options("bit", is_th), key=f"bi_{exp_key}")
+                        new_vals['lb'] = smart_select("Lock Bit", "lock_bit", 'lb')
+                        new_vals['mb'] = smart_select("Main Blade", "main_blade", 'mb')
+                        new_vals['ab'] = smart_select("Assist Blade", "assist_blade", 'ab')
+                        new_vals['r'] = smart_select("Ratchet", "ratchet", 'r')
+                        new_vals['bi'] = smart_select("Bit", "bit", 'bi')
                     elif "+RIB" in tipo:
                         if "CX" in tipo:
-                            new_vals['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_th), key=f"lb_{exp_key}")
-                            new_vals['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_th), key=f"mb_{exp_key}")
-                            new_vals['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_th), key=f"ab_{exp_key}")
-                        else: new_vals['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
-                        new_vals['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_th), key=f"rib_{exp_key}")
-                    
-                    # SALVATAGGIO IMMEDIATO se cambia qualcosa
+                            new_vals['lb'] = smart_select("Lock Bit", "lock_bit", 'lb')
+                            new_vals['mb'] = smart_select("Main Blade", "main_blade", 'mb')
+                            new_vals['ab'] = smart_select("Assist Blade", "assist_blade", 'ab')
+                        else: new_vals['b'] = smart_select("Blade", "blade", 'b')
+                        new_vals['rib'] = smart_select("RIB", "ratchet_integrated_bit", 'rib')
+
                     if curr_vals != new_vals:
                         deck["slots"][s_key] = new_vals
                         st.session_state.exp_state[exp_key] = True
                         save_cloud()
                         st.rerun()
 
-                    # Anteprime immagini
                     cols = st.columns(5)
-                    for idx, v in enumerate(new_vals.values()):
+                    for v in new_vals.values():
                         if v != "-":
                             img_obj = get_img(global_img_map.get(v))
-                            if img_obj: cols[idx].image(img_obj)
+                            if img_obj: cols[new_vals.values().index(v)].image(img_obj)
 
-            # Azioni Deck
             c1, c2 = st.columns([0.2, 0.8])
             if c1.button("📝 Rinomina", key=f"ren_btn_{d_idx}"):
-                st.session_state.edit_name_idx = d_idx
-                st.rerun()
+                st.session_state.edit_name_idx = d_idx; st.rerun()
             if c2.button("🗑️ Elimina Deck", key=f"del_btn_{d_idx}", type="primary"):
-                user_data["decks"].pop(d_idx)
-                save_cloud(); st.rerun()
+                user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
             
             if st.session_state.get('edit_name_idx') == d_idx:
                 new_n = st.text_input("Nuovo nome:", deck['name'], key=f"edit_field_{d_idx}")
                 if st.button("Conferma", key=f"conf_{d_idx}"):
-                    deck['name'] = new_n
-                    st.session_state.edit_name_idx = None
-                    save_cloud(); st.rerun()
+                    deck['name'] = new_n; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
 
     if st.button("➕ Crea Nuovo Deck"):
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {str(i): {} for i in range(3)}})
