@@ -38,36 +38,15 @@ st.markdown("""
 # =========================
 # FUNZIONI SALVATAGGIO CLOUD
 # =========================
-def get_conn():
-    # Carichiamo i segreti come dizionario semplice
-    s = dict(st.secrets["connections"]["gsheets"])
-    
-    # Pulizia chiave privata
-    p_key = s.get("private_key", "").replace("\\n", "\n")
-    
-    # Costruiamo il set di credenziali standard per Google
-    # Escludiamo 'type' e 'spreadsheet' per evitare conflitti nel costruttore
-    creds = {
-        "project_id": s.get("project_id"),
-        "private_key_id": s.get("private_key_id"),
-        "private_key": p_key,
-        "client_email": s.get("client_email"),
-        "client_id": s.get("client_id"),
-        "auth_uri": s.get("auth_uri"),
-        "token_uri": s.get("token_uri"),
-        "auth_provider_x509_cert_url": s.get("auth_provider_x509_cert_url"),
-        "client_x509_cert_url": s.get("client_x509_cert_url")
-    }
-    
-    # Rimuoviamo eventuali None se mancano chiavi non essenziali
-    creds = {k: v for k, v in creds.items() if v is not None}
-    
-    # Passiamo le credenziali come kwargs alla connessione
-    return st.connection("gsheets", type=GSheetsConnection, **creds)
-
 def save_cloud():
     try:
-        conn = get_conn()
+        # Pulizia forzata della private key per evitare errori di padding/PEM
+        conf = dict(st.secrets["connections"]["gsheets"])
+        if "private_key" in conf:
+            conf["private_key"] = conf["private_key"].replace("\\n", "\n")
+            
+        conn = st.connection("gsheets", type=GSheetsConnection, **conf)
+        
         inv_list = []
         deck_list = []
         for u, data in st.session_state.users.items():
@@ -82,7 +61,11 @@ def save_cloud():
 
 def load_cloud():
     try:
-        conn = get_conn()
+        conf = dict(st.secrets["connections"]["gsheets"])
+        if "private_key" in conf:
+            conf["private_key"] = conf["private_key"].replace("\\n", "\n")
+
+        conn = st.connection("gsheets", type=GSheetsConnection, **conf)
         sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
         
         df_inv = conn.read(spreadsheet=sheet_url, worksheet="inventario", ttl=0)
@@ -102,7 +85,7 @@ def load_cloud():
         return None
 
 # =========================
-# LOGICA DATI & IMMAGINI (INALTERATA)
+# LOGICA DATI & IMMAGINI
 # =========================
 @st.cache_data
 def load_db():
