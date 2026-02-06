@@ -17,24 +17,29 @@ st.markdown("""
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
     
-    /* MODIFICA COLORI: Grigio quasi bianco per Tab, Radio e Label Sidebar */
-    /* Target per i testi dei TAB */
-    button[data-baseweb="tab"] p {
-        color: #f8fafc !important;
-        font-weight: 500 !important;
-    }
+    /* MODIFICA COLORI: Target ultra-specifici per Tab, Radio e Label */
     
-    /* Target per le etichette dei RADIO (Aggiungi/Rimuovi) */
-    div[data-testid="stRadio"] label {
-        color: #f8fafc !important;
+    /* 1. Testi dei TAB (Aggiungi, Inventario, Deck Builder) */
+    button[data-baseweb="tab"] div, 
+    button[data-baseweb="tab"] p,
+    [data-testid="stMain"] .stTabs [data-baseweb="tab"] {
+        color: #e2e8f0 !important; /* Grigio molto chiaro */
     }
-    
-    /* Target per le etichette dei WIDGET (come 'Seleziona Utente') */
-    div[data-testid="stWidgetLabel"] p {
-        color: #f8fafc !important;
+
+    /* 2. Testi delle opzioni RADIO (Aggiungi/Rimuovi) */
+    [data-testid="stRadio"] label div,
+    [data-testid="stRadio"] label p,
+    div[role="radiogroup"] label {
+        color: #e2e8f0 !important;
     }
-    
-    /* Centratura e Layout (INALTERATI) */
+
+    /* 3. Etichette dei widget (Account / Seleziona Utente) */
+    [data-testid="stWidgetLabel"] p,
+    [data-testid="stSidebar"] label p {
+        color: #e2e8f0 !important;
+    }
+
+    /* Layout (INALTERATO) */
     [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
@@ -56,7 +61,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB (NON TOCCATA)
+# LOGICA GITHUB (INTACCATA E FUNZIONANTE)
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -105,7 +110,7 @@ def load_cloud():
     return None
 
 # =========================
-# LOGICA DATI & IMMAGINI (NON TOCCATA)
+# LOGICA DATI & IMMAGINI
 # =========================
 @st.cache_data
 def load_db():
@@ -130,7 +135,7 @@ def get_img(url, size=(100, 100)):
     return None
 
 # =========================
-# INIZIALIZZAZIONE (NON TOCCATA)
+# INIZIALIZZAZIONE
 # =========================
 if 'users' not in st.session_state:
     cloud = load_cloud()
@@ -151,7 +156,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 df_db, global_img_map = load_db()
 
 # =========================
-# UI PRINCIPALE (NON TOCCATA)
+# UI PRINCIPALE
 # =========================
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
