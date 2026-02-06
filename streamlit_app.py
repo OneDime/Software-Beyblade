@@ -146,7 +146,7 @@ with tab1:
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            st.markdown(f<div class='bey-name'>{row['name']}</div>, unsafe_allow_html=True)
+            st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
             img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
             if img: st.image(img)
             comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
@@ -161,7 +161,7 @@ with tab1:
             for ck, ik in comps:
                 val = row[ck]
                 if val and val != "n/a":
-                    st.markdown(f<div class='comp-name-centered'>{val}</div>, unsafe_allow_html=True)
+                    st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
                     if st.button("＋", key=f"btn_{i}_{ck}"):
                         user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                         save_cloud()
@@ -195,12 +195,9 @@ with tab3:
                 s_key = str(s_idx)
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 curr = deck["slots"][s_key]
-                
-                # Titoli puliti (senza icone)
                 titolo = " ".join([v for v in curr.values() if v and v != "-"]).strip() or f"SLOT {s_idx+1}"
                 exp_id = f"exp_{user_sel}_{d_idx}_{s_idx}"
                 
-                # Se l'utente ha interagito, l'expander resta aperto
                 with st.expander(titolo.upper(), expanded=st.session_state.exp_state.get(exp_id, False)):
                     tipo = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}")
                     is_th = "Theory" in tipo
@@ -209,13 +206,11 @@ with tab3:
                         opts = get_options(cat, is_th)
                         current_val = curr.get(k_comp, "-")
                         if current_val not in opts: current_val = "-"
-                        
                         w_key = f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}"
                         res = st.selectbox(label, opts, index=opts.index(current_val), key=w_key)
-                        
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res
-                            st.session_state.exp_state[exp_id] = True # Mantieni aperto dopo interazione
+                            st.session_state.exp_state[exp_id] = True
 
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         update_comp("Blade", "blade", "b")
@@ -244,13 +239,10 @@ with tab3:
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
                 st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
-            
             if c2.button("Salva Deck", key=f"s_{user_sel}_{d_idx}"):
                 save_cloud()
-                
             if c3.button("Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
                 user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
-            
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
                 n_name = st.text_input("Nuovo nome:", deck['name'], key=f"i_{d_idx}")
                 if st.button("OK", key=f"o_{d_idx}"):
