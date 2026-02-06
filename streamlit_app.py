@@ -17,10 +17,22 @@ st.markdown("""
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
     
-    /* MODIFICA COLORI RICHIESTA: Grigio quasi bianco per Tab, Radio e Label Account */
-    .stTabs button p { color: #f8fafc !important; font-weight: 500; }
-    [data-testid="stWidgetLabel"] p { color: #f8fafc !important; }
-    .stRadio label { color: #f8fafc !important; }
+    /* MODIFICA COLORI: Grigio quasi bianco per Tab, Radio e Label Sidebar */
+    /* Target per i testi dei TAB */
+    button[data-baseweb="tab"] p {
+        color: #f8fafc !important;
+        font-weight: 500 !important;
+    }
+    
+    /* Target per le etichette dei RADIO (Aggiungi/Rimuovi) */
+    div[data-testid="stRadio"] label {
+        color: #f8fafc !important;
+    }
+    
+    /* Target per le etichette dei WIDGET (come 'Seleziona Utente') */
+    div[data-testid="stWidgetLabel"] p {
+        color: #f8fafc !important;
+    }
     
     /* Centratura e Layout (INALTERATI) */
     [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
@@ -44,7 +56,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB
+# LOGICA GITHUB (NON TOCCATA)
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -93,7 +105,7 @@ def load_cloud():
     return None
 
 # =========================
-# LOGICA DATI & IMMAGINI
+# LOGICA DATI & IMMAGINI (NON TOCCATA)
 # =========================
 @st.cache_data
 def load_db():
@@ -118,7 +130,7 @@ def get_img(url, size=(100, 100)):
     return None
 
 # =========================
-# INIZIALIZZAZIONE
+# INIZIALIZZAZIONE (NON TOCCATA)
 # =========================
 if 'users' not in st.session_state:
     cloud = load_cloud()
@@ -139,7 +151,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 df_db, global_img_map = load_db()
 
 # =========================
-# UI PRINCIPALE
+# UI PRINCIPALE (NON TOCCATA)
 # =========================
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
