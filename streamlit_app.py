@@ -84,8 +84,6 @@ def save_cloud():
 # =========================
 if 'users' not in st.session_state:
     force_load()
-if 'exp_state' not in st.session_state:
-    st.session_state.exp_state = {}
 
 @st.dialog("Accesso Officina")
 def user_dialog():
@@ -190,7 +188,6 @@ with tab3:
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
     
     for d_idx, deck in enumerate(user_data["decks"]):
-        # Conteggio duplicati nel deck attuale
         all_selected = []
         for s in deck["slots"].values():
             all_selected.extend([v for v in s.values() if v and v != "-"] )
@@ -201,23 +198,33 @@ with tab3:
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 curr = deck["slots"][s_key]
                 
-                # Titolo con avviso se ci sono duplicati nello slot
+                # Calcolo Titoli
                 titolo_parti = [v for v in curr.values() if v and v != "-"]
                 avviso_slot = " ⚠️" if any(all_selected.count(p) > 1 for p in titolo_parti) else ""
                 titolo = " ".join(titolo_parti).strip() or f"SLOT {s_idx+1}"
                 
-                exp_id = f"exp_{user_sel}_{d_idx}_{s_idx}"
-                
-                with st.expander(f"{titolo.upper()}{avviso_slot}", expanded=st.session_state.exp_state.get(exp_id, False)):
-                    tipo = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}")
-                    is_th = "Theory" in tipo
+                # Expander: rimosso il controllo forzato, lasciato a default Streamlit
+                with st.expander(f"{titolo.upper()}{avviso_slot}"):
+                    t_key = f"t_{user_sel}_{d_idx}_{s_idx}"
+                    
+                    # Logica Reset: se il tipo cambia, svuotiamo lo slot prima di ricaricare i widget
+                    old_tipo = curr.get("_system_type", tipologie[0])
+                    new_tipo = st.selectbox("Sistema", tipologie, key=t_key)
+                    
+                    if old_tipo != new_tipo:
+                        # Pulizia totale delle parti salvate per evitare immagini residue
+                        for k in ["b", "r", "bi", "lb", "mb", "ab", "rib"]:
+                            if k in curr: curr[k] = "-"
+                        curr["_system_type"] = new_tipo
+                        st.rerun()
+
+                    is_th = "Theory" in new_tipo
                     
                     def update_comp(label, cat, k_comp):
                         opts = get_options(cat, is_th)
                         current_val = curr.get(k_comp, "-")
                         if current_val not in opts: current_val = "-"
                         
-                        # Aggiungi triangolo se il pezzo è già in un altro slot
                         display_label = label
                         if current_val != "-" and all_selected.count(current_val) > 1:
                             display_label = f"{label} ⚠️"
@@ -227,33 +234,41 @@ with tab3:
                         
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res
-                            st.session_state.exp_state[exp_id] = True
-                            st.rerun() # Rerunning to update the duplicate counts immediately
+                            st.rerun()
 
-                    if "BX/UX" in tipo and "+RIB" not in tipo:
+                    # Renderizzazione condizionale basata sul tipo
+                    if "BX/UX" in new_tipo and "+RIB" not in new_tipo:
                         update_comp("Blade", "blade", "b")
                         update_comp("Ratchet", "ratchet", "r")
                         update_comp("Bit", "bit", "bi")
-                    elif "CX" in tipo and "+RIB" not in tipo:
+                    elif "CX" in new_tipo and "+RIB" not in new_tipo:
                         update_comp("Lock Bit", "lock_bit", "lb")
                         update_comp("Main Blade", "main_blade", "mb")
                         update_comp("Assist Blade", "assist_blade", "ab")
                         update_comp("Ratchet", "ratchet", "r")
                         update_comp("Bit", "bit", "bi")
-                    elif "+RIB" in tipo:
-                        if "CX" in tipo:
+                    elif "+RIB" in new_tipo:
+                        if "CX" in new_tipo:
                             update_comp("Lock Bit", "lock_bit", "lb")
                             update_comp("Main Blade", "main_blade", "mb")
                             update_comp("Assist Blade", "assist_blade", "ab")
-                        else: update_comp("Blade", "blade", "b")
+                        else:
+                            update_comp("Blade", "blade", "b")
                         update_comp("RIB", "ratchet_integrated_bit", "rib")
 
+                    # Anteprima Immagini (solo quelle presenti nel dizionario e diverse da "-")
                     cols = st.columns(5)
-                    for i, (k, v) in enumerate(curr.items()):
+                    img_idx = 0
+                    # Definiamo l'ordine visivo basato sul sistema per pulizia
+                    for k in ["lb", "b", "mb", "ab", "r", "bi", "rib"]:
+                        v = curr.get(k)
                         if v and v != "-":
                             img_obj = get_img(global_img_map.get(v))
-                            if img_obj: cols[i % 5].image(img_obj)
+                            if img_obj:
+                                cols[img_idx % 5].image(img_obj)
+                                img_idx += 1
 
+            # Azioni Deck
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
                 st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
@@ -261,6 +276,7 @@ with tab3:
                 save_cloud()
             if c3.button("Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
                 user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
+            
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
                 n_name = st.text_input("Nuovo nome:", deck['name'], key=f"i_{d_idx}")
                 if st.button("OK", key=f"o_{d_idx}"):
