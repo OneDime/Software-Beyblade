@@ -1,0 +1,44 @@
+{
+    "Antonio": {
+        "lock_bit": {},
+        "blade": {
+            "BearScratch": 1,
+            "AeroPegasus": 1
+        },
+        "main_blade": {},
+        "assist_blade": {},
+        "ratchet": {
+            "3-70": 1,
+            "5-60": 1
+        },
+        "bit": {
+            "Accel": 1,
+            "Flat": 1
+        },
+        "ratchet_integrated_bit": {}
+    },
+    "Andrea": {
+        "lock_bit": {},
+        "blade": {
+            "BlackShell": 1
+        },
+        "main_blade": {},
+        "assist_blade": {},
+        "ratchet": {
+            "4-60": 1
+        },
+        "bit": {
+            "Dot": 1
+        },
+        "ratchet_integrated_bit": {}
+    },
+    "Fabio": {
+        "lock_bit": {},
+        "blade": {},
+        "main_blade": {},
+        "assist_blade": {},
+        "ratchet": {},
+        "bit": {},
+        "ratchet_integrated_bit": {}
+    }
+}
