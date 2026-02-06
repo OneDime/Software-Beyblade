@@ -186,17 +186,15 @@ with tab3:
         return ["-"] + sorted(list(user_data["inv"][cat].keys()))
     
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
-    
-    for d_idx, deck in enumerate(user_data["decks"]):
-        # Definiamo quali chiavi appartengono a quale sistema per filtraggio
-        sys_map = {
-            "BX/UX": ["b", "r", "bi"],
-            "CX": ["lb", "mb", "ab", "r", "bi"],
-            "BX/UX+RIB": ["b", "rib"],
-            "CX+RIB": ["lb", "mb", "ab", "rib"]
-        }
+    sys_map = {
+        "BX/UX": ["b", "r", "bi"],
+        "CX": ["lb", "mb", "ab", "r", "bi"],
+        "BX/UX+RIB": ["b", "rib"],
+        "CX+RIB": ["lb", "mb", "ab", "rib"]
+    }
 
-        # Raccolta pezzi validi per duplicati (solo quelli del sistema attuale di ogni slot)
+    for d_idx, deck in enumerate(user_data["decks"]):
+        # Raccolta pezzi attivi per controllo duplicati
         all_active_parts = []
         for s in deck["slots"].values():
             s_type = s.get("_sys", "BX/UX").replace(" Theory", "")
@@ -209,19 +207,22 @@ with tab3:
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 curr = deck["slots"][s_key]
                 
-                # Tipo Corrente
-                c_type = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}", index=tipologie.index(curr.get("_sys", tipologie[0])))
-                curr["_sys"] = c_type
-                c_base_type = c_type.replace(" Theory", "")
+                # Calcolo Titolo Pulito (senza il sistema)
+                c_base_type = curr.get("_sys", "BX/UX").replace(" Theory", "")
                 active_keys = sys_map.get(c_base_type, [])
-
-                # Titolo Pulito (Solo pezzi attivi del sistema scelto)
                 titolo_parti = [curr.get(k) for k in active_keys if curr.get(k) and curr.get(k) != "-"]
                 avviso_slot = " ⚠️" if any(all_active_parts.count(p) > 1 for p in titolo_parti) else ""
                 titolo_testo = " ".join(titolo_parti).strip() or f"SLOT {s_idx+1}"
 
+                # Expander Beyblade
                 with st.expander(f"{titolo_testo.upper()}{avviso_slot}"):
-                    is_th = "Theory" in c_type
+                    # SISTEMA DENTRO IL BEYBLADE
+                    new_sys = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}", index=tipologie.index(curr.get("_sys", tipologie[0])))
+                    if new_sys != curr.get("_sys"):
+                        curr["_sys"] = new_sys
+                        st.rerun()
+
+                    is_th = "Theory" in new_sys
                     
                     def update_comp(label, cat, k_comp):
                         opts = get_options(cat, is_th)
@@ -235,9 +236,9 @@ with tab3:
                         res = st.selectbox(display_label, opts, index=opts.index(current_val), key=f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}")
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res
-                            # Rimosso st.rerun() per stabilità expander
+                            # Niente rerun qui per non far collassare l'expander
 
-                    # Mostra solo i widget necessari
+                    # Menu condizionali
                     if "BX/UX" in c_base_type and "+RIB" not in c_base_type:
                         update_comp("Blade", "blade", "b")
                         update_comp("Ratchet", "ratchet", "r")
@@ -256,7 +257,7 @@ with tab3:
                         else: update_comp("Blade", "blade", "b")
                         update_comp("RIB", "ratchet_integrated_bit", "rib")
 
-                    # Anteprima Immagini FILTRATA (mostra solo ciò che appartiene al sistema)
+                    # Anteprima immagini (solo componenti attive)
                     cols = st.columns(5)
                     img_idx = 0
                     for k in active_keys:
