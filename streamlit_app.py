@@ -188,37 +188,40 @@ with tab3:
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
     
     for d_idx, deck in enumerate(user_data["decks"]):
-        all_selected = []
+        # Definiamo quali chiavi appartengono a quale sistema per filtraggio
+        sys_map = {
+            "BX/UX": ["b", "r", "bi"],
+            "CX": ["lb", "mb", "ab", "r", "bi"],
+            "BX/UX+RIB": ["b", "rib"],
+            "CX+RIB": ["lb", "mb", "ab", "rib"]
+        }
+
+        # Raccolta pezzi validi per duplicati (solo quelli del sistema attuale di ogni slot)
+        all_active_parts = []
         for s in deck["slots"].values():
-            all_selected.extend([v for v in s.values() if v and v != "-"] )
-        
+            s_type = s.get("_sys", "BX/UX").replace(" Theory", "")
+            active_keys = sys_map.get(s_type, [])
+            all_active_parts.extend([s.get(k) for k in active_keys if s.get(k) and s.get(k) != "-"])
+
         with st.expander(deck['name'].upper(), expanded=True):
             for s_idx in range(3):
                 s_key = str(s_idx)
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 curr = deck["slots"][s_key]
                 
-                # Calcolo Titoli
-                titolo_parti = [v for v in curr.values() if v and v != "-"]
-                avviso_slot = " ⚠️" if any(all_selected.count(p) > 1 for p in titolo_parti) else ""
-                titolo = " ".join(titolo_parti).strip() or f"SLOT {s_idx+1}"
-                
-                # Expander: rimosso il controllo forzato, lasciato a default Streamlit
-                with st.expander(f"{titolo.upper()}{avviso_slot}"):
-                    t_key = f"t_{user_sel}_{d_idx}_{s_idx}"
-                    
-                    # Logica Reset: se il tipo cambia, svuotiamo lo slot prima di ricaricare i widget
-                    old_tipo = curr.get("_system_type", tipologie[0])
-                    new_tipo = st.selectbox("Sistema", tipologie, key=t_key)
-                    
-                    if old_tipo != new_tipo:
-                        # Pulizia totale delle parti salvate per evitare immagini residue
-                        for k in ["b", "r", "bi", "lb", "mb", "ab", "rib"]:
-                            if k in curr: curr[k] = "-"
-                        curr["_system_type"] = new_tipo
-                        st.rerun()
+                # Tipo Corrente
+                c_type = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}", index=tipologie.index(curr.get("_sys", tipologie[0])))
+                curr["_sys"] = c_type
+                c_base_type = c_type.replace(" Theory", "")
+                active_keys = sys_map.get(c_base_type, [])
 
-                    is_th = "Theory" in new_tipo
+                # Titolo Pulito (Solo pezzi attivi del sistema scelto)
+                titolo_parti = [curr.get(k) for k in active_keys if curr.get(k) and curr.get(k) != "-"]
+                avviso_slot = " ⚠️" if any(all_active_parts.count(p) > 1 for p in titolo_parti) else ""
+                titolo_testo = " ".join(titolo_parti).strip() or f"SLOT {s_idx+1}"
+
+                with st.expander(f"{titolo_testo.upper()}{avviso_slot}"):
+                    is_th = "Theory" in c_type
                     
                     def update_comp(label, cat, k_comp):
                         opts = get_options(cat, is_th)
@@ -226,41 +229,37 @@ with tab3:
                         if current_val not in opts: current_val = "-"
                         
                         display_label = label
-                        if current_val != "-" and all_selected.count(current_val) > 1:
+                        if current_val != "-" and all_active_parts.count(current_val) > 1:
                             display_label = f"{label} ⚠️"
                         
-                        w_key = f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}"
-                        res = st.selectbox(display_label, opts, index=opts.index(current_val), key=w_key)
-                        
+                        res = st.selectbox(display_label, opts, index=opts.index(current_val), key=f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}")
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res
-                            st.rerun()
+                            # Rimosso st.rerun() per stabilità expander
 
-                    # Renderizzazione condizionale basata sul tipo
-                    if "BX/UX" in new_tipo and "+RIB" not in new_tipo:
+                    # Mostra solo i widget necessari
+                    if "BX/UX" in c_base_type and "+RIB" not in c_base_type:
                         update_comp("Blade", "blade", "b")
                         update_comp("Ratchet", "ratchet", "r")
                         update_comp("Bit", "bit", "bi")
-                    elif "CX" in new_tipo and "+RIB" not in new_tipo:
+                    elif "CX" in c_base_type and "+RIB" not in c_base_type:
                         update_comp("Lock Bit", "lock_bit", "lb")
                         update_comp("Main Blade", "main_blade", "mb")
                         update_comp("Assist Blade", "assist_blade", "ab")
                         update_comp("Ratchet", "ratchet", "r")
                         update_comp("Bit", "bit", "bi")
-                    elif "+RIB" in new_tipo:
-                        if "CX" in new_tipo:
+                    elif "+RIB" in c_base_type:
+                        if "CX" in c_base_type:
                             update_comp("Lock Bit", "lock_bit", "lb")
                             update_comp("Main Blade", "main_blade", "mb")
                             update_comp("Assist Blade", "assist_blade", "ab")
-                        else:
-                            update_comp("Blade", "blade", "b")
+                        else: update_comp("Blade", "blade", "b")
                         update_comp("RIB", "ratchet_integrated_bit", "rib")
 
-                    # Anteprima Immagini (solo quelle presenti nel dizionario e diverse da "-")
+                    # Anteprima Immagini FILTRATA (mostra solo ciò che appartiene al sistema)
                     cols = st.columns(5)
                     img_idx = 0
-                    # Definiamo l'ordine visivo basato sul sistema per pulizia
-                    for k in ["lb", "b", "mb", "ab", "r", "bi", "rib"]:
+                    for k in active_keys:
                         v = curr.get(k)
                         if v and v != "-":
                             img_obj = get_img(global_img_map.get(v))
@@ -268,7 +267,7 @@ with tab3:
                                 cols[img_idx % 5].image(img_obj)
                                 img_idx += 1
 
-            # Azioni Deck
+            # Pulsanti Deck
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
                 st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
