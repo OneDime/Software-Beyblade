@@ -1,7 +1,8 @@
 {
     "Antonio": {
         "lock_bit": {
-            "Wizard": 1
+            "Wizard": 1,
+            "Kraken": 1
         },
         "blade": {
             "WizardRod": 2,
@@ -11,10 +12,12 @@
             "WyvernHover": 1
         },
         "main_blade": {
-            "Arc": 1
+            "Arc": 1,
+            "Wriggle": 1
         },
         "assist_blade": {
-            "Round": 1
+            "Round": 1,
+            "Slash": 1
         },
         "ratchet": {
             "4-55": 1,
@@ -23,7 +26,7 @@
             "5-80": 1,
             "2-60": 1,
             "3-60": 1,
-            "3-85": 1
+            "3-85": 2
         },
         "bit": {
             "Low Orb": 1,
@@ -32,7 +35,8 @@
             "Elevate": 1,
             "Cyclone": 1,
             "Low Flat": 1,
-            "Needle": 1
+            "Needle": 1,
+            "Orb": 1
         },
         "ratchet_integrated_bit": {}
     },
