@@ -8,66 +8,12 @@ import base64
 from PIL import Image
 
 # =========================
-# 1. CONFIGURAZIONE (DEVE ESSERE LA PRIMA ISTRUZIONE)
+# 1. CONFIGURAZIONE
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 # =========================
-# 2. GESTIONE UTENTE & URL (PRIORITÀ ASSOLUTA)
-# =========================
-# Lista utenti
-users_list = ["Antonio", "Andrea", "Fabio"]
-
-# Leggiamo l'URL attuale
-qp = st.query_params
-url_user = qp.get("user", "Antonio") # Se non c'è nulla, default Antonio
-
-# Validazione: se l'URL ha un nome strano, torniamo ad Antonio
-if url_user not in users_list:
-    url_user = "Antonio"
-
-# CSS
-st.markdown("""
-    <style>
-    .stApp { background-color: #0f172a; color: #f1f5f9; }
-    .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
-    div[data-testid="stVerticalBlockBorderWrapper"] {
-        border: 2px solid #334155 !important;
-        background-color: #1e293b !important;
-        border-radius: 12px !important;
-        margin-bottom: 15px !important;
-        padding: 15px !important;
-    }
-    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; }
-    div.stButton > button { width: 100% !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; }
-    .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; }
-    /* Evidenzia il tasto Salva */
-    button[kind="primary"] { background-color: #2563eb !important; border-color: #3b82f6 !important; font-weight: bold !important; }
-    </style>
-    """, unsafe_allow_html=True)
-
-# =========================
-# 3. SIDEBAR E CAMBIO UTENTE
-# =========================
-st.sidebar.title("👤 Account")
-
-# Il widget parte selezionando quello che c'è nell'URL
-try:
-    idx = users_list.index(url_user)
-except:
-    idx = 0
-
-user_sel = st.sidebar.radio("Seleziona Utente:", users_list, index=idx)
-
-# SE L'UTENTE CAMBIA LA SELEZIONE:
-if user_sel != url_user:
-    # 1. Aggiorna l'URL
-    st.query_params["user"] = user_sel
-    # 2. Ricarica la pagina per applicare la modifica all'URL bar del browser
-    st.rerun()
-
-# =========================
-# 4. LOGICA GITHUB & DATI
+# 2. LOGICA GITHUB
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -100,14 +46,14 @@ def save_all():
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
     github_action("inv", inv_data, "PUT")
     github_action("decks", deck_data, "PUT")
-    st.toast("✅ SALVATAGGIO RIUSCITO!", icon="💾")
+    st.success("✅ SALVATO SU CLOUD!")
 
 def load_cloud():
     inv_cloud = github_action("inv", method="GET")
     deck_cloud = github_action("decks", method="GET")
     if inv_cloud and deck_cloud:
         new_users = {}
-        for u in users_list:
+        for u in ["Antonio", "Andrea", "Fabio"]:
             new_users[u] = {
                 "inv": inv_cloud.get(u, {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}),
                 "decks": deck_cloud.get(u, [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}])
@@ -115,6 +61,34 @@ def load_cloud():
         return new_users
     return None
 
+# =========================
+# 3. GESTIONE UTENTE (URL & CACHE)
+# =========================
+if 'users' not in st.session_state:
+    cloud = load_cloud()
+    st.session_state.users = cloud if cloud else {u: {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]} for u in ["Antonio", "Andrea", "Fabio"]}
+
+# Leggi utente da URL
+user_list = ["Antonio", "Andrea", "Fabio"]
+query_user = st.query_params.get("user", "Antonio")
+if query_user not in user_list: query_user = "Antonio"
+
+st.sidebar.title("👤 Account")
+# Seleziona l'utente in base all'URL
+user_sel = st.sidebar.radio("Seleziona Utente:", user_list, index=user_list.index(query_user))
+
+# Se cambi nel menu, aggiorna URL e ricarica
+if user_sel != query_user:
+    st.query_params["user"] = user_sel
+    st.rerun()
+
+st.sidebar.write(f"📡 Login attuale: **{user_sel}**")
+
+user_data = st.session_state.users[user_sel]
+
+# =========================
+# 4. DATI & IMMAGINI
+# =========================
 @st.cache_data
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame(), {}
@@ -130,6 +104,8 @@ def load_db():
     df['_search'] = df.astype(str).apply(lambda x: ' '.join(x).lower(), axis=1)
     return df, img_map
 
+df_db, global_img_map = load_db()
+
 def get_img(url, size=(100, 100)):
     if not url or url == "n/a": return None
     h = hashlib.md5(url.encode()).hexdigest()
@@ -138,30 +114,18 @@ def get_img(url, size=(100, 100)):
     return None
 
 # =========================
-# 5. CARICAMENTO STATO
+# 5. UI PRINCIPALE
 # =========================
-if 'users' not in st.session_state:
-    cloud = load_cloud()
-    if cloud: st.session_state.users = cloud
-    else:
-        st.session_state.users = {u: {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]} for u in users_list}
+st.markdown(f"<h1 style='text-align: center;'>Officina di {user_sel}</h1>", unsafe_allow_html=True)
 
-user_data = st.session_state.users[user_sel]
-df_db, global_img_map = load_db()
-
-# =========================
-# 6. INTERFACCIA
-# =========================
-st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI (INVARIATO) ---
 with tab1:
     search_q = st.text_input("Cerca componente...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
+            st.write(f"### {row['name']}")
             img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
             if img: st.image(img)
             if st.button("Aggiungi tutto all'inventario", key=f"all_{i}"):
@@ -171,27 +135,26 @@ with tab1:
                 for ck, ik in comps:
                     val = row[ck]
                     if val and val != "n/a": user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
-                save_all() # Salva subito l'inventario (qui funziona bene)
-                st.rerun()
+                save_all(); st.rerun()
 
-# --- TAB 2: INVENTARIO (INVARIATO) ---
 with tab2:
-    st.info("Le modifiche qui sono salvate automaticamente.")
     for cat, items in user_data["inv"].items():
         if items:
-            with st.expander(cat.replace('_', ' ').upper()):
+            with st.expander(cat.upper()):
                 for n, q in list(items.items()):
                     c1, c2 = st.columns([0.8, 0.2])
-                    c1.write(f"**{n}** (Quantità: {q})")
-                    if c2.button("🗑️", key=f"del_inv_{user_sel}_{cat}_{n}"):
+                    c1.write(f"**{n}** ({q})")
+                    if c2.button("🗑️", key=f"del_{cat}_{n}"):
                         user_data["inv"][cat][n] -= 1
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
-                        save_all()
-                        st.rerun()
+                        save_all(); st.rerun()
 
-# --- TAB 3: DECK BUILDER (MODIFICATO CON TASTI VISIBILI) ---
 with tab3:
-    st.info("⚠️ ATTENZIONE: Modifica i componenti e poi clicca il tasto BLU 'SALVA DECK' per confermare.")
+    # --- TASTO SALVA GLOBALE (SEMPRE IN CIMA) ---
+    st.markdown("---")
+    if st.button("💾 SALVA TUTTI I DECK SU CLOUD", type="primary", use_container_width=True):
+        save_all()
+    st.markdown("---")
 
     def get_options(cat, theory=False):
         if theory:
@@ -203,100 +166,52 @@ with tab3:
     
     for d_idx, deck in enumerate(user_data["decks"]):
         with st.expander(f"📁 {deck['name'].upper()}", expanded=True):
-            
-            # --- SLOT ---
             for s_idx in range(3):
                 s_key = str(s_idx)
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 vals = deck["slots"][s_key]
                 
-                parts = [v for v in vals.values() if v and v != "-"]
-                t_label = " ".join(parts) if parts else f"Slot {s_idx+1}"
+                st.markdown(f"**Slot {s_idx+1}**")
+                sel_tipo = st.selectbox(f"Sistema Slot {s_idx+1}", tipologie, key=f"t_{d_idx}_{s_idx}")
+                th = "Theory" in sel_tipo
                 
-                with st.expander(t_label.upper()):
-                    sys_key = f"sys_sel_{d_idx}_{s_idx}"
-                    if sys_key not in st.session_state: st.session_state[sys_key] = "BX/UX"
-                    
-                    sel_tipo = st.selectbox("Sistema", tipologie, key=sys_key)
-                    is_th = "Theory" in sel_tipo
-                    
-                    def smart_select(label, cat, k_part):
-                        options = get_options(cat, is_th)
-                        current = vals.get(k_part, "-")
-                        try: idx = options.index(current)
-                        except: idx = 0
-                        # Qui aggiorniamo SOLO la variabile locale 'deck'. 
-                        # Il salvataggio su Cloud avviene solo col tasto blu.
-                        sel = st.selectbox(label, options, index=idx, key=f"sel_{d_idx}_{s_idx}_{k_part}")
-                        deck["slots"][s_key][k_part] = sel
-                        return sel
+                # Funzione di selezione semplice
+                def draw_sel(label, cat, k):
+                    opts = get_options(cat, th)
+                    curr = vals.get(k, "-")
+                    idx = opts.index(curr) if curr in opts else 0
+                    sel = st.selectbox(label, opts, index=idx, key=f"s_{d_idx}_{s_idx}_{k}")
+                    deck["slots"][s_key][k] = sel
 
-                    if "BX/UX" in sel_tipo and "+RIB" not in sel_tipo:
-                        smart_select("Blade", "blade", "b")
-                        smart_select("Ratchet", "ratchet", "r")
-                        smart_select("Bit", "bit", "bi")
-                    elif "CX" in sel_tipo and "+RIB" not in sel_tipo:
-                        smart_select("Lock Bit", "lock_bit", "lb")
-                        smart_select("Main Blade", "main_blade", "mb")
-                        smart_select("Assist Blade", "assist_blade", "ab")
-                        smart_select("Ratchet", "ratchet", "r")
-                        smart_select("Bit", "bit", "bi")
-                    elif "+RIB" in sel_tipo:
-                        if "CX" in sel_tipo:
-                            smart_select("Lock Bit", "lock_bit", "lb")
-                            smart_select("Main Blade", "main_blade", "mb")
-                            smart_select("Assist Blade", "assist_blade", "ab")
-                        else: smart_select("Blade", "blade", "b")
-                        smart_select("RIB", "ratchet_integrated_bit", "rib")
-                    
-                    cols = st.columns(5)
-                    col_i = 0
-                    for k, v in vals.items():
-                        if v != "-":
-                            img = get_img(global_img_map.get(v))
-                            if img: cols[col_i % 5].image(img); col_i += 1
+                if "BX/UX" in sel_tipo and "+RIB" not in sel_tipo:
+                    draw_sel("Blade", "blade", "b")
+                    draw_sel("Ratchet", "ratchet", "r")
+                    draw_sel("Bit", "bit", "bi")
+                elif "CX" in sel_tipo and "+RIB" not in sel_tipo:
+                    draw_sel("Lock Bit", "lock_bit", "lb")
+                    draw_sel("Main Blade", "main_blade", "mb")
+                    draw_sel("Assist Blade", "assist_blade", "ab")
+                    draw_sel("Ratchet", "ratchet", "r")
+                    draw_sel("Bit", "bit", "bi")
+                elif "+RIB" in sel_tipo:
+                    if "CX" in sel_tipo:
+                        draw_sel("Lock Bit", "lock_bit", "lb"); draw_sel("Main Blade", "main_blade", "mb"); draw_sel("Assist Blade", "assist_blade", "ab")
+                    else: draw_sel("Blade", "blade", "b")
+                    draw_sel("RIB", "ratchet_integrated_bit", "rib")
 
+            # --- TASTI DI CONTROLLO DEL SINGOLO DECK ---
             st.divider()
-            
-            # --- BARRA DEI TASTI (SEMPRE VISIBILE) ---
-            # Gestione Rinomina (Stato locale per mostrare input)
-            ren_key = f"renaming_{d_idx}"
-            if ren_key not in st.session_state: st.session_state[ren_key] = False
-
-            if st.session_state[ren_key]:
-                st.write("✏️ **Rinomina Deck:**")
-                new_name = st.text_input("Nome:", value=deck['name'], key=f"input_ren_{d_idx}", label_visibility="collapsed")
-                c_conf, c_ann = st.columns(2)
-                if c_conf.button("Conferma", key=f"ok_ren_{d_idx}"):
-                    deck['name'] = new_name
-                    st.session_state[ren_key] = False
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                if st.button(f"✏️ Rinomina", key=f"ren_{d_idx}"):
+                    st.info("Funzione rinomina attiva (scrivi sopra)") # Semplificato per test
+            with c2:
+                if st.button(f"💾 SALVA DECK", key=f"sv_{d_idx}"):
                     save_all()
-                    st.rerun()
-                if c_ann.button("Annulla", key=f"ko_ren_{d_idx}"):
-                    st.session_state[ren_key] = False
-                    st.rerun()
-            else:
-                # 3 COLONNE: RINOMINA | SALVA | ELIMINA
-                col_ren, col_save, col_del = st.columns([1, 1.5, 1])
-                
-                with col_ren:
-                    if st.button("✏️ Rinomina", key=f"btn_ren_{d_idx}"):
-                        st.session_state[ren_key] = True
-                        st.rerun()
-                
-                with col_save:
-                    # Tasto PRIMARIO (Blu) - Questo è quello che salva su GitHub
-                    if st.button("💾 SALVA DECK", key=f"btn_save_{d_idx}", type="primary"):
-                        save_all()
-                        st.rerun()
-                
-                with col_del:
-                    if st.button("🗑️ Elimina", key=f"btn_del_{d_idx}"):
-                        user_data["decks"].pop(d_idx)
-                        save_all()
-                        st.rerun()
+            with c3:
+                if st.button(f"🗑️ Elimina", key=f"dl_{d_idx}"):
+                    user_data["decks"].pop(d_idx); save_all(); st.rerun()
 
-    if st.button("➕ Crea Nuovo Deck", use_container_width=True):
+    if st.button("➕ Crea Nuovo Deck"):
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {str(i): {} for i in range(3)}})
-        save_all()
-        st.rerun()
+        save_all(); st.rerun()
