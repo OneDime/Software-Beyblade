@@ -3,9 +3,21 @@
         {
             "name": "DECK 1",
             "slots": {
-                "0": {},
-                "1": {},
-                "2": {}
+                "0": {
+                    "b": "AeroPegasus",
+                    "r": "3-70",
+                    "bi": "Accel"
+                },
+                "1": {
+                    "b": "BearScratch",
+                    "r": "5-60",
+                    "bi": "Flat"
+                },
+                "2": {
+                    "b": "AeroPegasus",
+                    "r": "-",
+                    "bi": "-"
+                }
             }
         }
     ],
