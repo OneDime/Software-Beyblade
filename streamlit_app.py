@@ -21,6 +21,7 @@ st.markdown("""
         background-color: #1e293b !important;
         border-radius: 12px !important;
         margin-bottom: 15px !important;
+        padding: 10px !important;
     }
     .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; }
     .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; }
@@ -38,24 +39,30 @@ st.markdown("""
 # FUNZIONI SALVATAGGIO CLOUD
 # =========================
 def get_conn():
-    # Estraiamo i segreti
-    raw_secrets = dict(st.secrets["connections"]["gsheets"])
+    # Carichiamo i segreti come dizionario semplice
+    s = dict(st.secrets["connections"]["gsheets"])
     
-    # Lista rigida dei campi ammessi dal connettore per l'autenticazione
-    # Qualsiasi altro campo (come spreadsheet o project_id in certi contesti) rompe la connessione
-    auth_keys = [
-        "type", "project_id", "private_key_id", "private_key", 
-        "client_email", "client_id", "auth_uri", "token_uri", 
-        "auth_provider_x509_cert_url", "client_x509_cert_url", "universe_domain"
-    ]
+    # Pulizia chiave privata
+    p_key = s.get("private_key", "").replace("\\n", "\n")
     
-    # Filtriamo solo i parametri di autenticazione
-    creds = {k: raw_secrets[k] for k in auth_keys if k in raw_secrets}
+    # Costruiamo il set di credenziali standard per Google
+    # Escludiamo 'type' e 'spreadsheet' per evitare conflitti nel costruttore
+    creds = {
+        "project_id": s.get("project_id"),
+        "private_key_id": s.get("private_key_id"),
+        "private_key": p_key,
+        "client_email": s.get("client_email"),
+        "client_id": s.get("client_id"),
+        "auth_uri": s.get("auth_uri"),
+        "token_uri": s.get("token_uri"),
+        "auth_provider_x509_cert_url": s.get("auth_provider_x509_cert_url"),
+        "client_x509_cert_url": s.get("client_x509_cert_url")
+    }
     
-    # Pulizia manuale della chiave privata per gestire i newline
-    if "private_key" in creds:
-        creds["private_key"] = creds["private_key"].replace("\\n", "\n")
-        
+    # Rimuoviamo eventuali None se mancano chiavi non essenziali
+    creds = {k: v for k, v in creds.items() if v is not None}
+    
+    # Passiamo le credenziali come kwargs alla connessione
     return st.connection("gsheets", type=GSheetsConnection, **creds)
 
 def save_cloud():
@@ -67,9 +74,7 @@ def save_cloud():
             inv_list.append({"Utente": u, "Dati": json.dumps(data["inv"])})
             deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
         
-        # L'URL viene usato solo qui, non nella fase di connessione
         sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
-        
         conn.update(spreadsheet=sheet_url, worksheet="inventario", data=pd.DataFrame(inv_list))
         conn.update(spreadsheet=sheet_url, worksheet="decks", data=pd.DataFrame(deck_list))
     except Exception as e:
@@ -97,7 +102,7 @@ def load_cloud():
         return None
 
 # =========================
-# LOGICA DATI & IMMAGINI
+# LOGICA DATI & IMMAGINI (INALTERATA)
 # =========================
 @st.cache_data
 def load_db():
