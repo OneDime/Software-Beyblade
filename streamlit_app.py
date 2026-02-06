@@ -7,7 +7,7 @@ from PIL import Image
 from streamlit_gsheets import GSheetsConnection
 
 # =========================
-# CONFIGURAZIONE & STILE (RIPRISTINATO)
+# CONFIGURAZIONE & STILE (INTOCCABILE)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -38,20 +38,30 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI SALVATAGGIO (GSHEETS - FIXATO)
+# FUNZIONI SALVATAGGIO (FIX DEFINITIVO)
 # =========================
 def get_conn():
-    # Carichiamo i segreti ed estraiamo solo i campi di autenticazione per evitare conflitti
-    s = dict(st.secrets["connections"]["gsheets"])
-    auth_keys = ["project_id", "private_key_id", "private_key", "client_email", "client_id", 
-                 "auth_uri", "token_uri", "auth_provider_x509_cert_url", "client_x509_cert_url"]
+    # Estraiamo i dati dai secrets
+    s = st.secrets["connections"]["gsheets"]
     
-    creds = {k: s[k] for k in auth_keys if k in s}
-    if "private_key" in creds:
-        creds["private_key"] = creds["private_key"].replace("\\n", "\n")
+    # Creiamo un dizionario di credenziali che segua ESATTAMENTE 
+    # lo standard Service Account di Google, senza parametri extra di Streamlit.
+    creds = {
+        "type": "service_account",
+        "project_id": s["project_id"],
+        "private_key_id": s["private_key_id"],
+        "private_key": s["private_key"].replace("\\n", "\n"),
+        "client_email": s["client_email"],
+        "client_id": s["client_id"],
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url": s["client_x509_cert_url"]
+    }
     
-    # Passiamo 'type' esplicitamente qui, ignorando quello nei Secrets
-    return st.connection("gsheets", type=GSheetsConnection, **creds)
+    # Usiamo un nome di connessione personalizzato ("gsheets_custom") 
+    # per forzare Streamlit a ignorare la configurazione automatica dei Secrets
+    return st.connection("gsheets_custom", type=GSheetsConnection, **creds)
 
 def save_cloud():
     try:
@@ -62,18 +72,18 @@ def save_cloud():
             inv_list.append({"Utente": u, "Dati": json.dumps(data["inv"])})
             deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
         
-        sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
-        conn.update(spreadsheet=sheet_url, worksheet="inventario", data=pd.DataFrame(inv_list))
-        conn.update(spreadsheet=sheet_url, worksheet="decks", data=pd.DataFrame(deck_list))
+        url = st.secrets["connections"]["gsheets"]["spreadsheet"]
+        conn.update(spreadsheet=url, worksheet="inventario", data=pd.DataFrame(inv_list))
+        conn.update(spreadsheet=url, worksheet="decks", data=pd.DataFrame(deck_list))
     except Exception as e:
-        st.sidebar.warning(f"Errore Cloud: {e}")
+        st.sidebar.warning(f"Errore: {e}")
 
 def load_cloud():
     try:
         conn = get_conn()
-        sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
-        df_inv = conn.read(spreadsheet=sheet_url, worksheet="inventario", ttl=0)
-        df_deck = conn.read(spreadsheet=sheet_url, worksheet="decks", ttl=0)
+        url = st.secrets["connections"]["gsheets"]["spreadsheet"]
+        df_inv = conn.read(spreadsheet=url, worksheet="inventario", ttl=0)
+        df_deck = conn.read(spreadsheet=url, worksheet="decks", ttl=0)
         
         new_users = {}
         for u in ["Antonio", "Andrea", "Fabio"]:
@@ -134,7 +144,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 df_db, global_img_map = load_db()
 
 # =========================
-# UI PRINCIPALE
+# UI PRINCIPALE (TAB AGGIUNGI INTOCCATA)
 # =========================
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
