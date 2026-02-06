@@ -34,22 +34,30 @@
         "ratchet_integrated_bit": {}
     },
     "Fabio": {
-        "lock_bit": {},
+        "lock_bit": {
+            "Fox": 1
+        },
         "blade": {
             "DranDagger": 1,
             "WizardRod": 2,
             "WizardArrow": 1
         },
-        "main_blade": {},
-        "assist_blade": {},
+        "main_blade": {
+            "Brush": 1
+        },
+        "assist_blade": {
+            "Jaggy": 1
+        },
         "ratchet": {
             "4-60": 1,
             "1-60": 2,
-            "4-80": 1
+            "4-80": 1,
+            "9-70": 1
         },
         "bit": {
             "Rush": 3,
-            "Gear Ball": 1
+            "Gear Ball": 1,
+            "Gear Rush": 1
         },
         "ratchet_integrated_bit": {}
     }
