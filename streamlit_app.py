@@ -7,14 +7,13 @@ from PIL import Image
 from streamlit_gsheets import GSheetsConnection
 
 # =========================
-# CONFIGURAZIONE & STILE (RIPRISTINATO)
+# CONFIGURAZIONE & STILE (CENTRATURA RIPRISTINATA)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
 st.markdown("""
     <style>
     .stApp { background-color: #0f172a; color: #f1f5f9; }
-    /* Titolo Principale Centrato */
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
     
     /* Centratura globale dei blocchi verticali */
@@ -32,13 +31,10 @@ st.markdown("""
         align-items: center;
     }
     
-    /* Testi Centrati */
     .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; width: 100%; }
     .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; margin-top: 5px; }
-    
     hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; width: 100%; }
     
-    /* Bottoni */
     div.stButton > button {
         width: auto !important; min-width: 150px !important;
         height: 30px !important; background-color: #334155 !important; color: white !important;
@@ -51,11 +47,14 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI SALVATAGGIO (VERSIONE CRUD FIX)
+# FUNZIONI SALVATAGGIO (VERSIONE COMPATIBILE)
 # =========================
 def get_conn():
+    """Iniezione credenziali compatibile con tutte le versioni di st.connection."""
     s = st.secrets["connections"]["gsheets"]
-    creds_dict = {
+    
+    # Prepariamo il dizionario delle credenziali
+    creds = {
         "type": "service_account",
         "project_id": s["project_id"],
         "private_key_id": s["private_key_id"],
@@ -67,8 +66,14 @@ def get_conn():
         "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
         "client_x509_cert_url": s["client_x509_cert_url"]
     }
-    # Usiamo gsheets_v4 per resettare ogni cache precedente
-    return st.connection("gsheets_v4", type=GSheetsConnection, service_account_info=creds_dict)
+    
+    # Creiamo la connessione
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    
+    # Iniezione forzata delle info del service account
+    # Questo metodo sovrascrive la modalità 'public' e abilita la scrittura
+    conn._service_account_info = creds
+    return conn
 
 def save_cloud():
     try:
@@ -79,11 +84,12 @@ def save_cloud():
             deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
         
         url = st.secrets["connections"]["gsheets"]["spreadsheet"]
+        # Eseguiamo l'aggiornamento
         conn.update(spreadsheet=url, worksheet="inventario", data=pd.DataFrame(inv_list))
         conn.update(spreadsheet=url, worksheet="decks", data=pd.DataFrame(deck_list))
-        st.sidebar.success("Sincronizzato!")
+        st.sidebar.success("Sincronizzato correttamente!")
     except Exception as e:
-        st.sidebar.error(f"Errore: {e}")
+        st.sidebar.error(f"Errore di Salvataggio: {e}")
 
 def load_cloud():
     try:
@@ -91,6 +97,7 @@ def load_cloud():
         url = st.secrets["connections"]["gsheets"]["spreadsheet"]
         df_inv = conn.read(spreadsheet=url, worksheet="inventario", ttl=0)
         df_deck = conn.read(spreadsheet=url, worksheet="decks", ttl=0)
+        
         new_users = {}
         for u in ["Antonio", "Andrea", "Fabio"]:
             u_inv = df_inv[df_inv["Utente"] == u]["Dati"].values
@@ -147,7 +154,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 df_db, global_img_map = load_db()
 
 # =========================
-# UI PRINCIPALE (TAB AGGIUNGI RIPRISTINATA)
+# UI PRINCIPALE
 # =========================
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
