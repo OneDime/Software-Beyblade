@@ -47,7 +47,8 @@
     },
     "Fabio": {
         "lock_bit": {
-            "Fox": 1
+            "Fox": 1,
+            "Emperor": 1
         },
         "blade": {
             "DranDagger": 1,
@@ -64,10 +65,12 @@
             "DranBuster": 1
         },
         "main_blade": {
-            "Brush": 1
+            "Brush": 1,
+            "Might": 1
         },
         "assist_blade": {
-            "Jaggy": 1
+            "Jaggy": 1,
+            "Heavy": 1
         },
         "ratchet": {
             "4-60": 1,
@@ -94,6 +97,8 @@
             "Point": 1,
             "Accel": 1
         },
-        "ratchet_integrated_bit": {}
+        "ratchet_integrated_bit": {
+            "Operate": 1
+        }
     }
 }
