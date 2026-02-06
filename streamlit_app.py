@@ -38,20 +38,18 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI SALVATAGGIO (LOGICA BLINDATA)
+# FUNZIONI SALVATAGGIO (FIX CRUD)
 # =========================
 def get_conn():
-    """Connessione manuale: evita conflitti di parametri con Streamlit."""
-    # Inizializziamo senza argomenti per evitare il crash 'unexpected keyword argument'
+    # Inizializzazione pulita
     conn = st.connection("gsheets", type=GSheetsConnection)
     s = st.secrets["connections"]["gsheets"]
     
-    # Ricostruiamo il profilo credenziali iniettandolo manualmente
     conf = {
         "type": "service_account",
         "project_id": s["project_id"],
         "private_key_id": s["private_key_id"],
-        "private_key": s["private_key"], # Presa direttamente dalla versione multi-riga dei Secrets
+        "private_key": s["private_key"],
         "client_email": s["client_email"],
         "client_id": s["client_id"],
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
@@ -72,10 +70,11 @@ def save_cloud():
             deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
         
         url = st.secrets["connections"]["gsheets"]["spreadsheet"]
+        # Specifichiamo esplicitamente di usare il service account per l'update
         conn.update(spreadsheet=url, worksheet="inventario", data=pd.DataFrame(inv_list))
         conn.update(spreadsheet=url, worksheet="decks", data=pd.DataFrame(deck_list))
     except Exception as e:
-        st.sidebar.error(f"Errore Cloud: {e}")
+        st.sidebar.error(f"Errore: {e}")
 
 def load_cloud():
     try:
@@ -141,7 +140,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 df_db, global_img_map = load_db()
 
 # =========================
-# UI PRINCIPALE
+# UI PRINCIPALE (TAB AGGIUNGI INTOCCATA)
 # =========================
 st.markdown(f"<div class='user-title'>Officina di {user_sel}</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
