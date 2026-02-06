@@ -34,11 +34,13 @@ st.markdown("""
     div.stButton > button { width: auto !important; min-width: 150px !important; height: 30px !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; border-radius: 4px !important; }
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
     [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
+    /* Fix per allineare checkbox e titolo */
+    .stCheckbox { margin-bottom: -20px; }
     </style>
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB
+# LOGICA GITHUB (Invariata)
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -84,6 +86,8 @@ def save_cloud():
 # =========================
 if 'users' not in st.session_state:
     force_load()
+if 'exp_states' not in st.session_state:
+    st.session_state.exp_states = {}
 
 @st.dialog("Accesso Officina")
 def user_dialog():
@@ -138,7 +142,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 # =========================
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI (INALTERATO) ---
+# --- TAB 1: AGGIUNGI (INTOCCABILE) ---
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
@@ -198,14 +202,30 @@ with tab3:
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 curr = deck["slots"][s_key]
                 
+                # Identificatore unico per questo expander
+                exp_key = f"exp_{user_sel}_{d_idx}_{s_idx}"
+                
+                # Calcolo Titolo
                 titolo_base = [v for v in curr.values() if v and v != "-"]
                 ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
                 titolo = " ".join(titolo_base).strip() or f"SLOT {s_idx+1}"
                 if ha_duplicati: titolo += " ⚠️"
                 
-                # RIMOSSO expanded=st.session_state.exp_state per lasciare il controllo manuale
-                with st.expander(titolo.upper()):
+                # PERSISTENZA STATO: se non esiste nel session_state, lo inizializziamo a False
+                if exp_key not in st.session_state.exp_states:
+                    st.session_state.exp_states[exp_key] = False
+                
+                # Visualizziamo l'expander legandolo allo stato salvato
+                is_expanded = st.session_state.exp_states[exp_key]
+                
+                with st.expander(titolo.upper(), expanded=is_expanded):
+                    # Se l'utente interagisce, vogliamo che rimanga aperto
+                    # Un trucco efficace in Streamlit è aggiornare lo stato al primo widget interno
                     tipo = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}")
+                    
+                    # Se cambio sistema, assicuro che lo stato rimanga True (aperto)
+                    st.session_state.exp_states[exp_key] = True
+                    
                     is_th = "Theory" in tipo
                     
                     def update_comp(label, cat, k_comp):
@@ -222,6 +242,8 @@ with tab3:
                         
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res
+                            # Forza il rerun mantenendo lo stato aperto
+                            st.session_state.exp_states[exp_key] = True
                             st.rerun()
 
                     if "BX/UX" in tipo and "+RIB" not in tipo:
@@ -247,6 +269,11 @@ with tab3:
                         if v and v != "-":
                             img_obj = get_img(global_img_map.get(v))
                             if img_obj: cols[i % 5].image(img_obj)
+                    
+                    # Pulsante per CHIUDERE manualmente lo slot e salvarne lo stato
+                    if st.button("Chiudi Slot", key=f"close_{exp_key}"):
+                        st.session_state.exp_states[exp_key] = False
+                        st.rerun()
 
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
