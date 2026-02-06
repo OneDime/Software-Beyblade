@@ -4,7 +4,7 @@
             "Wizard": 1
         },
         "blade": {
-            "WizardRod": 1
+            "WizardRod": 2
         },
         "main_blade": {
             "Arc": 1
@@ -14,11 +14,13 @@
         },
         "ratchet": {
             "4-55": 1,
-            "1-60": 1
+            "1-60": 1,
+            "5-70": 1
         },
         "bit": {
             "Low Orb": 1,
-            "Rush": 1
+            "Rush": 1,
+            "Disk Ball": 1
         },
         "ratchet_integrated_bit": {}
     },
