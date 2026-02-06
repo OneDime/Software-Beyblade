@@ -11,7 +11,8 @@
             "SharkEdge": 1,
             "WyvernHover": 1,
             "ImpactDrake": 1,
-            "UnicornSting": 1
+            "UnicornSting": 1,
+            "DranBuster": 1
         },
         "main_blade": {
             "Arc": 1,
@@ -23,7 +24,7 @@
         },
         "ratchet": {
             "4-55": 1,
-            "1-60": 1,
+            "1-60": 2,
             "5-70": 1,
             "5-80": 1,
             "2-60": 1,
@@ -42,7 +43,8 @@
             "Needle": 1,
             "Orb": 1,
             "Low Rush": 1,
-            "Gear Point": 1
+            "Gear Point": 1,
+            "Accel": 1
         },
         "ratchet_integrated_bit": {}
     },
