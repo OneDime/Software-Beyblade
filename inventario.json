@@ -42,7 +42,8 @@
             "WizardRod": 2,
             "WizardArrow": 1,
             "MammothTusk": 1,
-            "TyrannoRoar": 1
+            "TyrannoRoar": 1,
+            "TyrannoBeat": 1
         },
         "main_blade": {
             "Brush": 1
@@ -56,14 +57,16 @@
             "4-80": 1,
             "9-70": 1,
             "3-60": 1,
-            "9-60": 1
+            "9-60": 1,
+            "4-70": 1
         },
         "bit": {
             "Rush": 3,
             "Gear Ball": 1,
             "Gear Rush": 1,
             "Taper": 1,
-            "Gear Flat": 1
+            "Gear Flat": 1,
+            "Quake": 1
         },
         "ratchet_integrated_bit": {}
     }
