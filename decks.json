@@ -4,13 +4,22 @@
             "name": "DECK 1",
             "slots": {
                 "0": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "-",
+                    "r": "-",
+                    "bi": "-"
                 },
                 "1": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "-",
+                    "r": "-",
+                    "bi": "-"
                 },
                 "2": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "-",
+                    "r": "-",
+                    "bi": "-"
                 }
             }
         }
