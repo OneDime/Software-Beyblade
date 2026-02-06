@@ -1,30 +1,5 @@
 {
-    "Antonio": [
-        {
-            "name": "DECK 1",
-            "slots": {
-                "0": {
-                    "b": "AeroPegasus",
-                    "r": "3-70",
-                    "bi": "Accel"
-                },
-                "1": {
-                    "b": "BearScratch",
-                    "r": "5-60",
-                    "bi": "Flat"
-                },
-                "2": {
-                    "b": "AeroPegasus",
-                    "r": "3-70",
-                    "bi": "Flat",
-                    "rib": "-",
-                    "lb": "-",
-                    "mb": "-",
-                    "ab": "-"
-                }
-            }
-        }
-    ],
+    "Antonio": [],
     "Andrea": [
         {
             "name": "DECK 1",
@@ -37,22 +12,27 @@
     ],
     "Fabio": [
         {
-            "name": "DECK 1",
+            "name": "Picciuli",
             "slots": {
                 "0": {
-                    "b": "BlackShell",
-                    "r": "4-60",
-                    "bi": "Dot"
+                    "b": "GolemRock",
+                    "r": "-",
+                    "bi": "-",
+                    "lb": "-",
+                    "mb": "-",
+                    "ab": "-",
+                    "tipo": "BX/UX+RIB",
+                    "rib": "Operate"
                 },
                 "1": {
-                    "b": "-",
-                    "r": "-",
-                    "bi": "-"
+                    "b": "TyrannoBeat",
+                    "r": "9-70",
+                    "bi": "Point"
                 },
                 "2": {
-                    "b": "-",
-                    "r": "-",
-                    "bi": "-"
+                    "b": "WizardRod",
+                    "r": "9-60",
+                    "bi": "Free Ball"
                 }
             }
         }
