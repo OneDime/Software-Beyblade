@@ -1,11 +1,21 @@
 {
     "Antonio": {
-        "lock_bit": {},
+        "lock_bit": {
+            "Wizard": 1
+        },
         "blade": {},
-        "main_blade": {},
-        "assist_blade": {},
-        "ratchet": {},
-        "bit": {},
+        "main_blade": {
+            "Arc": 1
+        },
+        "assist_blade": {
+            "Round": 1
+        },
+        "ratchet": {
+            "4-55": 1
+        },
+        "bit": {
+            "Low Orb": 1
+        },
         "ratchet_integrated_bit": {}
     },
     "Andrea": {
