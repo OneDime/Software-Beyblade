@@ -1,8 +1,7 @@
 {
     "Antonio": {
         "lock_bit": {
-            "Wizard": 1,
-            "Kraken": 1
+            "Wizard": 1
         },
         "blade": {
             "WizardRod": 2,
@@ -12,12 +11,10 @@
             "WyvernHover": 1
         },
         "main_blade": {
-            "Arc": 1,
-            "Wriggle": 1
+            "Arc": 1
         },
         "assist_blade": {
-            "Round": 1,
-            "Slash": 1
+            "Round": 1
         },
         "ratchet": {
             "4-55": 1,
@@ -26,7 +23,7 @@
             "5-80": 1,
             "2-60": 1,
             "3-60": 1,
-            "3-85": 2
+            "3-85": 1
         },
         "bit": {
             "Low Orb": 1,
@@ -35,8 +32,7 @@
             "Elevate": 1,
             "Cyclone": 1,
             "Low Flat": 1,
-            "Needle": 1,
-            "Orb": 1
+            "Needle": 1
         },
         "ratchet_integrated_bit": {}
     },
@@ -52,7 +48,8 @@
     "Fabio": {
         "lock_bit": {
             "Fox": 1,
-            "Emperor": 1
+            "Emperor": 1,
+            "Hornet": 1
         },
         "blade": {
             "DranDagger": 1,
@@ -72,11 +69,13 @@
         },
         "main_blade": {
             "Brush": 1,
-            "Might": 1
+            "Might": 1,
+            "Fort": 1
         },
         "assist_blade": {
             "Jaggy": 1,
-            "Heavy": 1
+            "Heavy": 1,
+            "Round": 1
         },
         "ratchet": {
             "4-60": 1,
@@ -88,13 +87,14 @@
             "4-70": 1,
             "3-80": 1,
             "5-60": 3,
-            "M-85": 1
+            "M-85": 1,
+            "7-60": 1
         },
         "bit": {
             "Rush": 3,
             "Gear Ball": 1,
             "Gear Rush": 1,
-            "Taper": 1,
+            "Taper": 2,
             "Gear Flat": 1,
             "Quake": 1,
             "High Needle": 2,
