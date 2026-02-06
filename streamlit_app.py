@@ -7,7 +7,7 @@ from PIL import Image
 from streamlit_gsheets import GSheetsConnection
 
 # =========================
-# CONFIGURAZIONE & STILE (INTOCCABILE)
+# CONFIGURAZIONE & STILE (RIPRISTINATO)
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
@@ -38,27 +38,43 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# FUNZIONI SALVATAGGIO (GSHEETS)
+# FUNZIONI SALVATAGGIO (GSHEETS - FIXATO)
 # =========================
+def get_conn():
+    # Carichiamo i segreti ed estraiamo solo i campi di autenticazione per evitare conflitti
+    s = dict(st.secrets["connections"]["gsheets"])
+    auth_keys = ["project_id", "private_key_id", "private_key", "client_email", "client_id", 
+                 "auth_uri", "token_uri", "auth_provider_x509_cert_url", "client_x509_cert_url"]
+    
+    creds = {k: s[k] for k in auth_keys if k in s}
+    if "private_key" in creds:
+        creds["private_key"] = creds["private_key"].replace("\\n", "\n")
+    
+    # Passiamo 'type' esplicitamente qui, ignorando quello nei Secrets
+    return st.connection("gsheets", type=GSheetsConnection, **creds)
+
 def save_cloud():
     try:
-        conn = st.connection("gsheets", type=GSheetsConnection)
+        conn = get_conn()
         inv_list = []
         deck_list = []
         for u, data in st.session_state.users.items():
             inv_list.append({"Utente": u, "Dati": json.dumps(data["inv"])})
             deck_list.append({"Utente": u, "Dati": json.dumps(data["decks"])})
         
-        conn.update(spreadsheet=st.secrets["connections"]["gsheets"]["spreadsheet"], worksheet="inventario", data=pd.DataFrame(inv_list))
-        conn.update(spreadsheet=st.secrets["connections"]["gsheets"]["spreadsheet"], worksheet="decks", data=pd.DataFrame(deck_list))
+        sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
+        conn.update(spreadsheet=sheet_url, worksheet="inventario", data=pd.DataFrame(inv_list))
+        conn.update(spreadsheet=sheet_url, worksheet="decks", data=pd.DataFrame(deck_list))
     except Exception as e:
-        st.sidebar.warning("Salvataggio Cloud non riuscito (verifica permessi foglio)")
+        st.sidebar.warning(f"Errore Cloud: {e}")
 
 def load_cloud():
     try:
-        conn = st.connection("gsheets", type=GSheetsConnection)
-        df_inv = conn.read(worksheet="inventario", ttl=0)
-        df_deck = conn.read(worksheet="decks", ttl=0)
+        conn = get_conn()
+        sheet_url = st.secrets["connections"]["gsheets"]["spreadsheet"]
+        df_inv = conn.read(spreadsheet=sheet_url, worksheet="inventario", ttl=0)
+        df_deck = conn.read(spreadsheet=sheet_url, worksheet="decks", ttl=0)
+        
         new_users = {}
         for u in ["Antonio", "Andrea", "Fabio"]:
             u_inv = df_inv[df_inv["Utente"] == u]["Dati"].values
@@ -115,7 +131,7 @@ user_data = st.session_state.users[user_sel]
 if 'exp_state' not in st.session_state: st.session_state.exp_state = {}
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
-df, global_img_map = load_db()
+df_db, global_img_map = load_db()
 
 # =========================
 # UI PRINCIPALE
@@ -125,7 +141,7 @@ tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Build
 
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
-    filtered = df[df['_search'].str.contains(search_q)] if search_q else df.head(3)
+    filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
             st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
@@ -167,7 +183,7 @@ with tab3:
     def get_options(cat, theory=False):
         if theory:
             csv_map = {"lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade", "assist_blade": "assist_blade", "ratchet": "ratchet", "bit": "bit", "ratchet_integrated_bit": "ratchet_integrated_bit"}
-            return ["-"] + sorted([x for x in df[csv_map.get(cat, cat)].unique().tolist() if x and x != "n/a"])
+            return ["-"] + sorted([x for x in df_db[csv_map.get(cat, cat)].unique().tolist() if x and x != "n/a"])
         return ["-"] + sorted(list(user_data["inv"][cat].keys()))
 
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
@@ -224,8 +240,8 @@ with tab3:
                 save_cloud()
                 st.rerun()
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
-                n_name = st.text_input("Nuovo nome:", deck['name'])
-                if st.button("Conferma"):
+                n_name = st.text_input("Nuovo nome:", deck['name'], key=f"edit_input_{d_idx}")
+                if st.button("Conferma", key=f"confirm_{d_idx}"):
                     deck['name'] = n_name
                     st.session_state.edit_name_idx = None
                     save_cloud()
