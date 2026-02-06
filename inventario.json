@@ -1,9 +1,7 @@
 {
     "Antonio": {
         "lock_bit": {},
-        "blade": {
-            "BearScratch": 1
-        },
+        "blade": {},
         "main_blade": {},
         "assist_blade": {},
         "ratchet": {
