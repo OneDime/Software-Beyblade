@@ -5,9 +5,7 @@
         "main_blade": {},
         "assist_blade": {},
         "ratchet": {},
-        "bit": {
-            "Flat": 1
-        },
+        "bit": {},
         "ratchet_integrated_bit": {}
     },
     "Andrea": {
