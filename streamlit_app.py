@@ -38,7 +38,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # =========================
-# LOGICA GITHUB (PULITA)
+# LOGICA GITHUB
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -48,38 +48,27 @@ def github_action(file_key, data=None, method="GET"):
     ts = int(time.time())
     url = f"https://api.github.com/repos/{REPO}/contents/{FILES[file_key]}"
     headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
-    
     try:
-        # Prendi sempre lo SHA più recente prima di fare qualsiasi cosa
         r_get = requests.get(f"{url}?t={ts}", headers=headers)
-        current_sha = r_get.json().get("sha") if r_get.status_code == 200 else None
-        
+        sha = r_get.json().get("sha") if r_get.status_code == 200 else None
         if method == "GET":
             if r_get.status_code == 200:
-                content = base64.b64decode(r_get.json()["content"]).decode('utf-8')
-                return json.loads(content)
+                return json.loads(base64.b64decode(r_get.json()["content"]).decode('utf-8'))
             return None
-        
         elif method == "PUT":
-            payload = {
-                "message": f"App Update {FILES[file_key]}",
-                "content": base64.b64encode(json.dumps(data, indent=4).encode('utf-8')).decode('utf-8'),
-                "sha": current_sha
-            }
-            res = requests.put(url, headers=headers, json=payload)
-            return res.status_code in [200, 201]
-    except:
-        return False
+            payload = {"message": f"Update {FILES[file_key]}", "content": base64.b64encode(json.dumps(data, indent=4).encode('utf-8')).decode('utf-8'), "sha": sha}
+            return requests.put(url, headers=headers, json=payload).status_code in [200, 201]
+    except: return False
     return False
 
 def force_load():
-    inv_cloud = github_action("inv", method="GET")
-    deck_cloud = github_action("decks", method="GET")
+    inv_c = github_action("inv", method="GET")
+    deck_c = github_action("decks", method="GET")
     new_users = {}
     for u in ["Antonio", "Andrea", "Fabio"]:
         new_users[u] = {
-            "inv": inv_cloud.get(u, {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}) if inv_cloud else {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]},
-            "decks": deck_cloud.get(u, [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]) if deck_cloud else [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]
+            "inv": inv_c.get(u, {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}) if inv_c else {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]},
+            "decks": deck_c.get(u, [{"name": "DECK 1", "slots": {"0":{}, "1":{}, "2":{}}}]) if deck_c else [{"name": "DECK 1", "slots": {"0":{}, "1":{}, "2":{}}}]
         }
     st.session_state.users = new_users
 
@@ -87,9 +76,8 @@ def save_cloud():
     inv_data = {u: d["inv"] for u, d in st.session_state.users.items()}
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
     if github_action("inv", inv_data, "PUT") and github_action("decks", deck_data, "PUT"):
-        st.toast("✅ Salvato su GitHub!", icon="💾")
-    else:
-        st.error("❌ Errore di connessione GitHub.")
+        st.toast("✅ Cloud Sincronizzato!", icon="💾")
+    else: st.error("❌ Errore Cloud")
 
 # =========================
 # INIZIALIZZAZIONE
@@ -97,13 +85,12 @@ def save_cloud():
 if 'users' not in st.session_state:
     force_load()
 
-@st.dialog("Benvenuto in Officina")
+@st.dialog("Accesso")
 def user_dialog():
-    st.write("Seleziona il tuo profilo per caricare i tuoi dati:")
     for u in ["Antonio", "Andrea", "Fabio"]:
         if st.button(u, use_container_width=True):
             st.session_state.user_sel = u
-            force_load() # Carica i dati freschi appena scegli l'utente
+            force_load()
             st.rerun()
 
 if 'user_sel' not in st.session_state:
@@ -141,12 +128,11 @@ user_data = st.session_state.users[user_sel]
 
 # Sidebar
 st.sidebar.title(f"👤 {user_sel}")
-if st.sidebar.button("🔄 Sync Cloud"):
+if st.sidebar.button("🔄 Forza Sync Cloud"):
     force_load(); st.rerun()
-if st.sidebar.button("🚪 Cambia Utente"):
+if st.sidebar.button("🚪 Esci"):
     del st.session_state.user_sel; st.rerun()
 
-if 'exp_state' not in st.session_state: st.session_state.exp_state = {}
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
 # =========================
@@ -154,7 +140,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 # =========================
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI (INALTERATO) ---
+# --- TAB 1: AGGIUNGI (INALTERATA) ---
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
@@ -193,7 +179,7 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
-# --- TAB 3: DECK BUILDER ---
+# --- TAB 3: DECK BUILDER (FIX FINALE) ---
 with tab3:
     def get_options(cat, theory=False):
         if theory:
@@ -204,48 +190,64 @@ with tab3:
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
     
     for d_idx, deck in enumerate(user_data["decks"]):
-        with st.expander(f"{deck['name'].upper()}", expanded=True):
+        with st.expander(f"🗃️ {deck['name'].upper()}", expanded=True):
             for s_idx in range(3):
                 s_key = str(s_idx)
-                sels = deck["slots"].get(s_key, {})
-                titolo = " ".join([v for v in sels.values() if v and v != "-"]) or f"SLOT {s_idx+1}"
-                exp_key = f"{user_sel}-{d_idx}-{s_idx}"
-                with st.expander(titolo.upper(), expanded=st.session_state.exp_state.get(exp_key, False)):
-                    tipo = st.selectbox("Sistema", tipologie, key=f"ty_{exp_key}")
-                    is_th, curr = "Theory" in tipo, {}
+                # Recuperiamo o inizializziamo lo slot
+                if s_key not in deck["slots"]: deck["slots"][s_key] = {}
+                curr = deck["slots"][s_key]
+                
+                # Calcolo titolo dinamico
+                titolo = " ".join([v for v in curr.values() if v and v != "-"]).strip() or f"SLOT {s_idx+1}"
+                
+                with st.expander(f"🔹 {titolo.upper()}"):
+                    # Sistema
+                    t_key = f"tipo_{user_sel}_{d_idx}_{s_idx}"
+                    tipo = st.selectbox("Sistema", tipologie, key=t_key)
+                    is_th = "Theory" in tipo
+                    
+                    # Funzione di utilità per aggiornare il dizionario al volo
+                    def update_comp(label, cat, comp_key):
+                        w_key = f"w_{comp_key}_{user_sel}_{d_idx}_{s_idx}"
+                        # Pre-popoliamo il widget con il valore salvato se esiste
+                        default_val = curr.get(comp_key, "-")
+                        options = get_options(cat, is_th)
+                        if default_val not in options: default_val = "-"
+                        
+                        val = st.selectbox(label, options, index=options.index(default_val), key=w_key)
+                        curr[comp_key] = val # Scrittura diretta nel session_state
+
                     if "BX/UX" in tipo and "+RIB" not in tipo:
-                        curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
-                        curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}")
-                        curr['bi'] = st.selectbox("Bit", get_options("bit", is_th), key=f"bi_{exp_key}")
+                        update_comp("Blade", "blade", "b")
+                        update_comp("Ratchet", "ratchet", "r")
+                        update_comp("Bit", "bit", "bi")
                     elif "CX" in tipo and "+RIB" not in tipo:
-                        curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_th), key=f"lb_{exp_key}")
-                        curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_th), key=f"mb_{exp_key}")
-                        curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_th), key=f"ab_{exp_key}")
-                        curr['r'] = st.selectbox("Ratchet", get_options("ratchet", is_th), key=f"r_{exp_key}")
-                        curr['bi'] = st.selectbox("Bit", get_options("bit", is_th), key=f"bi_{exp_key}")
+                        update_comp("Lock Bit", "lock_bit", "lb")
+                        update_comp("Main Blade", "main_blade", "mb")
+                        update_comp("Assist Blade", "assist_blade", "ab")
+                        update_comp("Ratchet", "ratchet", "r")
+                        update_comp("Bit", "bit", "bi")
                     elif "+RIB" in tipo:
                         if "CX" in tipo:
-                            curr['lb'] = st.selectbox("Lock Bit", get_options("lock_bit", is_th), key=f"lb_{exp_key}")
-                            curr['mb'] = st.selectbox("Main Blade", get_options("main_blade", is_th), key=f"mb_{exp_key}")
-                            curr['ab'] = st.selectbox("Assist Blade", get_options("assist_blade", is_th), key=f"ab_{exp_key}")
-                        else: curr['b'] = st.selectbox("Blade", get_options("blade", is_th), key=f"b_{exp_key}")
-                        curr['rib'] = st.selectbox("RIB", get_options("ratchet_integrated_bit", is_th), key=f"rib_{exp_key}")
-                    
-                    cols = st.columns(5)
-                    for idx, (k, v) in enumerate(curr.items()):
-                        if v != "-":
-                            img_obj = get_img(global_img_map.get(v))
-                            if img_obj: cols[idx].image(img_obj)
-                    
-                    if deck["slots"].get(s_key) != curr:
-                        deck["slots"][s_key] = curr
-                        st.session_state.exp_state[exp_key] = True; st.rerun()
+                            update_comp("Lock Bit", "lock_bit", "lb")
+                            update_comp("Main Blade", "main_blade", "mb")
+                            update_comp("Assist Blade", "assist_blade", "ab")
+                        else: update_comp("Blade", "blade", "b")
+                        update_comp("RIB", "ratchet_integrated_bit", "rib")
 
+                    # Anteprima immagini
+                    cols = st.columns(5)
+                    for i, (k, v) in enumerate(curr.items()):
+                        if v and v != "-":
+                            img_obj = get_img(global_img_map.get(v))
+                            if img_obj: cols[i % 5].image(img_obj)
+
+            # Azioni Deck
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("📝 Rinomina", key=f"ren_{user_sel}_{d_idx}"):
                 st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
             
-            # IL TASTO SALVA
+            # IL SALVATAGGIO ORA È SICURO
             if c2.button("💾 SALVA DECK", key=f"save_btn_{user_sel}_{d_idx}"):
                 save_cloud()
                 
@@ -258,5 +260,5 @@ with tab3:
                     deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
 
     if st.button("➕ Nuovo Deck"):
-        user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {str(i): {} for i in range(3)}})
+        user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{}, "1":{}, "2":{}}})
         save_cloud(); st.rerun()
