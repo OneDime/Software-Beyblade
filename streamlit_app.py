@@ -106,6 +106,9 @@ if 'user_sel' not in st.session_state:
     user_dialog()
     st.stop()
 
+# =========================
+# CARICAMENTO DATABASE
+# =========================
 @st.cache_data
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame(), {}
@@ -128,19 +131,29 @@ def get_img(url, size=(100, 100)):
     if os.path.exists(path): return Image.open(path).resize(size, Image.Resampling.LANCZOS)
     return None
 
+# Sidebar e Pulsante Reset Cache Database
+st.sidebar.title(f"👤 {st.session_state.user_sel}")
+
+if st.sidebar.button("🔄 Forza Sync Cloud"):
+    force_load()
+    st.rerun()
+
+# --- NUOVO PULSANTE AGGIORNA DATABASE ---
+if st.sidebar.button("📂 Aggiorna Database CSV"):
+    st.cache_data.clear() # Svuota la cache per ricaricare il CSV aggiornato
+    st.toast("Database ricaricato!", icon="📂")
+    time.sleep(1)
+    st.rerun()
+
 df_db, global_img_map = load_db()
 user_sel = st.session_state.user_sel
 user_data = st.session_state.users[user_sel]
-
-st.sidebar.title(f"👤 {user_sel}")
-if st.sidebar.button("🔄 Forza Aggiornamento Cloud"):
-    force_load(); st.rerun()
 
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1 (INALTERATA) ---
+# --- TAB 1: AGGIUNGI (INTUCCABILE) ---
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
@@ -166,7 +179,7 @@ with tab1:
                         user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                         save_cloud()
 
-# --- TAB 2 ---
+# --- TAB 2: INVENTARIO ---
 with tab2:
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
     op = 1 if "Aggiungi" in modo else -1
@@ -212,7 +225,6 @@ with tab3:
                 
                 with st.expander(f"SLOT {s_idx+1}"):
                     old_tipo = curr.get("tipo", "BX/UX")
-                    # Il selectbox ora legge e scrive direttamente nel database (curr["tipo"])
                     tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(old_tipo), key=f"t_{user_sel}_{d_idx}_{s_idx}")
                     
                     if tipo != old_tipo:
@@ -223,7 +235,6 @@ with tab3:
                             if "CX" in tipo: valid_keys += ["lb", "mb", "ab", "rib"]
                             else: valid_keys += ["b", "rib"]
                         
-                        # Svuotamento chirurgico
                         for k in ["b", "r", "bi", "lb", "mb", "ab", "rib"]:
                             if k not in valid_keys: curr[k] = "-"
                         curr["tipo"] = tipo
@@ -255,7 +266,7 @@ with tab3:
                     for k, v in curr.items():
                         if k != "tipo" and v and v != "-":
                             img_obj = get_img(global_img_map.get(v))
-                            if img_obj: st.image(img_obj, width=80) # Semplificato per il rendering in colonna
+                            if img_obj: st.image(img_obj, width=80)
 
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
