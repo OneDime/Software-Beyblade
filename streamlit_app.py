@@ -8,12 +8,32 @@ import base64
 from PIL import Image
 
 # =========================
-# 1. CONFIGURAZIONE
+# 1. SETUP & PERSISTENZA UTENTE
 # =========================
 st.set_page_config(page_title="Officina Beyblade X", layout="wide")
 
+# Lista utenti fissa
+UTENTI = ["Antonio", "Andrea", "Fabio"]
+
+# Recupero utente dall'URL
+query_params = st.query_params
+utente_url = query_params.get("user", "Antonio")
+
+# Se l'utente nell'URL non è valido, forziamo Antonio
+if utente_url not in UTENTI:
+    utente_url = "Antonio"
+
+# Sidebar per il cambio utente
+st.sidebar.title("👤 Account")
+user_sel = st.sidebar.radio("Sei loggato come:", UTENTI, index=UTENTI.index(utente_url))
+
+# SE L'UTENTE CAMBIA NEL MENU: aggiorniamo l'URL e ricarichiamo subito
+if user_sel != utente_url:
+    st.query_params["user"] = user_sel
+    st.rerun()
+
 # =========================
-# 2. LOGICA GITHUB
+# 2. FUNZIONI GITHUB
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -46,14 +66,14 @@ def save_all():
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
     github_action("inv", inv_data, "PUT")
     github_action("decks", deck_data, "PUT")
-    st.success("✅ SALVATO SU CLOUD!")
+    st.toast("✅ Dati salvati su GitHub!", icon="💾")
 
 def load_cloud():
     inv_cloud = github_action("inv", method="GET")
     deck_cloud = github_action("decks", method="GET")
     if inv_cloud and deck_cloud:
         new_users = {}
-        for u in ["Antonio", "Andrea", "Fabio"]:
+        for u in UTENTI:
             new_users[u] = {
                 "inv": inv_cloud.get(u, {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}),
                 "decks": deck_cloud.get(u, [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}])
@@ -62,33 +82,17 @@ def load_cloud():
     return None
 
 # =========================
-# 3. GESTIONE UTENTE (URL & CACHE)
+# 3. CARICAMENTO DATI
 # =========================
 if 'users' not in st.session_state:
     cloud = load_cloud()
-    st.session_state.users = cloud if cloud else {u: {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]} for u in ["Antonio", "Andrea", "Fabio"]}
-
-# Leggi utente da URL
-user_list = ["Antonio", "Andrea", "Fabio"]
-query_user = st.query_params.get("user", "Antonio")
-if query_user not in user_list: query_user = "Antonio"
-
-st.sidebar.title("👤 Account")
-# Seleziona l'utente in base all'URL
-user_sel = st.sidebar.radio("Seleziona Utente:", user_list, index=user_list.index(query_user))
-
-# Se cambi nel menu, aggiorna URL e ricarica
-if user_sel != query_user:
-    st.query_params["user"] = user_sel
-    st.rerun()
-
-st.sidebar.write(f"📡 Login attuale: **{user_sel}**")
+    if cloud:
+        st.session_state.users = cloud
+    else:
+        st.session_state.users = {u: {"inv": {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}, "decks": [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]} for u in UTENTI}
 
 user_data = st.session_state.users[user_sel]
 
-# =========================
-# 4. DATI & IMMAGINI
-# =========================
 @st.cache_data
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame(), {}
@@ -114,21 +118,21 @@ def get_img(url, size=(100, 100)):
     return None
 
 # =========================
-# 5. UI PRINCIPALE
+# 4. INTERFACCIA PRINCIPALE
 # =========================
-st.markdown(f"<h1 style='text-align: center;'>Officina di {user_sel}</h1>", unsafe_allow_html=True)
+st.title(f"🛠️ Officina di {user_sel}")
 
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 with tab1:
-    search_q = st.text_input("Cerca componente...", "").lower()
+    search_q = st.text_input("Cerca pezzo...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            st.write(f"### {row['name']}")
-            img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
+            st.subheader(row['name'])
+            img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(120, 120))
             if img: st.image(img)
-            if st.button("Aggiungi tutto all'inventario", key=f"all_{i}"):
+            if st.button("Aggiungi all'inventario", key=f"add_{i}"):
                 comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
                          ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
                          ("ratchet_integrated_bit", "ratchet_integrated_bit")]
@@ -138,80 +142,81 @@ with tab1:
                 save_all(); st.rerun()
 
 with tab2:
+    st.info("Le modifiche qui si salvano subito.")
     for cat, items in user_data["inv"].items():
         if items:
-            with st.expander(cat.upper()):
+            with st.expander(f"📂 {cat.upper()}"):
                 for n, q in list(items.items()):
                     c1, c2 = st.columns([0.8, 0.2])
-                    c1.write(f"**{n}** ({q})")
+                    c1.write(f"**{n}** (x{q})")
                     if c2.button("🗑️", key=f"del_{cat}_{n}"):
                         user_data["inv"][cat][n] -= 1
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_all(); st.rerun()
 
 with tab3:
-    # --- TASTO SALVA GLOBALE (SEMPRE IN CIMA) ---
-    st.markdown("---")
-    if st.button("💾 SALVA TUTTI I DECK SU CLOUD", type="primary", use_container_width=True):
+    # --- POSIZIONE DI SICUREZZA: IL TASTO SALVA GENERALE ---
+    st.warning("⚠️ Ricorda di salvare dopo ogni modifica ai deck!")
+    if st.button("💾 SALVA TUTTI I DECK (GLOBAL)", type="primary", use_container_width=True):
         save_all()
+        st.rerun()
+    
     st.markdown("---")
 
     def get_options(cat, theory=False):
         if theory:
             csv_m = {"lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade", "assist_blade": "assist_blade", "ratchet": "ratchet", "bit": "bit", "ratchet_integrated_bit": "ratchet_integrated_bit"}
             return ["-"] + sorted([x for x in df_db[csv_m.get(cat, cat)].unique().tolist() if x and x != "n/a"])
-        return ["-"] + sorted(list(user_data["inv"][cat].keys()))
+        return ["-"] + sorted(list(user_data["inv"].get(cat, {}).keys()))
 
-    tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
-    
+    # Se l'utente non ha deck, ne creiamo uno
+    if not user_data["decks"]:
+        user_data["decks"] = [{"name": "DECK 1", "slots": {str(i): {} for i in range(3)}}]
+
     for d_idx, deck in enumerate(user_data["decks"]):
-        with st.expander(f"📁 {deck['name'].upper()}", expanded=True):
+        with st.container(border=True):
+            col_titolo, col_del = st.columns([0.8, 0.2])
+            col_titolo.subheader(f"📁 {deck['name']}")
+            if col_del.button("🗑️", key=f"rm_dk_{d_idx}"):
+                user_data["decks"].pop(d_idx)
+                save_all(); st.rerun()
+
             for s_idx in range(3):
                 s_key = str(s_idx)
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 vals = deck["slots"][s_key]
                 
-                st.markdown(f"**Slot {s_idx+1}**")
-                sel_tipo = st.selectbox(f"Sistema Slot {s_idx+1}", tipologie, key=f"t_{d_idx}_{s_idx}")
-                th = "Theory" in sel_tipo
-                
-                # Funzione di selezione semplice
-                def draw_sel(label, cat, k):
-                    opts = get_options(cat, th)
-                    curr = vals.get(k, "-")
-                    idx = opts.index(curr) if curr in opts else 0
-                    sel = st.selectbox(label, opts, index=idx, key=f"s_{d_idx}_{s_idx}_{k}")
-                    deck["slots"][s_key][k] = sel
+                with st.expander(f"Slot {s_idx+1}: {list(vals.values())[0] if vals else 'Vuoto'}"):
+                    tipo = st.selectbox("Sistema", ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "Theory"], key=f"t_{d_idx}_{s_idx}")
+                    th = "Theory" in tipo
+                    
+                    def build_sel(label, cat, k):
+                        opts = get_options(cat, th)
+                        curr = vals.get(k, "-")
+                        idx = opts.index(curr) if curr in opts else 0
+                        sel = st.selectbox(label, opts, index=idx, key=f"s_{d_idx}_{s_idx}_{k}")
+                        deck["slots"][s_key][k] = sel
 
-                if "BX/UX" in sel_tipo and "+RIB" not in sel_tipo:
-                    draw_sel("Blade", "blade", "b")
-                    draw_sel("Ratchet", "ratchet", "r")
-                    draw_sel("Bit", "bit", "bi")
-                elif "CX" in sel_tipo and "+RIB" not in sel_tipo:
-                    draw_sel("Lock Bit", "lock_bit", "lb")
-                    draw_sel("Main Blade", "main_blade", "mb")
-                    draw_sel("Assist Blade", "assist_blade", "ab")
-                    draw_sel("Ratchet", "ratchet", "r")
-                    draw_sel("Bit", "bit", "bi")
-                elif "+RIB" in sel_tipo:
-                    if "CX" in sel_tipo:
-                        draw_sel("Lock Bit", "lock_bit", "lb"); draw_sel("Main Blade", "main_blade", "mb"); draw_sel("Assist Blade", "assist_blade", "ab")
-                    else: draw_sel("Blade", "blade", "b")
-                    draw_sel("RIB", "ratchet_integrated_bit", "rib")
+                    if "BX/UX" in tipo and "+RIB" not in tipo:
+                        build_sel("Blade", "blade", "b"); build_sel("Ratchet", "ratchet", "r"); build_sel("Bit", "bit", "bi")
+                    elif "CX" in tipo and "+RIB" not in tipo:
+                        build_sel("Lock Bit", "lock_bit", "lb"); build_sel("Main Blade", "main_blade", "mb"); build_sel("Assist Blade", "assist_blade", "ab")
+                        build_sel("Ratchet", "ratchet", "r"); build_sel("Bit", "bit", "bi")
+                    elif "+RIB" in tipo:
+                        if "CX" in tipo:
+                            build_sel("Lock Bit", "lock_bit", "lb"); build_sel("Main Blade", "main_blade", "mb"); build_sel("Assist Blade", "assist_blade", "ab")
+                        else: build_sel("Blade", "blade", "b")
+                        build_sel("RIB", "ratchet_integrated_bit", "rib")
+                    elif "Theory" in tipo:
+                        build_sel("Blade/Main", "blade", "b"); build_sel("Ratchet", "ratchet", "r"); build_sel("Bit", "bit", "bi")
 
-            # --- TASTI DI CONTROLLO DEL SINGOLO DECK ---
-            st.divider()
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                if st.button(f"✏️ Rinomina", key=f"ren_{d_idx}"):
-                    st.info("Funzione rinomina attiva (scrivi sopra)") # Semplificato per test
-            with c2:
-                if st.button(f"💾 SALVA DECK", key=f"sv_{d_idx}"):
-                    save_all()
-            with c3:
-                if st.button(f"🗑️ Elimina", key=f"dl_{d_idx}"):
-                    user_data["decks"].pop(d_idx); save_all(); st.rerun()
+            # TASTO SALVA SINGOLO DECK (Sotto ogni deck)
+            if st.button(f"💾 SALVA {deck['name']}", key=f"sv_single_{d_idx}"):
+                save_all()
+                st.rerun()
 
-    if st.button("➕ Crea Nuovo Deck"):
+    st.markdown("---")
+    if st.button("➕ AGGIUNGI NUOVO DECK"):
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {str(i): {} for i in range(3)}})
-        save_all(); st.rerun()
+        save_all()
+        st.rerun()
