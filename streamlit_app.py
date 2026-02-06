@@ -76,8 +76,8 @@ def save_cloud():
     inv_data = {u: d["inv"] for u, d in st.session_state.users.items()}
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
     if github_action("inv", inv_data, "PUT") and github_action("decks", deck_data, "PUT"):
-        st.toast("✅ Sincronizzato!", icon="💾")
-    else: st.error("❌ Errore Cloud")
+        st.toast("✅ Dati salvati!", icon="💾")
+    else: st.error("❌ Errore sincronizzazione")
 
 # =========================
 # INIZIALIZZAZIONE
@@ -87,7 +87,7 @@ if 'users' not in st.session_state:
 if 'exp_state' not in st.session_state:
     st.session_state.exp_state = {}
 
-@st.dialog("Accesso")
+@st.dialog("Accesso Officina")
 def user_dialog():
     for u in ["Antonio", "Andrea", "Fabio"]:
         if st.button(u, use_container_width=True):
@@ -130,7 +130,7 @@ user_data = st.session_state.users[user_sel]
 
 # Sidebar
 st.sidebar.title(f"👤 {user_sel}")
-if st.sidebar.button("🔄 Forza Sync"):
+if st.sidebar.button("🔄 Forza Aggiornamento Cloud"):
     force_load(); st.rerun()
 
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
@@ -140,13 +140,13 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 # =========================
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI (INTOCCABILE) ---
+# --- TAB 1: AGGIUNGI (INALTERATO) ---
 with tab1:
     search_q = st.text_input("Cerca...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.container(border=True):
-            st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
+            st.markdown(f<div class='bey-name'>{row['name']}</div>, unsafe_allow_html=True)
             img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
             if img: st.image(img)
             comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
@@ -161,7 +161,7 @@ with tab1:
             for ck, ik in comps:
                 val = row[ck]
                 if val and val != "n/a":
-                    st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
+                    st.markdown(f<div class='comp-name-centered'>{val}</div>, unsafe_allow_html=True)
                     if st.button("＋", key=f"btn_{i}_{ck}"):
                         user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                         save_cloud()
@@ -179,7 +179,7 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
-# --- TAB 3: DECK BUILDER (FIX TITOLI E EXPANDER) ---
+# --- TAB 3: DECK BUILDER ---
 with tab3:
     def get_options(cat, theory=False):
         if theory:
@@ -196,14 +196,12 @@ with tab3:
                 if s_key not in deck["slots"]: deck["slots"][s_key] = {}
                 curr = deck["slots"][s_key]
                 
-                # Titolo pulito senza icone
+                # Titoli puliti (senza icone)
                 titolo = " ".join([v for v in curr.values() if v and v != "-"]).strip() or f"SLOT {s_idx+1}"
-                
-                # Gestione stato expander per evitare chiusure
                 exp_id = f"exp_{user_sel}_{d_idx}_{s_idx}"
-                is_expanded = st.session_state.exp_state.get(exp_id, False)
                 
-                with st.expander(titolo.upper(), expanded=is_expanded):
+                # Se l'utente ha interagito, l'expander resta aperto
+                with st.expander(titolo.upper(), expanded=st.session_state.exp_state.get(exp_id, False)):
                     tipo = st.selectbox("Sistema", tipologie, key=f"t_{user_sel}_{d_idx}_{s_idx}")
                     is_th = "Theory" in tipo
                     
@@ -217,9 +215,7 @@ with tab3:
                         
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res
-                            # Quando l'utente cambia qualcosa, segnamo che questo expander deve restare aperto
-                            st.session_state.exp_state[exp_id] = True
-                            # Non facciamo rerun qui per non essere troppo aggressivi, Streamlit gestirà il cambio stato
+                            st.session_state.exp_state[exp_id] = True # Mantieni aperto dopo interazione
 
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         update_comp("Blade", "blade", "b")
@@ -246,15 +242,13 @@ with tab3:
                             if img_obj: cols[i % 5].image(img_obj)
 
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
-            if c1.button("📝 Rinomina", key=f"r_{user_sel}_{d_idx}"):
+            if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
                 st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
             
-            if c2.button("💾 SALVA DECK", key=f"s_{user_sel}_{d_idx}"):
-                # Al salvataggio possiamo resettare gli stati degli expander se vuoi che si chiudano, 
-                # oppure lasciarli così. Qui li lasciamo aperti per conferma visiva.
+            if c2.button("Salva Deck", key=f"s_{user_sel}_{d_idx}"):
                 save_cloud()
                 
-            if c3.button("🗑️ Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
+            if c3.button("Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
                 user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
             
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
@@ -262,6 +256,6 @@ with tab3:
                 if st.button("OK", key=f"o_{d_idx}"):
                     deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
 
-    if st.button("➕ Nuovo Deck"):
+    if st.button("Nuovo Deck"):
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{}, "1":{}, "2":{}}})
         save_cloud(); st.rerun()
