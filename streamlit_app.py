@@ -171,10 +171,10 @@ tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Build
 # --- TAB 1: AGGIUNGI ---
 with tab1:
     search_q = st.text_input("Cerca Beyblade...", "").lower()
-    filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(5)
+    # Aumentato il limite a 10 quando non c'è ricerca
+    filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(10)
     
     for i, (_, row) in enumerate(filtered.iterrows()):
-        # Rimosse stelline e aggiunto il grassetto (**) al nome
         with st.expander(f"**{row['name'].upper()}**", expanded=False):
             with st.container(border=True):
                 img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
