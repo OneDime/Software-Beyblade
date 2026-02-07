@@ -87,7 +87,8 @@
             "GolemRock": 1,
             "SharkGill": 1,
             "MeteorDragoon": 1,
-            "ImpactDrake": 1
+            "ImpactDrake": 1,
+            "Hover Wyvern": 1
         },
         "main_blade": {
             "Brush": 1,
@@ -113,7 +114,8 @@
             "5-60": 3,
             "M-85": 1,
             "7-60": 1,
-            "3-70": 1
+            "3-70": 1,
+            "3-85": 1
         },
         "bit": {
             "Rush": 3,
@@ -130,7 +132,8 @@
             "Accel": 1,
             "Free Ball": 1,
             "Jolt": 1,
-            "Low Rush": 1
+            "Low Rush": 1,
+            "Needle": 1
         },
         "ratchet_integrated_bit": {
             "Operate": 1,
