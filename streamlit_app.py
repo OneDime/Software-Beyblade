@@ -19,7 +19,19 @@ st.markdown("""
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
     .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
+    
+    /* Centratura contenuti per il Tab Aggiungi */
+    .add-tab-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        width: 100%;
+    }
+
     [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
+    
+    /* Stile per i container interni agli expander */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border: 2px solid #334155 !important;
         background-color: #1e293b !important;
@@ -30,11 +42,16 @@ st.markdown("""
         flex-direction: column;
         align-items: center;
     }
+    
     .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; width: 100%; }
     .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; margin-top: 5px; }
     hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; width: 100%; }
+    
     div.stButton > button { width: auto !important; min-width: 150px !important; height: 30px !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; border-radius: 4px !important; }
+    
+    /* Stile specifico per gli expander */
     .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
+    
     [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
     
     .slot-summary-box {
@@ -133,6 +150,7 @@ def get_img(url, size=(100, 100)):
     if os.path.exists(path): return Image.open(path).resize(size, Image.Resampling.LANCZOS)
     return None
 
+# Sidebar
 st.sidebar.title(f"👤 {st.session_state.user_sel}")
 
 if st.sidebar.button("🔄 Forza Sync Cloud"):
@@ -153,40 +171,47 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI (INTUCCABILE) ---
+# --- TAB 1: AGGIUNGI (MODIFICATO IN EXPANDERS) ---
 with tab1:
-    search_q = st.text_input("Cerca...", "").lower()
-    filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(3)
+    search_q = st.text_input("Cerca Beyblade...", "").lower()
+    filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(5)
+    
     for i, (_, row) in enumerate(filtered.iterrows()):
-        with st.container(border=True):
-            st.markdown(f"<div class='bey-name'>{row['name']}</div>", unsafe_allow_html=True)
-            img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
-            if img: st.image(img)
-            comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
-                     ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
-                     ("ratchet_integrated_bit", "ratchet_integrated_bit")]
-            if st.button("Aggiungi tutto", key=f"all_{i}"):
+        # Il nome del Beyblade diventa il titolo dell'expander
+        with st.expander(f"✨ {row['name'].upper()}", expanded=False):
+            # Container per mantenere la centratura dei componenti
+            with st.container(border=True):
+                img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
+                if img: 
+                    st.image(img)
+                
+                comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
+                         ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
+                         ("ratchet_integrated_bit", "ratchet_integrated_bit")]
+                
+                if st.button("Aggiungi tutto", key=f"all_{i}"):
+                    for ck, ik in comps:
+                        val = row[ck]
+                        if val and val != "n/a": user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
+                    save_cloud()
+                
+                st.markdown("<hr>", unsafe_allow_html=True)
+                
                 for ck, ik in comps:
                     val = row[ck]
-                    if val and val != "n/a": user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
-                save_cloud()
-            st.markdown("<hr>", unsafe_allow_html=True)
-            for ck, ik in comps:
-                val = row[ck]
-                if val and val != "n/a":
-                    st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
-                    if st.button("＋", key=f"btn_{i}_{ck}"):
-                        user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
-                        save_cloud()
+                    if val and val != "n/a":
+                        st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
+                        if st.button("＋", key=f"btn_{i}_{ck}"):
+                            user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
+                            save_cloud()
 
-# --- TAB 2: INVENTARIO (MODIFICATO ORDINE ALFANUMERICO) ---
+# --- TAB 2: INVENTARIO ---
 with tab2:
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
     op = 1 if "Aggiungi" in modo else -1
     for cat, items in user_data["inv"].items():
         if items:
             with st.expander(cat.replace('_', ' ').upper()):
-                # ORDINE ALFANUMERICO APPLICATO QUI
                 for n in sorted(list(items.keys())):
                     q = items[n]
                     if st.button(f"{n} x{q}", key=f"inv_{user_sel}_{cat}_{n}"):
