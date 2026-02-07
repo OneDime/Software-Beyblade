@@ -11,12 +11,10 @@ from PIL import Image
 # =========================
 # CONFIGURAZIONE & STILE
 # =========================
-# Forziamo il tema scuro tramite configuration (valido per alcune versioni di Streamlit)
 st.set_page_config(page_title="Officina Beyblade X", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
     <style>
-    /* Forzatura Dark Mode Globale */
     :root { color-scheme: dark; }
     .stApp { background-color: #0f172a; color: #f1f5f9; }
     
@@ -135,7 +133,6 @@ def get_img(url, size=(100, 100)):
     if os.path.exists(path): return Image.open(path).resize(size, Image.Resampling.LANCZOS)
     return None
 
-# Sidebar e Pulsante Reset Cache Database
 st.sidebar.title(f"👤 {st.session_state.user_sel}")
 
 if st.sidebar.button("🔄 Forza Sync Cloud"):
@@ -182,14 +179,16 @@ with tab1:
                         user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                         save_cloud()
 
-# --- TAB 2: INVENTARIO ---
+# --- TAB 2: INVENTARIO (MODIFICATO ORDINE ALFANUMERICO) ---
 with tab2:
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
     op = 1 if "Aggiungi" in modo else -1
     for cat, items in user_data["inv"].items():
         if items:
             with st.expander(cat.replace('_', ' ').upper()):
-                for n, q in list(items.items()):
+                # ORDINE ALFANUMERICO APPLICATO QUI
+                for n in sorted(list(items.keys())):
+                    q = items[n]
                     if st.button(f"{n} x{q}", key=f"inv_{user_sel}_{cat}_{n}"):
                         user_data["inv"][cat][n] += op
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
