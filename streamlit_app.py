@@ -171,8 +171,7 @@ tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Build
 # --- TAB 1: AGGIUNGI ---
 with tab1:
     search_q = st.text_input("Cerca Beyblade...", "").lower()
-    # Aumentato il limite a 10 quando non c'è ricerca
-    filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(10)
+    filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(20)
     
     for i, (_, row) in enumerate(filtered.iterrows()):
         with st.expander(f"**{row['name'].upper()}**", expanded=False):
