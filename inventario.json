@@ -68,7 +68,8 @@
         "lock_bit": {
             "Fox": 1,
             "Emperor": 1,
-            "Hornet": 1
+            "Hornet": 1,
+            "Pegasus": 1
         },
         "blade": {
             "DranDagger": 1,
@@ -89,12 +90,14 @@
         "main_blade": {
             "Brush": 1,
             "Might": 1,
-            "Fort": 1
+            "Fort": 1,
+            "Blast": 1
         },
         "assist_blade": {
             "Jaggy": 1,
             "Heavy": 1,
-            "Round": 1
+            "Round": 1,
+            "Assault": 1
         },
         "ratchet": {
             "4-60": 1,
@@ -125,7 +128,8 @@
             "Free Ball": 1
         },
         "ratchet_integrated_bit": {
-            "Operate": 1
+            "Operate": 1,
+            "Turbo": 1
         }
     }
 }
