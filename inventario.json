@@ -85,7 +85,8 @@
             "LeonClaw": 1,
             "DranBuster": 1,
             "GolemRock": 1,
-            "SharkGill": 1
+            "SharkGill": 1,
+            "MeteorDragoon": 1
         },
         "main_blade": {
             "Brush": 1,
@@ -110,7 +111,8 @@
             "3-80": 1,
             "5-60": 3,
             "M-85": 1,
-            "7-60": 1
+            "7-60": 1,
+            "3-70": 1
         },
         "bit": {
             "Rush": 3,
@@ -125,7 +127,8 @@
             "Gear Point": 1,
             "Point": 1,
             "Accel": 1,
-            "Free Ball": 1
+            "Free Ball": 1,
+            "Jolt": 1
         },
         "ratchet_integrated_bit": {
             "Operate": 1,
