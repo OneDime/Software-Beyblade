@@ -57,11 +57,17 @@
     },
     "Andrea": {
         "lock_bit": {},
-        "blade": {},
+        "blade": {
+            "Buster Dran": 1
+        },
         "main_blade": {},
         "assist_blade": {},
-        "ratchet": {},
-        "bit": {},
+        "ratchet": {
+            "5-70": 1
+        },
+        "bit": {
+            "Disk Ball": 1
+        },
         "ratchet_integrated_bit": {}
     },
     "Fabio": {
