@@ -56,7 +56,9 @@
         "ratchet_integrated_bit": {}
     },
     "Andrea": {
-        "lock_bit": {},
+        "lock_bit": {
+            "Hells": 1
+        },
         "blade": {
             "Buster Dran": 1,
             "TyrannoBeat": 1,
@@ -64,11 +66,15 @@
             "Tusk Mammoth": 1,
             "WizardRod": 1
         },
-        "main_blade": {},
-        "assist_blade": {},
+        "main_blade": {
+            "Reaper": 1
+        },
+        "assist_blade": {
+            "Turn": 1
+        },
         "ratchet": {
             "5-70": 1,
-            "4-70": 1,
+            "4-70": 2,
             "9-60": 1,
             "3-60": 1,
             "1-60": 1
@@ -78,7 +84,8 @@
             "Quake": 1,
             "Gear Flat": 1,
             "Taper": 1,
-            "Rush": 1
+            "Rush": 1,
+            "Kick": 1
         },
         "ratchet_integrated_bit": {}
     },
