@@ -60,19 +60,22 @@
         "blade": {
             "Buster Dran": 1,
             "TyrannoBeat": 1,
-            "Roar Tyranno": 1
+            "Roar Tyranno": 1,
+            "Tusk Mammoth": 1
         },
         "main_blade": {},
         "assist_blade": {},
         "ratchet": {
             "5-70": 1,
             "4-70": 1,
-            "9-60": 1
+            "9-60": 1,
+            "3-60": 1
         },
         "bit": {
             "Disk Ball": 1,
             "Quake": 1,
-            "Gear Flat": 1
+            "Gear Flat": 1,
+            "Taper": 1
         },
         "ratchet_integrated_bit": {}
     },
