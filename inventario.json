@@ -58,15 +58,18 @@
     "Andrea": {
         "lock_bit": {},
         "blade": {
-            "Buster Dran": 1
+            "Buster Dran": 1,
+            "TyrannoBeat": 1
         },
         "main_blade": {},
         "assist_blade": {},
         "ratchet": {
-            "5-70": 1
+            "5-70": 1,
+            "4-70": 1
         },
         "bit": {
-            "Disk Ball": 1
+            "Disk Ball": 1,
+            "Quake": 1
         },
         "ratchet_integrated_bit": {}
     },
