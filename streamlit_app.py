@@ -64,11 +64,22 @@ st.markdown("""
     .slot-summary-name { font-weight: bold; color: #f1f5f9; text-transform: uppercase; }
     .slot-summary-alert { color: #fbbf24; font-weight: bold; margin-left: 8px; font-size: 0.85rem; }
     
-    /* Stili specifici tab Torneo - CENTRATURA APPLICATA */
+    /* Stili specifici tab Torneo & Stats */
     .tourney-bey-title { font-weight: bold; font-size: 1.1rem; color: #f8fafc; margin-bottom: 5px; text-align: center; width: 100%; }
     .tourney-stats { font-family: monospace; font-size: 1.2rem; margin-bottom: 10px; text-align: center; width: 100%; }
     .stat-green { color: #4ade80; font-weight: bold; }
     .stat-red { color: #f87171; font-weight: bold; }
+    
+    .stats-row { 
+        background-color: #1e293b; 
+        padding: 12px; 
+        border-radius: 8px; 
+        margin-bottom: 8px; 
+        border: 1px solid #334155;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -183,7 +194,7 @@ user_data = st.session_state.users[user_sel]
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 if 'edit_tourney_idx' not in st.session_state: st.session_state.edit_tourney_idx = None
 
-tab1, tab2, tab3, tab4 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🏆 Torneo"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🏆 Torneo", "📊 Stats"])
 
 # --- TAB 1: AGGIUNGI ---
 with tab1:
@@ -327,11 +338,8 @@ with tab4:
     @st.dialog("Nuovo Torneo")
     def nuovo_torneo_dialog():
         t_name = st.text_input("Nome del Torneo")
-        
-        # Recupera tutti i beyblade completi dai deck
         available_beys = []
         bey_map = {} 
-        
         for d in user_data["decks"]:
             for s_k, s_v in d["slots"].items():
                 parts = [v for k, v in s_v.items() if k != "tipo" and v and v != "-"]
@@ -346,22 +354,13 @@ with tab4:
         b3 = st.selectbox("Beyblade 3", ["Seleziona..."] + available_beys)
 
         if st.button("Crea Torneo"):
-            if not t_name:
-                st.error("Inserisci un nome per il torneo.")
-                return
-            if "Seleziona..." in [b1, b2, b3] or len({b1, b2, b3}) < 3:
-                st.error("Seleziona 3 Beyblade distinti.")
-                return
+            if not t_name: st.error("Inserisci un nome."); return
+            if "Seleziona..." in [b1, b2, b3] or len({b1, b2, b3}) < 3: st.error("Seleziona 3 Beyblade."); return
             
-            parts1 = set(bey_map[b1]["parts"].values())
-            parts2 = set(bey_map[b2]["parts"].values())
-            parts3 = set(bey_map[b3]["parts"].values())
+            p1, p2, p3 = set(bey_map[b1]["parts"].values()), set(bey_map[b2]["parts"].values()), set(bey_map[b3]["parts"].values())
+            if not p1.isdisjoint(p2) or not p1.isdisjoint(p3) or not p2.isdisjoint(p3):
+                st.error("I Beyblade condividono componenti!"); return
             
-            if not parts1.isdisjoint(parts2) or not parts1.isdisjoint(parts3) or not parts2.isdisjoint(parts3):
-                st.error("Errore: I Beyblade selezionati condividono delle componenti!")
-                return
-            
-            # Salvataggio con formato data italiano e chiave di ordinamento raw
             new_tourney = {
                 "id": int(time.time()),
                 "date": datetime.now().strftime("%d/%m/%Y"),
@@ -373,29 +372,20 @@ with tab4:
                     {"name": bey_map[b3]["name"], "p1": 0, "p2": 0}
                 ]
             }
-            user_data["tourney"].append(new_tourney)
-            save_cloud()
-            st.rerun()
+            user_data["tourney"].append(new_tourney); save_cloud(); st.rerun()
 
-    if st.button("🏆 Nuovo Torneo"):
-        nuovo_torneo_dialog()
+    if st.button("🏆 Nuovo Torneo"): nuovo_torneo_dialog()
 
-    # Ordina per raw_date (più recente prima) e mostra
     sorted_tourneys = sorted(user_data["tourney"], key=lambda x: x.get("raw_date", x["date"]), reverse=True)
-    
     for t in sorted_tourneys:
         real_idx = user_data["tourney"].index(t) 
-        
         label = f"{t['date']} - {t['name']}"
         with st.expander(f"**{label}**", expanded=False):
-            
             cols = st.columns(3)
             for b_idx, bey in enumerate(t['beys']):
                 with cols[b_idx]:
-                    # Centratura garantita dalle classi tourney-bey-title e tourney-stats nel CSS
                     st.markdown(f"<div class='tourney-bey-title'>{bey['name']}</div>", unsafe_allow_html=True)
                     st.markdown(f"<div class='tourney-stats'><span class='stat-green'>+{bey['p1']}</span> / <span class='stat-red'>-{bey['p2']}</span></div>", unsafe_allow_html=True)
-                    
                     bc1, bc2 = st.columns(2)
                     if bc1.button("+1 Pt", key=f"p1_{t['id']}_{b_idx}"):
                         user_data["tourney"][real_idx]["beys"][b_idx]["p1"] += 1
@@ -405,18 +395,44 @@ with tab4:
                         save_cloud(); st.rerun()
             
             st.markdown("<hr>", unsafe_allow_html=True)
-            
             c1, c2, _ = st.columns([0.2, 0.2, 0.6])
             if c1.button("Rinomina", key=f"rt_{t['id']}"):
                 st.session_state.edit_tourney_idx = t['id']; st.rerun()
-            
             if c2.button("Elimina", key=f"et_{t['id']}", type="primary"):
-                user_data["tourney"].pop(real_idx)
-                save_cloud(); st.rerun()
-                
+                user_data["tourney"].pop(real_idx); save_cloud(); st.rerun()
             if st.session_state.edit_tourney_idx == t['id']:
                 nn = st.text_input("Nuovo nome torneo", t['name'], key=f"int_{t['id']}")
                 if st.button("Salva Nome", key=f"snt_{t['id']}"):
                     user_data["tourney"][real_idx]["name"] = nn
-                    st.session_state.edit_tourney_idx = None
-                    save_cloud(); st.rerun()
+                    st.session_state.edit_tourney_idx = None; save_cloud(); st.rerun()
+
+# --- TAB 5: STATS ---
+with tab5:
+    st.markdown("<h2 style='text-align: center;'>Statistiche Beyblade</h2>", unsafe_allow_html=True)
+    
+    # Aggregazione dati
+    stats_map = {} # nome -> {'p1': total, 'p2': total}
+    
+    for t in user_data["tourney"]:
+        for bey in t.get("beys", []):
+            name = bey["name"]
+            if name not in stats_map:
+                stats_map[name] = {"p1": 0, "p2": 0}
+            stats_map[name]["p1"] += bey["p1"]
+            stats_map[name]["p2"] += bey["p2"]
+            
+    if not stats_map:
+        st.info("Nessun dato disponibile. Partecipa a un torneo per vedere le statistiche!")
+    else:
+        # Trasformazione in lista e ordinamento per p1 (positivo) decrescente
+        sorted_stats = sorted(stats_map.items(), key=lambda x: x[1]["p1"], reverse=True)
+        
+        for name, scores in sorted_stats:
+            st.markdown(f"""
+                <div class="stats-row">
+                    <div style="font-weight: bold; color: #f1f5f9; font-size: 1.1rem;">{name}</div>
+                    <div style="font-family: monospace; font-size: 1.2rem;">
+                        <span class="stat-green">+{scores['p1']}</span> | <span class="stat-red">-{scores['p2']}</span>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
