@@ -1,24 +1,25 @@
 {
     "Antonio": [
         {
-            "id": 1770637250,
-            "date": "2026-02-09",
+            "id": 1770637500,
+            "date": "09/02/2026",
+            "raw_date": "202602091145",
             "name": "test",
             "beys": [
                 {
                     "name": "WyvernHover 9-60 Kick",
-                    "p1": 2,
+                    "p1": 0,
                     "p2": 0
                 },
                 {
                     "name": "CobaltDragoon 5-60 Elevate",
-                    "p1": 1,
-                    "p2": 1
+                    "p1": 0,
+                    "p2": 0
                 },
                 {
                     "name": "WizardRod 1-60 Hexa",
-                    "p1": 3,
-                    "p2": 1
+                    "p1": 0,
+                    "p2": 0
                 }
             ]
         }
