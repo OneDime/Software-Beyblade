@@ -64,9 +64,9 @@ st.markdown("""
     .slot-summary-name { font-weight: bold; color: #f1f5f9; text-transform: uppercase; }
     .slot-summary-alert { color: #fbbf24; font-weight: bold; margin-left: 8px; font-size: 0.85rem; }
     
-    /* Stili specifici tab Torneo */
-    .tourney-bey-title { font-weight: bold; font-size: 1.1rem; color: #f8fafc; margin-bottom: 5px; }
-    .tourney-stats { font-family: monospace; font-size: 1.2rem; margin-bottom: 10px; }
+    /* Stili specifici tab Torneo - CENTRATURA APPLICATA */
+    .tourney-bey-title { font-weight: bold; font-size: 1.1rem; color: #f8fafc; margin-bottom: 5px; text-align: center; width: 100%; }
+    .tourney-stats { font-family: monospace; font-size: 1.2rem; margin-bottom: 10px; text-align: center; width: 100%; }
     .stat-green { color: #4ade80; font-weight: bold; }
     .stat-red { color: #f87171; font-weight: bold; }
     </style>
@@ -330,15 +330,14 @@ with tab4:
         
         # Recupera tutti i beyblade completi dai deck
         available_beys = []
-        bey_map = {} # Mappa nome -> componenti
+        bey_map = {} 
         
         for d in user_data["decks"]:
             for s_k, s_v in d["slots"].items():
                 parts = [v for k, v in s_v.items() if k != "tipo" and v and v != "-"]
-                if len(parts) >= 3: # Consideriamo valido un bey con almeno 3 parti
+                if len(parts) >= 3:
                     full_name = f"{d['name']} - S{int(s_k)+1}: {' '.join(parts)}"
                     available_beys.append(full_name)
-                    # Salviamo i componenti (escludendo il tipo) per il controllo duplicati
                     clean_parts = {k: v for k, v in s_v.items() if k != "tipo" and v and v != "-"}
                     bey_map[full_name] = {"name": " ".join(parts), "parts": clean_parts}
 
@@ -354,7 +353,6 @@ with tab4:
                 st.error("Seleziona 3 Beyblade distinti.")
                 return
             
-            # Controllo duplicati componenti incrociati
             parts1 = set(bey_map[b1]["parts"].values())
             parts2 = set(bey_map[b2]["parts"].values())
             parts3 = set(bey_map[b3]["parts"].values())
@@ -363,10 +361,11 @@ with tab4:
                 st.error("Errore: I Beyblade selezionati condividono delle componenti!")
                 return
             
-            # Creazione oggetto torneo
+            # Salvataggio con formato data italiano e chiave di ordinamento raw
             new_tourney = {
                 "id": int(time.time()),
-                "date": datetime.now().strftime("%Y-%m-%d"),
+                "date": datetime.now().strftime("%d/%m/%Y"),
+                "raw_date": datetime.now().strftime("%Y%m%d%H%M"),
                 "name": t_name,
                 "beys": [
                     {"name": bey_map[b1]["name"], "p1": 0, "p2": 0},
@@ -381,18 +380,19 @@ with tab4:
     if st.button("🏆 Nuovo Torneo"):
         nuovo_torneo_dialog()
 
-    # Ordina per data (più recente prima) e mostra
-    sorted_tourneys = sorted(user_data["tourney"], key=lambda x: x["date"], reverse=True)
+    # Ordina per raw_date (più recente prima) e mostra
+    sorted_tourneys = sorted(user_data["tourney"], key=lambda x: x.get("raw_date", x["date"]), reverse=True)
     
-    for t_idx, t in enumerate(sorted_tourneys):
-        real_idx = user_data["tourney"].index(t) # Indice reale nella lista originale per modifiche
+    for t in sorted_tourneys:
+        real_idx = user_data["tourney"].index(t) 
         
         label = f"{t['date']} - {t['name']}"
-        with st.expander(label, expanded=False):
+        with st.expander(f"**{label}**", expanded=False):
             
             cols = st.columns(3)
             for b_idx, bey in enumerate(t['beys']):
                 with cols[b_idx]:
+                    # Centratura garantita dalle classi tourney-bey-title e tourney-stats nel CSS
                     st.markdown(f"<div class='tourney-bey-title'>{bey['name']}</div>", unsafe_allow_html=True)
                     st.markdown(f"<div class='tourney-stats'><span class='stat-green'>+{bey['p1']}</span> / <span class='stat-red'>-{bey['p2']}</span></div>", unsafe_allow_html=True)
                     
