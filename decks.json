@@ -24,16 +24,25 @@
             }
         },
         {
-            "name": "DECK 2",
+            "name": "Def Test",
             "slots": {
                 "0": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "WyvernHover",
+                    "r": "9-60",
+                    "bi": "Low Rush"
                 },
                 "1": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "PhoenixWing",
+                    "r": "5-70",
+                    "bi": "Hexa"
                 },
                 "2": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "WizardRod",
+                    "r": "1-60",
+                    "bi": "Orb"
                 }
             }
         }
