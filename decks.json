@@ -24,16 +24,25 @@
             }
         },
         {
-            "name": "DECK 2",
+            "name": "Dragonwolf",
             "slots": {
                 "0": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "WyvernHover",
+                    "r": "1-60",
+                    "bi": "Kick"
                 },
                 "1": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "SilverWolf",
+                    "r": "9-60",
+                    "bi": "Free Ball"
                 },
                 "2": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "CobaltDragoon",
+                    "r": "5-60",
+                    "bi": "Elevate"
                 }
             }
         }
