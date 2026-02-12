@@ -74,7 +74,8 @@
             "WizardRod": 1,
             "Knife Shinobi": 1,
             "DranDagger": 1,
-            "Talon Ptera": 1
+            "Talon Ptera": 1,
+            "PhoenixWing": 1
         },
         "main_blade": {
             "Reaper": 1
@@ -85,7 +86,7 @@
         "ratchet": {
             "5-70": 1,
             "4-70": 2,
-            "9-60": 1,
+            "9-60": 2,
             "3-60": 1,
             "1-60": 1,
             "4-80": 1,
@@ -95,7 +96,7 @@
         "bit": {
             "Disk Ball": 1,
             "Quake": 1,
-            "Gear Flat": 1,
+            "Gear Flat": 2,
             "Taper": 1,
             "Rush": 2,
             "Kick": 1,
