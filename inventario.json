@@ -16,7 +16,8 @@
             "DranBuster": 1,
             "PhoenixWing": 2,
             "SilverWolf": 1,
-            "SamuraiSaber": 1
+            "SamuraiSaber": 1,
+            "HellsHammer": 1
         },
         "main_blade": {
             "Arc": 1,
@@ -40,7 +41,8 @@
             "5-60": 1,
             "4-70": 1,
             "3-80": 1,
-            "2-70": 1
+            "2-70": 1,
+            "3-70": 1
         },
         "bit": {
             "Low Orb": 1,
@@ -55,7 +57,7 @@
             "Gear Point": 1,
             "Accel": 1,
             "Kick": 1,
-            "Hexa": 1,
+            "Hexa": 2,
             "Free Ball": 1,
             "Gear Flat": 1,
             "Level": 1
