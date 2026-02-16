@@ -113,7 +113,8 @@
             "Dran": 1,
             "Fox": 1,
             "Pegasus": 1,
-            "Perseus": 1
+            "Perseus": 1,
+            "Emperor": 1
         },
         "blade": {
             "PhoenixWing": 1,
@@ -137,14 +138,16 @@
             "Brave": 1,
             "Brush": 1,
             "Blast": 1,
-            "Dark": 1
+            "Dark": 1,
+            "Might": 1
         },
         "assist_blade": {
             "Turn": 1,
             "Slash": 1,
             "Jaggy": 1,
             "Assault": 1,
-            "Bumper": 1
+            "Bumper": 1,
+            "Heavy": 1
         },
         "ratchet": {
             "9-60": 3,
@@ -182,7 +185,8 @@
             "Ball": 1
         },
         "ratchet_integrated_bit": {
-            "Turbo": 1
+            "Turbo": 1,
+            "Operate": 1
         }
     }
 }
