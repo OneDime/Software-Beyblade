@@ -112,7 +112,6 @@
         "blade": {},
         "main_blade": {},
         "assist_blade": {
-            "Jaggy": 1,
             "Round": 1,
             "Turn": 1
         },
