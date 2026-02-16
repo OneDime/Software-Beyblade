@@ -115,10 +115,7 @@
         "ratchet": {},
         "bit": {
             "Rush": 3,
-            "Taper": 1,
-            "Quake": 1,
-            "Low Rush": 1,
-            "Hexa": 1
+            "Taper": 1
         },
         "ratchet_integrated_bit": {}
     }
