@@ -111,8 +111,7 @@
         "lock_bit": {},
         "blade": {},
         "main_blade": {
-            "Might": 1,
-            "Reaper": 1
+            "Might": 1
         },
         "assist_blade": {
             "Jaggy": 1,
