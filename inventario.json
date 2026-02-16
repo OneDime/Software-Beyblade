@@ -114,7 +114,8 @@
             "Fox": 1,
             "Pegasus": 1,
             "Perseus": 1,
-            "Emperor": 1
+            "Emperor": 1,
+            "Hornet": 1
         },
         "blade": {
             "PhoenixWing": 1,
@@ -139,7 +140,8 @@
             "Brush": 1,
             "Blast": 1,
             "Dark": 1,
-            "Might": 1
+            "Might": 1,
+            "Fort": 1
         },
         "assist_blade": {
             "Turn": 1,
@@ -147,7 +149,8 @@
             "Jaggy": 1,
             "Assault": 1,
             "Bumper": 1,
-            "Heavy": 1
+            "Heavy": 1,
+            "Round": 1
         },
         "ratchet": {
             "9-60": 3,
@@ -163,7 +166,8 @@
             "5-60": 2,
             "6-80": 1,
             "4-60": 1,
-            "4-80": 1
+            "4-80": 1,
+            "7-60": 1
         },
         "bit": {
             "Gear Flat": 2,
@@ -182,7 +186,8 @@
             "Wedge": 1,
             "Accel": 1,
             "Gear Point": 1,
-            "Ball": 1
+            "Ball": 1,
+            "Taper": 1
         },
         "ratchet_integrated_bit": {
             "Turbo": 1,
