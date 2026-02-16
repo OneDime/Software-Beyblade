@@ -109,26 +109,31 @@
     },
     "Fabio": {
         "lock_bit": {
-            "Hells": 1
+            "Hells": 1,
+            "Dran": 1
         },
         "blade": {
             "PhoenixWing": 1,
             "TyrannoBeat": 1
         },
         "main_blade": {
-            "Reaper": 1
+            "Reaper": 1,
+            "Brave": 1
         },
         "assist_blade": {
-            "Turn": 1
+            "Turn": 1,
+            "Slash": 1
         },
         "ratchet": {
             "9-60": 1,
-            "4-70": 2
+            "4-70": 2,
+            "6-60": 1
         },
         "bit": {
             "Gear Flat": 1,
             "Kick": 1,
-            "Quake": 1
+            "Quake": 1,
+            "Vortex": 1
         },
         "ratchet_integrated_bit": {}
     }
