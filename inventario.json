@@ -115,14 +115,10 @@
         "ratchet": {},
         "bit": {
             "Rush": 3,
-            "Gear Ball": 1,
             "Taper": 2,
             "Quake": 1,
-            "Point": 1,
             "Free Ball": 1,
-            "Jolt": 1,
             "Low Rush": 1,
-            "Needle": 1,
             "Hexa": 1
         },
         "ratchet_integrated_bit": {}
