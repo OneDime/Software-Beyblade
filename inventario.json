@@ -129,7 +129,8 @@
             "Roar Tyranno": 1,
             "DranBuster": 1,
             "UnicornSting": 1,
-            "DranDagger": 1
+            "DranDagger": 1,
+            "WizardArrow": 1
         },
         "main_blade": {
             "Reaper": 1,
@@ -158,7 +159,8 @@
             "3-60": 1,
             "5-60": 2,
             "6-80": 1,
-            "4-60": 1
+            "4-60": 1,
+            "4-80": 1
         },
         "bit": {
             "Gear Flat": 2,
@@ -176,7 +178,8 @@
             "Free Ball": 1,
             "Wedge": 1,
             "Accel": 1,
-            "Gear Point": 1
+            "Gear Point": 1,
+            "Ball": 1
         },
         "ratchet_integrated_bit": {
             "Turbo": 1
