@@ -116,17 +116,35 @@ def save_cloud():
 if 'users' not in st.session_state:
     force_load()
 
-@st.dialog("Accesso Officina")
-def user_dialog():
-    for u in ["Antonio", "Andrea", "Fabio"]:
-        if st.button(u, use_container_width=True):
-            st.session_state.user_sel = u
-            force_load()
-            st.rerun()
+# =========================
+# GESTIONE LOGIN PERSISTENTE
+# =========================
+valid_users = ["Antonio", "Andrea", "Fabio"]
 
+# 1. Controllo se c'è un utente nell'URL (Param Query)
+query_params = st.query_params
+url_user = query_params.get("user")
+
+# 2. Se l'URL ha un utente valido e non siamo già loggati, facciamo login automatico
+if url_user in valid_users and 'user_sel' not in st.session_state:
+    st.session_state.user_sel = url_user
+    force_load()
+
+# 3. Se ancora non c'è un utente selezionato, mostriamo il dialogo
 if 'user_sel' not in st.session_state:
+    @st.dialog("Accesso Officina")
+    def user_dialog():
+        st.write("Seleziona utente:")
+        for u in valid_users:
+            if st.button(u, use_container_width=True):
+                st.session_state.user_sel = u
+                # Qui salviamo la scelta nell'URL
+                st.query_params["user"] = u 
+                force_load()
+                st.rerun()
+    
     user_dialog()
-    st.stop()
+    st.stop() # Ferma l'esecuzione finché non si sceglie
 
 # =========================
 # CARICAMENTO DATABASE
@@ -155,6 +173,13 @@ def get_img(url, size=(100, 100)):
 
 # Sidebar
 st.sidebar.title(f"👤 {st.session_state.user_sel}")
+
+# Aggiungo un tasto di Logout per poter cambiare utente
+if st.sidebar.button("Esci / Cambia Utente"):
+    st.query_params.clear() # Pulisce l'URL
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.rerun()
 
 if st.sidebar.button("🔄 Forza Sync Cloud"):
     force_load()
