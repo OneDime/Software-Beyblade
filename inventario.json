@@ -108,17 +108,25 @@
         "ratchet_integrated_bit": {}
     },
     "Fabio": {
-        "lock_bit": {},
+        "lock_bit": {
+            "Hells": 1
+        },
         "blade": {
             "PhoenixWing": 1
         },
-        "main_blade": {},
-        "assist_blade": {},
+        "main_blade": {
+            "Reaper": 1
+        },
+        "assist_blade": {
+            "Turn": 1
+        },
         "ratchet": {
-            "9-60": 1
+            "9-60": 1,
+            "4-70": 1
         },
         "bit": {
-            "Gear Flat": 1
+            "Gear Flat": 1,
+            "Kick": 1
         },
         "ratchet_integrated_bit": {}
     }
