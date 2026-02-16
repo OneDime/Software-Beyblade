@@ -111,9 +111,7 @@
         "lock_bit": {},
         "blade": {},
         "main_blade": {},
-        "assist_blade": {
-            "Turn": 1
-        },
+        "assist_blade": {},
         "ratchet": {
             "4-60": 1,
             "1-60": 3,
