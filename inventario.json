@@ -137,7 +137,8 @@
             "HellsScythe": 1,
             "SharkEdge": 1,
             "MeteorDragoon": 1,
-            "Knife Shinobi": 1
+            "Knife Shinobi": 1,
+            "Tusk Mammoth": 1
         },
         "main_blade": {
             "Reaper": 1,
@@ -167,7 +168,7 @@
             "1-60": 3,
             "2-70": 1,
             "3-85": 1,
-            "3-60": 2,
+            "3-60": 3,
             "5-60": 3,
             "6-80": 1,
             "4-60": 1,
@@ -193,7 +194,7 @@
             "Accel": 1,
             "Gear Point": 1,
             "Ball": 2,
-            "Taper": 1,
+            "Taper": 2,
             "Point": 1,
             "Low Flat": 1,
             "Jolt": 1
