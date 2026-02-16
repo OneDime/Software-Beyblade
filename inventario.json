@@ -109,9 +109,7 @@
     },
     "Fabio": {
         "lock_bit": {},
-        "blade": {
-            "WizardRod": 1
-        },
+        "blade": {},
         "main_blade": {
             "Brush": 1,
             "Might": 1,
