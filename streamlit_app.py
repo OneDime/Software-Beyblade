@@ -63,23 +63,6 @@ st.markdown("""
     }
     .slot-summary-name { font-weight: bold; color: #f1f5f9; text-transform: uppercase; }
     .slot-summary-alert { color: #fbbf24; font-weight: bold; margin-left: 8px; font-size: 0.85rem; }
-    
-    /* Stili specifici tab Torneo & Stats */
-    .tourney-bey-title { font-weight: bold; font-size: 1.1rem; color: #f8fafc; margin-bottom: 5px; text-align: center; width: 100%; }
-    .tourney-stats { font-family: monospace; font-size: 1.2rem; margin-bottom: 10px; text-align: center; width: 100%; }
-    .stat-green { color: #4ade80; font-weight: bold; }
-    .stat-red { color: #f87171; font-weight: bold; }
-    
-    .stats-row { 
-        background-color: #1e293b; 
-        padding: 12px; 
-        border-radius: 8px; 
-        margin-bottom: 8px; 
-        border: 1px solid #334155;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -88,7 +71,7 @@ st.markdown("""
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
-FILES = {"inv": "inventario.json", "decks": "decks.json", "tourney": "tornei.json"}
+FILES = {"inv": "inventario.json", "decks": "decks.json"}
 
 def github_action(file_key, data=None, method="GET"):
     ts = int(time.time())
@@ -110,27 +93,23 @@ def github_action(file_key, data=None, method="GET"):
 def force_load():
     inv_c = github_action("inv", method="GET")
     deck_c = github_action("decks", method="GET")
-    tourney_c = github_action("tourney", method="GET")
     
     new_users = {}
     for u in ["Antonio", "Andrea", "Fabio"]:
         new_users[u] = {
             "inv": inv_c.get(u, {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}) if inv_c else {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]},
-            "decks": deck_c.get(u, [{"name": "DECK 1", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}}]) if deck_c else [{"name": "DECK 1", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}}],
-            "tourney": tourney_c.get(u, []) if tourney_c else []
+            "decks": deck_c.get(u, [{"name": "DECK 1", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}}]) if deck_c else [{"name": "DECK 1", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}}]
         }
     st.session_state.users = new_users
 
 def save_cloud():
     inv_data = {u: d["inv"] for u, d in st.session_state.users.items()}
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
-    tourney_data = {u: d["tourney"] for u, d in st.session_state.users.items()}
     
     ok1 = github_action("inv", inv_data, "PUT")
     ok2 = github_action("decks", deck_data, "PUT")
-    ok3 = github_action("tourney", tourney_data, "PUT")
     
-    if ok1 and ok2 and ok3:
+    if ok1 and ok2:
         st.toast("✅ Dati salvati!", icon="💾")
     else: st.error("❌ Errore sincronizzazione")
 
@@ -192,9 +171,8 @@ user_sel = st.session_state.user_sel
 user_data = st.session_state.users[user_sel]
 
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
-if 'edit_tourney_idx' not in st.session_state: st.session_state.edit_tourney_idx = None
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🏆 Torneo", "📊 Stats"])
+tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
 # --- TAB 1: AGGIUNGI ---
 with tab1:
@@ -332,107 +310,3 @@ with tab3:
     if st.button("Nuovo Deck"):
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
-
-# --- TAB 4: TORNEO ---
-with tab4:
-    @st.dialog("Nuovo Torneo")
-    def nuovo_torneo_dialog():
-        t_name = st.text_input("Nome del Torneo")
-        available_beys = []
-        bey_map = {} 
-        for d in user_data["decks"]:
-            for s_k, s_v in d["slots"].items():
-                parts = [v for k, v in s_v.items() if k != "tipo" and v and v != "-"]
-                if len(parts) >= 3:
-                    full_name = f"{d['name']} - S{int(s_k)+1}: {' '.join(parts)}"
-                    available_beys.append(full_name)
-                    clean_parts = {k: v for k, v in s_v.items() if k != "tipo" and v and v != "-"}
-                    bey_map[full_name] = {"name": " ".join(parts), "parts": clean_parts}
-
-        b1 = st.selectbox("Beyblade 1", ["Seleziona..."] + available_beys)
-        b2 = st.selectbox("Beyblade 2", ["Seleziona..."] + available_beys)
-        b3 = st.selectbox("Beyblade 3", ["Seleziona..."] + available_beys)
-
-        if st.button("Crea Torneo"):
-            if not t_name: st.error("Inserisci un nome."); return
-            if "Seleziona..." in [b1, b2, b3] or len({b1, b2, b3}) < 3: st.error("Seleziona 3 Beyblade."); return
-            
-            p1, p2, p3 = set(bey_map[b1]["parts"].values()), set(bey_map[b2]["parts"].values()), set(bey_map[b3]["parts"].values())
-            if not p1.isdisjoint(p2) or not p1.isdisjoint(p3) or not p2.isdisjoint(p3):
-                st.error("I Beyblade condividono componenti!"); return
-            
-            new_tourney = {
-                "id": int(time.time()),
-                "date": datetime.now().strftime("%d/%m/%Y"),
-                "raw_date": datetime.now().strftime("%Y%m%d%H%M"),
-                "name": t_name,
-                "beys": [
-                    {"name": bey_map[b1]["name"], "p1": 0, "p2": 0},
-                    {"name": bey_map[b2]["name"], "p1": 0, "p2": 0},
-                    {"name": bey_map[b3]["name"], "p1": 0, "p2": 0}
-                ]
-            }
-            user_data["tourney"].append(new_tourney); save_cloud(); st.rerun()
-
-    if st.button("🏆 Nuovo Torneo"): nuovo_torneo_dialog()
-
-    sorted_tourneys = sorted(user_data["tourney"], key=lambda x: x.get("raw_date", x["date"]), reverse=True)
-    for t in sorted_tourneys:
-        real_idx = user_data["tourney"].index(t) 
-        label = f"{t['date']} - {t['name']}"
-        with st.expander(f"**{label}**", expanded=False):
-            cols = st.columns(3)
-            for b_idx, bey in enumerate(t['beys']):
-                with cols[b_idx]:
-                    st.markdown(f"<div class='tourney-bey-title'>{bey['name']}</div>", unsafe_allow_html=True)
-                    st.markdown(f"<div class='tourney-stats'><span class='stat-green'>+{bey['p1']}</span> / <span class='stat-red'>-{bey['p2']}</span></div>", unsafe_allow_html=True)
-                    bc1, bc2 = st.columns(2)
-                    if bc1.button("+1 Pt", key=f"p1_{t['id']}_{b_idx}"):
-                        user_data["tourney"][real_idx]["beys"][b_idx]["p1"] += 1
-                        save_cloud(); st.rerun()
-                    if bc2.button("-1 Pt", key=f"p2_{t['id']}_{b_idx}"):
-                        user_data["tourney"][real_idx]["beys"][b_idx]["p2"] += 1
-                        save_cloud(); st.rerun()
-            
-            st.markdown("<hr>", unsafe_allow_html=True)
-            c1, c2, _ = st.columns([0.2, 0.2, 0.6])
-            if c1.button("Rinomina", key=f"rt_{t['id']}"):
-                st.session_state.edit_tourney_idx = t['id']; st.rerun()
-            if c2.button("Elimina", key=f"et_{t['id']}", type="primary"):
-                user_data["tourney"].pop(real_idx); save_cloud(); st.rerun()
-            if st.session_state.edit_tourney_idx == t['id']:
-                nn = st.text_input("Nuovo nome torneo", t['name'], key=f"int_{t['id']}")
-                if st.button("Salva Nome", key=f"snt_{t['id']}"):
-                    user_data["tourney"][real_idx]["name"] = nn
-                    st.session_state.edit_tourney_idx = None; save_cloud(); st.rerun()
-
-# --- TAB 5: STATS ---
-with tab5:
-    st.markdown("<h2 style='text-align: center;'>Statistiche Beyblade</h2>", unsafe_allow_html=True)
-    
-    # Aggregazione dati
-    stats_map = {} # nome -> {'p1': total, 'p2': total}
-    
-    for t in user_data["tourney"]:
-        for bey in t.get("beys", []):
-            name = bey["name"]
-            if name not in stats_map:
-                stats_map[name] = {"p1": 0, "p2": 0}
-            stats_map[name]["p1"] += bey["p1"]
-            stats_map[name]["p2"] += bey["p2"]
-            
-    if not stats_map:
-        st.info("Nessun dato disponibile. Partecipa a un torneo per vedere le statistiche!")
-    else:
-        # Trasformazione in lista e ordinamento per p1 (positivo) decrescente
-        sorted_stats = sorted(stats_map.items(), key=lambda x: x[1]["p1"], reverse=True)
-        
-        for name, scores in sorted_stats:
-            st.markdown(f"""
-                <div class="stats-row">
-                    <div style="font-weight: bold; color: #f1f5f9; font-size: 1.1rem;">{name}</div>
-                    <div style="font-family: monospace; font-size: 1.2rem;">
-                        <span class="stat-green">+{scores['p1']}</span> | <span class="stat-red">-{scores['p2']}</span>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
