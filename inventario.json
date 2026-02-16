@@ -108,9 +108,7 @@
         "ratchet_integrated_bit": {}
     },
     "Fabio": {
-        "lock_bit": {
-            "Pegasus": 1
-        },
+        "lock_bit": {},
         "blade": {
             "DranDagger": 1,
             "WizardRod": 2,
