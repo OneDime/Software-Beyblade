@@ -45,29 +45,6 @@
                     "bi": "Elevate"
                 }
             }
-        },
-        {
-            "name": "Trollpick",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "WyvernHover",
-                    "r": "3-60",
-                    "bi": "Rush"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "PhoenixWing",
-                    "r": "1-60",
-                    "bi": "Kick"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "SamuraiSaber",
-                    "r": "9-60",
-                    "bi": "Hexa"
-                }
-            }
         }
     ],
     "Andrea": [
