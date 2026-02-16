@@ -160,8 +160,6 @@
             "Low Flat": 1,
             "Kick": 1
         },
-        "ratchet_integrated_bit": {
-            "Turbo": 1
-        }
+        "ratchet_integrated_bit": {}
     }
 }
