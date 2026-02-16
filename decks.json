@@ -24,13 +24,13 @@
             }
         },
         {
-            "name": "Dragonwolf",
+            "name": "PhoenixStamina",
             "slots": {
                 "0": {
                     "tipo": "BX/UX",
-                    "b": "WyvernHover",
-                    "r": "1-60",
-                    "bi": "Low Rush"
+                    "b": "PhoenixWing",
+                    "r": "3-60",
+                    "bi": "Kick"
                 },
                 "1": {
                     "tipo": "BX/UX",
@@ -40,9 +40,9 @@
                 },
                 "2": {
                     "tipo": "BX/UX",
-                    "b": "CobaltDragoon",
-                    "r": "5-60",
-                    "bi": "Elevate"
+                    "b": "WizardRod",
+                    "r": "1-60",
+                    "bi": "Hexa"
                 }
             }
         }
