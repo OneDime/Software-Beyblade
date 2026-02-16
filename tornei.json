@@ -1,0 +1,29 @@
+{
+    "Antonio": [
+        {
+            "id": 1771188099,
+            "date": "15/02/2026",
+            "raw_date": "202602152041",
+            "name": "Amichevole",
+            "beys": [
+                {
+                    "name": "WyvernHover 3-60 Rush",
+                    "p1": 1,
+                    "p2": 1
+                },
+                {
+                    "name": "PhoenixWing 1-60 Kick",
+                    "p1": 3,
+                    "p2": 2
+                },
+                {
+                    "name": "SamuraiSaber 9-60 Hexa",
+                    "p1": 1,
+                    "p2": 2
+                }
+            ]
+        }
+    ],
+    "Andrea": [],
+    "Fabio": []
+}

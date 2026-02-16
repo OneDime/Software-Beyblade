@@ -22,6 +22,52 @@
                     "bi": "Hexa"
                 }
             }
+        },
+        {
+            "name": "Dragonwolf",
+            "slots": {
+                "0": {
+                    "tipo": "BX/UX",
+                    "b": "WyvernHover",
+                    "r": "1-60",
+                    "bi": "Low Rush"
+                },
+                "1": {
+                    "tipo": "BX/UX",
+                    "b": "SilverWolf",
+                    "r": "9-60",
+                    "bi": "Free Ball"
+                },
+                "2": {
+                    "tipo": "BX/UX",
+                    "b": "CobaltDragoon",
+                    "r": "5-60",
+                    "bi": "Elevate"
+                }
+            }
+        },
+        {
+            "name": "Trollpick",
+            "slots": {
+                "0": {
+                    "tipo": "BX/UX",
+                    "b": "WyvernHover",
+                    "r": "3-60",
+                    "bi": "Rush"
+                },
+                "1": {
+                    "tipo": "BX/UX",
+                    "b": "PhoenixWing",
+                    "r": "1-60",
+                    "bi": "Kick"
+                },
+                "2": {
+                    "tipo": "BX/UX",
+                    "b": "SamuraiSaber",
+                    "r": "9-60",
+                    "bi": "Hexa"
+                }
+            }
         }
     ],
     "Andrea": [
@@ -46,31 +92,5 @@
             }
         }
     ],
-    "Fabio": [
-        {
-            "name": "Picciuli",
-            "slots": {
-                "0": {
-                    "b": "GolemRock",
-                    "r": "-",
-                    "bi": "-",
-                    "lb": "-",
-                    "mb": "-",
-                    "ab": "-",
-                    "tipo": "BX/UX+RIB",
-                    "rib": "Operate"
-                },
-                "1": {
-                    "b": "TyrannoBeat",
-                    "r": "9-70",
-                    "bi": "Point"
-                },
-                "2": {
-                    "b": "WizardRod",
-                    "r": "9-60",
-                    "bi": "Free Ball"
-                }
-            }
-        }
-    ]
+    "Fabio": []
 }
