@@ -114,7 +114,7 @@
         "assist_blade": {},
         "ratchet": {},
         "bit": {
-            "Rush": 3,
+            "Rush": 2,
             "Taper": 1
         },
         "ratchet_integrated_bit": {}
