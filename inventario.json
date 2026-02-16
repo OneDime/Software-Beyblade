@@ -112,9 +112,7 @@
         "blade": {},
         "main_blade": {},
         "assist_blade": {},
-        "ratchet": {
-            "9-60": 1
-        },
+        "ratchet": {},
         "bit": {
             "Rush": 3,
             "Gear Ball": 1,
