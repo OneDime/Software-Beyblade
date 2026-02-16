@@ -111,7 +111,8 @@
         "lock_bit": {
             "Hells": 1,
             "Dran": 1,
-            "Fox": 1
+            "Fox": 1,
+            "Pegasus": 1
         },
         "blade": {
             "PhoenixWing": 1,
@@ -126,12 +127,14 @@
         "main_blade": {
             "Reaper": 1,
             "Brave": 1,
-            "Brush": 1
+            "Brush": 1,
+            "Blast": 1
         },
         "assist_blade": {
             "Turn": 1,
             "Slash": 1,
-            "Jaggy": 1
+            "Jaggy": 1,
+            "Assault": 1
         },
         "ratchet": {
             "9-60": 2,
@@ -157,6 +160,8 @@
             "Level": 1,
             "Needle": 1
         },
-        "ratchet_integrated_bit": {}
+        "ratchet_integrated_bit": {
+            "Turbo": 1
+        }
     }
 }
