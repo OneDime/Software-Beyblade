@@ -111,8 +111,7 @@
         "lock_bit": {},
         "blade": {
             "WizardRod": 2,
-            "WizardArrow": 1,
-            "UnicornSting": 1
+            "WizardArrow": 1
         },
         "main_blade": {
             "Brush": 1,
