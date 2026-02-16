@@ -109,11 +109,17 @@
     },
     "Fabio": {
         "lock_bit": {},
-        "blade": {},
+        "blade": {
+            "PhoenixWing": 1
+        },
         "main_blade": {},
         "assist_blade": {},
-        "ratchet": {},
-        "bit": {},
+        "ratchet": {
+            "9-60": 1
+        },
+        "bit": {
+            "Gear Flat": 1
+        },
         "ratchet_integrated_bit": {}
     }
 }
