@@ -119,7 +119,7 @@
             "HellsHammer": 1,
             "ImpactDrake": 1,
             "GolemRock": 1,
-            "WizardRod": 1
+            "WizardRod": 2
         },
         "main_blade": {
             "Reaper": 1,
@@ -138,7 +138,7 @@
             "3-70": 1,
             "9-70": 1,
             "M-85": 1,
-            "1-60": 1
+            "1-60": 2
         },
         "bit": {
             "Gear Flat": 1,
@@ -149,7 +149,7 @@
             "Gear Rush": 1,
             "Low Rush": 1,
             "High Needle": 1,
-            "Rush": 1
+            "Rush": 2
         },
         "ratchet_integrated_bit": {}
     }
