@@ -170,13 +170,22 @@
             "name": "DECK 4",
             "slots": {
                 "0": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "ImpactDrake",
+                    "r": "2-70",
+                    "bi": "Accel"
                 },
                 "1": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "DranBuster",
+                    "r": "1-60",
+                    "bi": "Low Flat"
                 },
                 "2": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "DranSword",
+                    "r": "3-60",
+                    "bi": "Rush"
                 }
             }
         }
