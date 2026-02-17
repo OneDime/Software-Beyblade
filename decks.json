@@ -147,13 +147,22 @@
             "name": "DECK 3",
             "slots": {
                 "0": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "PhoenixWing",
+                    "r": "1-60",
+                    "bi": "Kick"
                 },
                 "1": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "GolemRock",
+                    "r": "6-60",
+                    "bi": "Rush"
                 },
                 "2": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "WizardRod",
+                    "r": "9-60",
+                    "bi": "Free Ball"
                 }
             }
         }
