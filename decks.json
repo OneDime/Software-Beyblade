@@ -193,13 +193,30 @@
             "name": "DECK 5",
             "slots": {
                 "0": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX+RIB",
+                    "b": "Roar Tyranno",
+                    "r": "-",
+                    "bi": "-",
+                    "lb": "-",
+                    "mb": "-",
+                    "ab": "-",
+                    "rib": "Operate"
                 },
                 "1": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "DranDagger",
+                    "r": "6-80",
+                    "bi": "Point"
                 },
                 "2": {
-                    "tipo": "BX/UX"
+                    "tipo": "CX",
+                    "b": "-",
+                    "r": "9-70",
+                    "bi": "Ball",
+                    "rib": "-",
+                    "lb": "Perseus",
+                    "mb": "Might",
+                    "ab": "Jaggy"
                 }
             }
         }
