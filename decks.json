@@ -124,13 +124,22 @@
             "name": "DECK 2",
             "slots": {
                 "0": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "MeteorDragoon",
+                    "r": "5-60",
+                    "bi": "Level"
                 },
                 "1": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "Hover Wyvern",
+                    "r": "3-70",
+                    "bi": "Jolt"
                 },
                 "2": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "WizardRod",
+                    "r": "9-60",
+                    "bi": "Ball"
                 }
             }
         }
