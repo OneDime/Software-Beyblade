@@ -47,16 +47,25 @@
             }
         },
         {
-            "name": "DECK 3",
+            "name": "Immortals",
             "slots": {
                 "0": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "WizardRod",
+                    "r": "1-60",
+                    "bi": "Hexa"
                 },
                 "1": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "CobaltDragoon",
+                    "r": "5-60",
+                    "bi": "Elevate"
                 },
                 "2": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "SilverWolf",
+                    "r": "9-60",
+                    "bi": "Free Ball"
                 }
             }
         }
