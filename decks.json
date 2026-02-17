@@ -119,6 +119,20 @@
                     "bi": "Hexa"
                 }
             }
+        },
+        {
+            "name": "DECK 2",
+            "slots": {
+                "0": {
+                    "tipo": "BX/UX"
+                },
+                "1": {
+                    "tipo": "BX/UX"
+                },
+                "2": {
+                    "tipo": "BX/UX"
+                }
+            }
         }
     ]
 }
