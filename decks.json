@@ -97,13 +97,26 @@
             "name": "DECK 1",
             "slots": {
                 "0": {
-                    "tipo": "BX/UX"
+                    "tipo": "CX",
+                    "b": "-",
+                    "r": "7-60",
+                    "bi": "Taper",
+                    "rib": "-",
+                    "lb": "Emperor",
+                    "mb": "Blast",
+                    "ab": "Heavy"
                 },
                 "1": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "TyrannoBeat",
+                    "r": "1-60",
+                    "bi": "Low Rush"
                 },
                 "2": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "SamuraiSaber",
+                    "r": "9-60",
+                    "bi": "Hexa"
                 }
             }
         }
