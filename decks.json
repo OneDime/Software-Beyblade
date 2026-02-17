@@ -188,6 +188,20 @@
                     "bi": "Rush"
                 }
             }
+        },
+        {
+            "name": "DECK 5",
+            "slots": {
+                "0": {
+                    "tipo": "BX/UX"
+                },
+                "1": {
+                    "tipo": "BX/UX"
+                },
+                "2": {
+                    "tipo": "BX/UX"
+                }
+            }
         }
     ]
 }
