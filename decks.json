@@ -193,10 +193,10 @@
             "name": "UNDERRATED",
             "slots": {
                 "0": {
-                    "tipo": "BX/UX+RIB",
+                    "tipo": "BX/UX",
                     "b": "Roar Tyranno",
-                    "r": "-",
-                    "bi": "-",
+                    "r": "3-60",
+                    "bi": "Rush",
                     "lb": "-",
                     "mb": "-",
                     "ab": "-",
