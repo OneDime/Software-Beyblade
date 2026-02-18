@@ -10,7 +10,7 @@ from datetime import datetime
 from PIL import Image
 
 # =========================
-# 4. PULIZIA: CSS INIETTATO
+# CONFIGURAZIONE & STILE
 # =========================
 def inject_css():
     st.markdown("""
@@ -115,7 +115,7 @@ if 'user_sel' not in st.session_state:
     user_dialog(); st.stop()
 
 # =========================
-# 3. OTTIMIZZAZIONE DB
+# DATABASE E CACHE
 # =========================
 @st.cache_data
 def load_db():
@@ -127,22 +127,15 @@ def load_db():
                ('main_blade', 'main_blade_image', 'main_blade'), ('assist_blade', 'assist_blade_image', 'assist_blade'), 
                ('ratchet', 'ratchet_image', 'ratchet'), ('bit', 'bit_image', 'bit'), 
                ('ratchet_integrated_bit', 'ratchet_integrated_bit_image', 'ratchet_integrated_bit')]
-    
     for csv_col, img_col, state_key in mapping:
         if csv_col in df.columns:
-            # Pre-calcolo opzioni Theory (ordinate)
             theory_opts[state_key] = ["-"] + sorted([x for x in df[csv_col].unique().tolist() if x and x != "n/a"])
-            # Mappa immagini
             if img_col in df.columns:
                 for _, r in df.iterrows():
                     if r[csv_col] and r[csv_col] != "n/a": img_map[r[csv_col]] = r[img_col]
-                    
     df['_search'] = df.astype(str).apply(lambda x: ' '.join(x).lower(), axis=1)
     return df, img_map, theory_opts
 
-# =========================
-# 1. CACHING IMMAGINI
-# =========================
 @st.cache_resource
 def get_img(url, size=(100, 100)):
     if not url or url == "n/a": return None
@@ -172,7 +165,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI (Intoccata) ---
+# --- TAB 1: AGGIUNGI ---
 with tab1:
     search_q = st.text_input("Cerca Beyblade...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(10)
@@ -213,9 +206,7 @@ with tab2:
 
 # --- TAB 3: DECK BUILDER ---
 with tab3:
-    # 2. PRE-CALCOLO OPZIONI INVENTARIO
     inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
-    
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
     
     for d_idx, deck in enumerate(user_data["decks"]):
@@ -223,12 +214,13 @@ with tab3:
         for s in deck["slots"].values():
             all_selected.extend([v for k, v in s.items() if v and v != "-" and k != "tipo"])
 
-        with st.expander(deck['name'].upper(), expanded=True):
+        # MODIFICA: expanded=False per farli apparire chiusi inizialmente
+        with st.expander(deck['name'].upper(), expanded=False):
             for s_idx in range(3):
                 curr = deck["slots"].get(str(s_idx), {})
                 tipo_sys = curr.get("tipo", "BX/UX")
                 
-                # Ordinamento chiavi per nome
+                # Logica ordine chiavi
                 if "CX" in tipo_sys:
                     keys_order = ["lb", "mb", "ab", "rib"] if "+RIB" in tipo_sys else ["lb", "mb", "ab", "r", "bi"]
                 else:
@@ -237,7 +229,7 @@ with tab3:
                 titolo_base = [curr.get(k) for k in keys_order if curr.get(k) and curr.get(k) != "-"]
                 nome_bey = " ".join(titolo_base).strip() or f"Slot {s_idx+1} Vuoto"
                 ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
-                alert_html = "<span class='slot-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
+                alert_html = f"<span class='slot-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
                 st.markdown(f"<div class='slot-summary-box'><span class='slot-summary-name'>{nome_bey}</span>{alert_html}</div>", unsafe_allow_html=True)
             
             st.markdown("<hr>", unsafe_allow_html=True)
@@ -250,7 +242,6 @@ with tab3:
                 with st.expander(f"SLOT {s_idx+1}"):
                     old_tipo = curr.get("tipo", "BX/UX")
                     tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(old_tipo), key=f"t_{user_sel}_{d_idx}_{s_idx}")
-                    
                     if tipo != old_tipo:
                         curr["tipo"] = tipo; st.rerun()
 
@@ -266,19 +257,28 @@ with tab3:
 
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         update_comp("Blade", "blade", "b"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                        k_img_order = ["b", "r", "bi"]
                     elif "CX" in tipo and "+RIB" not in tipo:
                         update_comp("Lock Bit", "lock_bit", "lb"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                        k_img_order = ["lb", "mb", "ab", "r", "bi"]
                     elif "+RIB" in tipo:
                         if "CX" in tipo:
                             update_comp("Lock Bit", "lock_bit", "lb"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab")
-                        else: update_comp("Blade", "blade", "b")
+                            k_img_order = ["lb", "mb", "ab", "rib"]
+                        else: 
+                            update_comp("Blade", "blade", "b")
+                            k_img_order = ["b", "rib"]
                         update_comp("RIB", "ratchet_integrated_bit", "rib")
 
+                    # FIX: Ordine visualizzazione immagini coerente con il sistema scelto
+                    st.write("") # Spazio
                     cols = st.columns(5)
-                    for k, v in curr.items():
-                        if k != "tipo" and v and v != "-":
+                    col_idx = 0
+                    for k in k_img_order:
+                        v = curr.get(k)
+                        if v and v != "-":
                             img_obj = get_img(global_img_map.get(v))
-                            if img_obj: st.image(img_obj, width=80)
+                            if img_obj: cols[col_idx].image(img_obj, width=80); col_idx += 1
 
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
