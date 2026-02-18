@@ -121,16 +121,13 @@ if 'users' not in st.session_state:
 # =========================
 valid_users = ["Antonio", "Andrea", "Fabio"]
 
-# 1. Controllo se c'è un utente nell'URL (Param Query)
 query_params = st.query_params
 url_user = query_params.get("user")
 
-# 2. Se l'URL ha un utente valido e non siamo già loggati, facciamo login automatico
 if url_user in valid_users and 'user_sel' not in st.session_state:
     st.session_state.user_sel = url_user
     force_load()
 
-# 3. Se ancora non c'è un utente selezionato, mostriamo il dialogo
 if 'user_sel' not in st.session_state:
     @st.dialog("Accesso Officina")
     def user_dialog():
@@ -138,13 +135,12 @@ if 'user_sel' not in st.session_state:
         for u in valid_users:
             if st.button(u, use_container_width=True):
                 st.session_state.user_sel = u
-                # Qui salviamo la scelta nell'URL
                 st.query_params["user"] = u 
                 force_load()
                 st.rerun()
     
     user_dialog()
-    st.stop() # Ferma l'esecuzione finché non si sceglie
+    st.stop()
 
 # =========================
 # CARICAMENTO DATABASE
@@ -174,9 +170,8 @@ def get_img(url, size=(100, 100)):
 # Sidebar
 st.sidebar.title(f"👤 {st.session_state.user_sel}")
 
-# Aggiungo un tasto di Logout per poter cambiare utente
 if st.sidebar.button("Esci / Cambia Utente"):
-    st.query_params.clear() # Pulisce l'URL
+    st.query_params.clear()
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     st.rerun()
@@ -263,7 +258,33 @@ with tab3:
         with st.expander(deck['name'].upper(), expanded=True):
             for s_idx in range(3):
                 curr = deck["slots"].get(str(s_idx), {})
-                titolo_base = [v for k, v in curr.items() if v and v != "-" and k != "tipo"]
+                
+                # --- FIX ORDINAMENTO NOMI ---
+                # Recuperiamo il tipo del sistema corrente (default BX/UX)
+                tipo_sys = curr.get("tipo", "BX/UX")
+                
+                # Definiamo l'ordine esatto delle chiavi in base al sistema scelto
+                keys_order = []
+                if "CX" in tipo_sys:
+                    if "+RIB" in tipo_sys:
+                        keys_order = ["lb", "mb", "ab", "rib"] # CX + RIB: Lock -> Main -> Assist -> RIB
+                    else:
+                        keys_order = ["lb", "mb", "ab", "r", "bi"] # CX Standard: Lock -> Main -> Assist -> Ratchet -> Bit
+                else:
+                    # BX/UX
+                    if "+RIB" in tipo_sys:
+                        keys_order = ["b", "rib"] # BX + RIB
+                    else:
+                        keys_order = ["b", "r", "bi"] # BX Standard
+                
+                # Costruiamo il titolo seguendo RIGOROSAMENTE l'ordine definito sopra
+                titolo_base = []
+                for k in keys_order:
+                    val = curr.get(k)
+                    if val and val != "-":
+                        titolo_base.append(val)
+                # -----------------------------
+                
                 nome_bey = " ".join(titolo_base).strip() or f"Slot {s_idx+1} Vuoto"
                 ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
                 alert_html = "<span class='slot-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
