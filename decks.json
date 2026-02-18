@@ -68,32 +68,6 @@
                     "bi": "Free Ball"
                 }
             }
-        },
-        {
-            "name": "DECK 4",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "DranBuster",
-                    "r": "2-60",
-                    "bi": "Cyclone"
-                },
-                "1": {
-                    "tipo": "CX",
-                    "b": "-",
-                    "r": "3-80",
-                    "bi": "Gear Flat",
-                    "lb": "Hells",
-                    "mb": "Reaper",
-                    "ab": "Slash"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "-",
-                    "r": "-",
-                    "bi": "-"
-                }
-            }
         }
     ],
     "Andrea": [
