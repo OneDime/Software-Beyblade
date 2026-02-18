@@ -10,61 +10,43 @@ from datetime import datetime
 from PIL import Image
 
 # =========================
-# CONFIGURAZIONE & STILE
+# 4. PULIZIA: CSS INIETTATO
 # =========================
+def inject_css():
+    st.markdown("""
+        <style>
+        :root { color-scheme: dark; }
+        .stApp { background-color: #0f172a; color: #f1f5f9; }
+        .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
+        [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
+        div[data-testid="stVerticalBlockBorderWrapper"] {
+            border: 2px solid #334155 !important;
+            background-color: #1e293b !important;
+            border-radius: 12px !important;
+            margin-bottom: 15px !important;
+            padding: 10px !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; width: 100%; }
+        .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; margin-top: 5px; }
+        hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; width: 100%; }
+        div.stButton > button { width: auto !important; min-width: 150px !important; height: 30px !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; border-radius: 4px !important; }
+        .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
+        [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
+        .slot-summary-box {
+            background-color: #0f172a; border-left: 4px solid #60a5fa;
+            padding: 8px 12px; margin: 4px 0px; border-radius: 4px;
+            text-align: left; width: 100%;
+        }
+        .slot-summary-name { font-weight: bold; color: #f1f5f9; text-transform: uppercase; }
+        .slot-summary-alert { color: #fbbf24; font-weight: bold; margin-left: 8px; font-size: 0.85rem; }
+        </style>
+        """, unsafe_allow_html=True)
+
 st.set_page_config(page_title="Officina Beyblade X", layout="wide", initial_sidebar_state="expanded")
-
-st.markdown("""
-    <style>
-    :root { color-scheme: dark; }
-    .stApp { background-color: #0f172a; color: #f1f5f9; }
-    
-    .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
-    
-    .add-tab-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        width: 100%;
-    }
-
-    [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
-    
-    div[data-testid="stVerticalBlockBorderWrapper"] {
-        border: 2px solid #334155 !important;
-        background-color: #1e293b !important;
-        border-radius: 12px !important;
-        margin-bottom: 15px !important;
-        padding: 10px !important;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .bey-name { font-weight: bold; font-size: 1.4rem; color: #60a5fa; text-transform: uppercase; text-align: center; width: 100%; }
-    .comp-name-centered { font-size: 1.1rem; color: #cbd5e1; text-align: center; width: 100%; display: block; margin-top: 5px; }
-    hr { margin-top: 8px !important; margin-bottom: 8px !important; opacity: 0.3; width: 100%; }
-    
-    div.stButton > button { width: auto !important; min-width: 150px !important; height: 30px !important; background-color: #334155 !important; color: white !important; border: 1px solid #475569 !important; border-radius: 4px !important; }
-    
-    .stExpander { border: 1px solid #334155 !important; background-color: #1e293b !important; text-align: left !important; margin-bottom: 5px !important; }
-    
-    [data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155; }
-    
-    .slot-summary-box {
-        background-color: #0f172a;
-        border-left: 4px solid #60a5fa;
-        padding: 8px 12px;
-        margin: 4px 0px;
-        border-radius: 4px;
-        text-align: left;
-        width: 100%;
-    }
-    .slot-summary-name { font-weight: bold; color: #f1f5f9; text-transform: uppercase; }
-    .slot-summary-alert { color: #fbbf24; font-weight: bold; margin-left: 8px; font-size: 0.85rem; }
-    </style>
-    """, unsafe_allow_html=True)
+inject_css()
 
 # =========================
 # LOGICA GITHUB
@@ -93,7 +75,6 @@ def github_action(file_key, data=None, method="GET"):
 def force_load():
     inv_c = github_action("inv", method="GET")
     deck_c = github_action("decks", method="GET")
-    
     new_users = {}
     for u in ["Antonio", "Andrea", "Fabio"]:
         new_users[u] = {
@@ -105,11 +86,7 @@ def force_load():
 def save_cloud():
     inv_data = {u: d["inv"] for u, d in st.session_state.users.items()}
     deck_data = {u: d["decks"] for u, d in st.session_state.users.items()}
-    
-    ok1 = github_action("inv", inv_data, "PUT")
-    ok2 = github_action("decks", deck_data, "PUT")
-    
-    if ok1 and ok2:
+    if github_action("inv", inv_data, "PUT") and github_action("decks", deck_data, "PUT"):
         st.toast("✅ Dati salvati!", icon="💾")
     else: st.error("❌ Errore sincronizzazione")
 
@@ -117,12 +94,10 @@ if 'users' not in st.session_state:
     force_load()
 
 # =========================
-# GESTIONE LOGIN PERSISTENTE
+# LOGIN PERSISTENTE
 # =========================
 valid_users = ["Antonio", "Andrea", "Fabio"]
-
-query_params = st.query_params
-url_user = query_params.get("user")
+url_user = st.query_params.get("user")
 
 if url_user in valid_users and 'user_sel' not in st.session_state:
     st.session_state.user_sel = url_user
@@ -136,88 +111,85 @@ if 'user_sel' not in st.session_state:
             if st.button(u, use_container_width=True):
                 st.session_state.user_sel = u
                 st.query_params["user"] = u 
-                force_load()
-                st.rerun()
-    
-    user_dialog()
-    st.stop()
+                force_load(); st.rerun()
+    user_dialog(); st.stop()
 
 # =========================
-# CARICAMENTO DATABASE
+# 3. OTTIMIZZAZIONE DB
 # =========================
 @st.cache_data
 def load_db():
-    if not os.path.exists("beyblade_x.csv"): return pd.DataFrame(), {}
+    if not os.path.exists("beyblade_x.csv"): return pd.DataFrame(), {}, {}
     df = pd.read_csv("beyblade_x.csv").fillna("")
     img_map = {}
-    mapping = [('lock_chip', 'lock_chip_image'), ('blade', 'blade_image'), ('main_blade', 'main_blade_image'), 
-               ('assist_blade', 'assist_blade_image'), ('ratchet', 'ratchet_image'), ('bit', 'bit_image'),
-               ('ratchet_integrated_bit', 'ratchet_integrated_bit_image')]
-    for c, im in mapping:
-        if c in df.columns and im in df.columns:
-            for _, r in df.iterrows():
-                if r[c] and r[c] != "n/a": img_map[r[c]] = r[im]
+    theory_opts = {}
+    mapping = [('lock_chip', 'lock_chip_image', 'lock_bit'), ('blade', 'blade_image', 'blade'), 
+               ('main_blade', 'main_blade_image', 'main_blade'), ('assist_blade', 'assist_blade_image', 'assist_blade'), 
+               ('ratchet', 'ratchet_image', 'ratchet'), ('bit', 'bit_image', 'bit'), 
+               ('ratchet_integrated_bit', 'ratchet_integrated_bit_image', 'ratchet_integrated_bit')]
+    
+    for csv_col, img_col, state_key in mapping:
+        if csv_col in df.columns:
+            # Pre-calcolo opzioni Theory (ordinate)
+            theory_opts[state_key] = ["-"] + sorted([x for x in df[csv_col].unique().tolist() if x and x != "n/a"])
+            # Mappa immagini
+            if img_col in df.columns:
+                for _, r in df.iterrows():
+                    if r[csv_col] and r[csv_col] != "n/a": img_map[r[csv_col]] = r[img_col]
+                    
     df['_search'] = df.astype(str).apply(lambda x: ' '.join(x).lower(), axis=1)
-    return df, img_map
+    return df, img_map, theory_opts
 
+# =========================
+# 1. CACHING IMMAGINI
+# =========================
+@st.cache_resource
 def get_img(url, size=(100, 100)):
     if not url or url == "n/a": return None
     h = hashlib.md5(url.encode()).hexdigest()
     path = os.path.join("images", f"{h}.png")
-    if os.path.exists(path): return Image.open(path).resize(size, Image.Resampling.LANCZOS)
+    if os.path.exists(path):
+        return Image.open(path).resize(size, Image.Resampling.LANCZOS)
     return None
 
-# Sidebar
-st.sidebar.title(f"👤 {st.session_state.user_sel}")
-
-if st.sidebar.button("Esci / Cambia Utente"):
-    st.query_params.clear()
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
-    st.rerun()
-
-if st.sidebar.button("🔄 Forza Sync Cloud"):
-    force_load()
-    st.rerun()
-
-if st.sidebar.button("📂 Aggiorna Database CSV"):
-    st.cache_data.clear()
-    st.toast("Database ricaricato!", icon="📂")
-    time.sleep(1)
-    st.rerun()
-
-df_db, global_img_map = load_db()
+df_db, global_img_map, theory_opts = load_db()
 user_sel = st.session_state.user_sel
 user_data = st.session_state.users[user_sel]
+
+# Sidebar
+st.sidebar.title(f"👤 {user_sel}")
+if st.sidebar.button("Esci / Cambia Utente"):
+    st.query_params.clear()
+    for key in list(st.session_state.keys()): del st.session_state[key]
+    st.rerun()
+if st.sidebar.button("🔄 Forza Sync Cloud"):
+    force_load(); st.rerun()
+if st.sidebar.button("📂 Aggiorna Database CSV"):
+    st.cache_data.clear(); st.cache_resource.clear()
+    st.toast("Database ricaricato!", icon="📂"); time.sleep(1); st.rerun()
 
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
 tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
 
-# --- TAB 1: AGGIUNGI ---
+# --- TAB 1: AGGIUNGI (Intoccata) ---
 with tab1:
     search_q = st.text_input("Cerca Beyblade...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(10)
-    
     for i, (_, row) in enumerate(filtered.iterrows()):
-        with st.expander(f"**{row['name'].upper()}**", expanded=False):
+        with st.expander(f"**{row['name'].upper()}**"):
             with st.container(border=True):
                 img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
-                if img: 
-                    st.image(img)
-                
+                if img: st.image(img)
                 comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
                          ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
                          ("ratchet_integrated_bit", "ratchet_integrated_bit")]
-                
                 if st.button("Aggiungi tutto", key=f"all_{i}"):
                     for ck, ik in comps:
                         val = row[ck]
                         if val and val != "n/a": user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                     save_cloud()
-                
                 st.markdown("<hr>", unsafe_allow_html=True)
-                
                 for ck, ik in comps:
                     val = row[ck]
                     if val and val != "n/a":
@@ -234,19 +206,15 @@ with tab2:
         if items:
             with st.expander(cat.replace('_', ' ').upper()):
                 for n in sorted(list(items.keys())):
-                    q = items[n]
-                    if st.button(f"{n} x{q}", key=f"inv_{user_sel}_{cat}_{n}"):
+                    if st.button(f"{n} x{items[n]}", key=f"inv_{user_sel}_{cat}_{n}"):
                         user_data["inv"][cat][n] += op
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
 # --- TAB 3: DECK BUILDER ---
 with tab3:
-    def get_options(cat, theory=False):
-        if theory:
-            csv_m = {"lock_bit": "lock_chip", "blade": "blade", "main_blade": "main_blade", "assist_blade": "assist_blade", "ratchet": "ratchet", "bit": "bit", "ratchet_integrated_bit": "ratchet_integrated_bit"}
-            return ["-"] + sorted([x for x in df_db[csv_m.get(cat, cat)].unique().tolist() if x and x != "n/a"])
-        return ["-"] + sorted(list(user_data["inv"][cat].keys()))
+    # 2. PRE-CALCOLO OPZIONI INVENTARIO
+    inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
     
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
     
@@ -258,33 +226,15 @@ with tab3:
         with st.expander(deck['name'].upper(), expanded=True):
             for s_idx in range(3):
                 curr = deck["slots"].get(str(s_idx), {})
-                
-                # --- FIX ORDINAMENTO NOMI ---
-                # Recuperiamo il tipo del sistema corrente (default BX/UX)
                 tipo_sys = curr.get("tipo", "BX/UX")
                 
-                # Definiamo l'ordine esatto delle chiavi in base al sistema scelto
-                keys_order = []
+                # Ordinamento chiavi per nome
                 if "CX" in tipo_sys:
-                    if "+RIB" in tipo_sys:
-                        keys_order = ["lb", "mb", "ab", "rib"] # CX + RIB: Lock -> Main -> Assist -> RIB
-                    else:
-                        keys_order = ["lb", "mb", "ab", "r", "bi"] # CX Standard: Lock -> Main -> Assist -> Ratchet -> Bit
+                    keys_order = ["lb", "mb", "ab", "rib"] if "+RIB" in tipo_sys else ["lb", "mb", "ab", "r", "bi"]
                 else:
-                    # BX/UX
-                    if "+RIB" in tipo_sys:
-                        keys_order = ["b", "rib"] # BX + RIB
-                    else:
-                        keys_order = ["b", "r", "bi"] # BX Standard
+                    keys_order = ["b", "rib"] if "+RIB" in tipo_sys else ["b", "r", "bi"]
                 
-                # Costruiamo il titolo seguendo RIGOROSAMENTE l'ordine definito sopra
-                titolo_base = []
-                for k in keys_order:
-                    val = curr.get(k)
-                    if val and val != "-":
-                        titolo_base.append(val)
-                # -----------------------------
-                
+                titolo_base = [curr.get(k) for k in keys_order if curr.get(k) and curr.get(k) != "-"]
                 nome_bey = " ".join(titolo_base).strip() or f"Slot {s_idx+1} Vuoto"
                 ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
                 alert_html = "<span class='slot-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
@@ -302,29 +252,17 @@ with tab3:
                     tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(old_tipo), key=f"t_{user_sel}_{d_idx}_{s_idx}")
                     
                     if tipo != old_tipo:
-                        valid_keys = ["tipo"]
-                        if "BX/UX" in tipo and "+RIB" not in tipo: valid_keys += ["b", "r", "bi"]
-                        elif "CX" in tipo and "+RIB" not in tipo: valid_keys += ["lb", "mb", "ab", "r", "bi"]
-                        elif "+RIB" in tipo:
-                            if "CX" in tipo: valid_keys += ["lb", "mb", "ab", "rib"]
-                            else: valid_keys += ["b", "rib"]
-                        
-                        for k in ["b", "r", "bi", "lb", "mb", "ab", "rib"]:
-                            if k not in valid_keys: curr[k] = "-"
-                        curr["tipo"] = tipo
-                        st.rerun()
+                        curr["tipo"] = tipo; st.rerun()
 
                     is_th = "Theory" in tipo
-                    
                     def update_comp(label, cat, k_comp):
-                        opts = get_options(cat, is_th)
+                        opts = theory_opts[cat] if is_th else inv_opts[cat]
                         current_val = curr.get(k_comp, "-")
                         if current_val not in opts: current_val = "-"
                         display_label = f"{label} ⚠️" if current_val != "-" and all_selected.count(current_val) > 1 else label
                         res = st.selectbox(display_label, opts, index=opts.index(current_val), key=f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}")
                         if curr.get(k_comp) != res:
-                            curr[k_comp] = res
-                            st.rerun()
+                            curr[k_comp] = res; st.rerun()
 
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         update_comp("Blade", "blade", "b"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
