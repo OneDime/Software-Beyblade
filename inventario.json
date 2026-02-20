@@ -3,7 +3,8 @@
         "lock_bit": {
             "Wizard": 1,
             "Kraken": 1,
-            "Hells": 1
+            "Hells": 1,
+            "Fox": 1
         },
         "blade": {
             "WizardRod": 2,
@@ -22,12 +23,14 @@
         "main_blade": {
             "Arc": 1,
             "Wriggle": 1,
-            "Reaper": 1
+            "Reaper": 1,
+            "Brush": 1
         },
         "assist_blade": {
             "Round": 1,
             "Slash": 1,
-            "Turn": 1
+            "Turn": 1,
+            "Jaggy": 1
         },
         "ratchet": {
             "4-55": 1,
@@ -42,7 +45,8 @@
             "4-70": 1,
             "3-80": 1,
             "2-70": 1,
-            "3-70": 1
+            "3-70": 1,
+            "9-70": 1
         },
         "bit": {
             "Low Orb": 1,
@@ -60,7 +64,8 @@
             "Hexa": 2,
             "Free Ball": 1,
             "Gear Flat": 1,
-            "Level": 1
+            "Level": 1,
+            "Gear Rush": 1
         },
         "ratchet_integrated_bit": {}
     },
