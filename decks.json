@@ -95,13 +95,22 @@
             "name": "DECK 2",
             "slots": {
                 "0": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "WizardRod",
+                    "r": "5-70",
+                    "bi": "Ball"
                 },
                 "1": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "TyrannoBeat",
+                    "r": "1-60",
+                    "bi": "Rush"
                 },
                 "2": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "PhoenixWing",
+                    "r": "9-60",
+                    "bi": "Taper"
                 }
             }
         }
