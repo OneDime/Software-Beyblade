@@ -8,6 +8,7 @@ import base64
 import time
 from datetime import datetime
 from PIL import Image
+from openai import OpenAI  # <-- Nuova libreria
 
 # =========================
 # CONFIGURAZIONE & STILE
@@ -42,6 +43,11 @@ def inject_css():
         }
         .slot-summary-name { font-weight: bold; color: #f1f5f9; text-transform: uppercase; }
         .slot-summary-alert { color: #fbbf24; font-weight: bold; margin-left: 8px; font-size: 0.85rem; }
+        .ai-response-area { 
+            background-color: #1e293b; border: 1px solid #60a5fa; 
+            padding: 20px; border-radius: 10px; color: #f1f5f9;
+            line-height: 1.6; text-align: left !important;
+        }
         </style>
         """, unsafe_allow_html=True)
 
@@ -49,11 +55,14 @@ st.set_page_config(page_title="Officina Beyblade X", layout="wide", initial_side
 inject_css()
 
 # =========================
-# LOGICA GITHUB
+# LOGICA GITHUB & OPENAI
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
+OPENAI_KEY = st.secrets.get("openai_api_key") # Lo aggiungerai nei secrets
 FILES = {"inv": "inventario.json", "decks": "decks.json"}
+
+client = OpenAI(api_key=OPENAI_KEY) if OPENAI_KEY else None
 
 def github_action(file_key, data=None, method="GET"):
     ts = int(time.time())
@@ -71,6 +80,8 @@ def github_action(file_key, data=None, method="GET"):
             return requests.put(url, headers=headers, json=payload).status_code in [200, 201]
     except: return False
     return False
+
+# ... [Le funzioni force_load e save_cloud rimangono IDENTICHE] ...
 
 def force_load():
     inv_c = github_action("inv", method="GET")
@@ -94,8 +105,9 @@ if 'users' not in st.session_state:
     force_load()
 
 # =========================
-# LOGIN PERSISTENTE
+# LOGIN & DATABASE
 # =========================
+# ... [Le parti LOGIN PERSISTENTE e DATABASE E CACHE rimangono IDENTICHE] ...
 valid_users = ["Antonio", "Andrea", "Fabio"]
 url_user = st.query_params.get("user")
 
@@ -114,9 +126,6 @@ if 'user_sel' not in st.session_state:
                 force_load(); st.rerun()
     user_dialog(); st.stop()
 
-# =========================
-# DATABASE E CACHE
-# =========================
 @st.cache_data
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame(), {}, {}
@@ -149,7 +158,7 @@ df_db, global_img_map, theory_opts = load_db()
 user_sel = st.session_state.user_sel
 user_data = st.session_state.users[user_sel]
 
-# Sidebar
+# ... [Sidebar e Tab 1, 2, 3 rimangono IDENTICHE] ...
 st.sidebar.title(f"👤 {user_sel}")
 if st.sidebar.button("Esci / Cambia Utente"):
     st.query_params.clear()
@@ -165,7 +174,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 
 tab1, tab2, tab3, tab4 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🤖 AI Advisor"])
 
-# --- TAB 1: AGGIUNGI ---
+# --- TAB 1, 2, 3 (Codice Precedente) ---
 with tab1:
     search_q = st.text_input("Cerca Beyblade...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(10)
@@ -191,7 +200,6 @@ with tab1:
                             user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                             save_cloud()
 
-# --- TAB 2: INVENTARIO ---
 with tab2:
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
     op = 1 if "Aggiungi" in modo else -1
@@ -204,7 +212,6 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
-# --- TAB 3: DECK BUILDER ---
 with tab3:
     inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
@@ -295,46 +302,41 @@ with tab3:
 # --- TAB 4: AI ADVISOR ---
 with tab4:
     st.markdown("### 🤖 Strategia & Ottimizzazione Deck")
-    st.write("Configura i parametri e lascia che l'IA analizzi il tuo inventario per suggerirti il miglior deck competitivo.")
+    
+    if not OPENAI_KEY:
+        st.warning("⚠️ OpenAI API Key non trovata. Aggiungila nei Secrets per attivare l'Advisor.")
     
     with st.container(border=True):
         col_a, col_b = st.columns(2)
-        
         with col_a:
-            tipo_deck_ai = st.selectbox(
-                "Tipo di Deck desiderato",
-                ["Aggro puro", "Anti-meta", "Stamina dominante", "Difensivo / Counter", 
-                 "Top meta ottimizzato", "Equilibrato", "High-risk High-reward", "Tech specialist"]
-            )
-            
-            lancio_ai = st.select_slider(
-                "Capacità di Lancio (Potenza/Precisione)",
-                options=list(range(1, 11)),
-                value=5
-            )
-            
-            torneo_ai = st.selectbox(
-                "Livello Torneo",
-                ["Locale", "Regionale", "Nazionale", "WBO competitivo"],
-                index=0 # Default Locale
-            )
+            tipo_deck_ai = st.selectbox("Tipo di Deck", ["Aggro puro", "Anti-meta", "Stamina dominante", "Difensivo / Counter", "Top meta ottimizzato", "Equilibrato", "High-risk High-reward", "Tech specialist"])
+            lancio_ai = st.select_slider("Capacità di Lancio", options=list(range(1, 11)), value=5)
+            torneo_ai = st.selectbox("Livello Torneo", ["Locale", "Regionale", "Nazionale", "WBO competitivo"], index=0)
 
         with col_b:
-            # Creiamo una lista unica di tutte le componenti possedute dall'utente
             all_owned_components = ["nessuna"]
             for cat in user_data["inv"]:
                 all_owned_components.extend(sorted(user_data["inv"][cat].keys()))
-            
-            comp_obbligatoria = st.selectbox(
-                "Componente Obbligatoria",
-                all_owned_components
-            )
-            
-            comp_escludere = st.selectbox(
-                "Componente da Escludere",
-                all_owned_components
-            )
+            comp_obbligatoria = st.selectbox("Componente Obbligatoria", all_owned_components)
+            comp_escludere = st.selectbox("Componente da Escludere", all_owned_components)
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🚀 CALCOLA DECK COMPETITIVO", use_container_width=True):
-            st.info("L'integrazione con l'IA sarà attiva non appena avremo configurato le API Key. Per ora i dati sono pronti per essere inviati!")
+        if st.button("🚀 CALCOLA DECK COMPETITIVO", use_container_width=True) and client:
+            with st.spinner("L'IA sta analizzando il tuo inventario e il meta attuale..."):
+                try:
+                    # PROMPT DI TEST (Verrà espanso nel prossimo step)
+                    response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role": "system", "content": "Sei un esperto di Beyblade X. Rispondi in italiano."},
+                            {"role": "user", "content": f"Suggerisci un beyblade basato su: {tipo_deck_ai}, livello torneo {torneo_ai}."}
+                        ]
+                    )
+                    ai_text = response.choices[0].message.content
+                    st.session_state.last_ai_resp = ai_text
+                except Exception as e:
+                    st.error(f"Errore API: {e}")
+
+    if 'last_ai_resp' in st.session_state:
+        st.markdown(f"<div class='ai-response-area'>{st.session_state.last_ai_resp}</div>", unsafe_allow_html=True)
+        if st.button("📥 Importa questo Deck"):
+            st.info("Funzionalità di importazione automatica in arrivo nel prossimo step!")
