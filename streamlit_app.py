@@ -163,7 +163,7 @@ if st.sidebar.button("📂 Aggiorna Database CSV"):
 
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
-tab1, tab2, tab3 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder"])
+tab1, tab2, tab3, tab4 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🤖 AI Advisor"])
 
 # --- TAB 1: AGGIUNGI ---
 with tab1:
@@ -214,13 +214,11 @@ with tab3:
         for s in deck["slots"].values():
             all_selected.extend([v for k, v in s.items() if v and v != "-" and k != "tipo"])
 
-        # MODIFICA: expanded=False per farli apparire chiusi inizialmente
         with st.expander(deck['name'].upper(), expanded=False):
             for s_idx in range(3):
                 curr = deck["slots"].get(str(s_idx), {})
                 tipo_sys = curr.get("tipo", "BX/UX")
                 
-                # Logica ordine chiavi
                 if "CX" in tipo_sys:
                     keys_order = ["lb", "mb", "ab", "rib"] if "+RIB" in tipo_sys else ["lb", "mb", "ab", "r", "bi"]
                 else:
@@ -270,8 +268,7 @@ with tab3:
                             k_img_order = ["b", "rib"]
                         update_comp("RIB", "ratchet_integrated_bit", "rib")
 
-                    # FIX: Ordine visualizzazione immagini coerente con il sistema scelto
-                    st.write("") # Spazio
+                    st.write("") 
                     cols = st.columns(5)
                     col_idx = 0
                     for k in k_img_order:
@@ -294,3 +291,50 @@ with tab3:
     if st.button("Nuovo Deck"):
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
+
+# --- TAB 4: AI ADVISOR ---
+with tab4:
+    st.markdown("### 🤖 Strategia & Ottimizzazione Deck")
+    st.write("Configura i parametri e lascia che l'IA analizzi il tuo inventario per suggerirti il miglior deck competitivo.")
+    
+    with st.container(border=True):
+        col_a, col_b = st.columns(2)
+        
+        with col_a:
+            tipo_deck_ai = st.selectbox(
+                "Tipo di Deck desiderato",
+                ["Aggro puro", "Anti-meta", "Stamina dominante", "Difensivo / Counter", 
+                 "Top meta ottimizzato", "Equilibrato", "High-risk High-reward", "Tech specialist"]
+            )
+            
+            lancio_ai = st.select_slider(
+                "Capacità di Lancio (Potenza/Precisione)",
+                options=list(range(1, 11)),
+                value=5
+            )
+            
+            torneo_ai = st.selectbox(
+                "Livello Torneo",
+                ["Locale", "Regionale", "Nazionale", "WBO competitivo"],
+                index=0 # Default Locale
+            )
+
+        with col_b:
+            # Creiamo una lista unica di tutte le componenti possedute dall'utente
+            all_owned_components = ["nessuna"]
+            for cat in user_data["inv"]:
+                all_owned_components.extend(sorted(user_data["inv"][cat].keys()))
+            
+            comp_obbligatoria = st.selectbox(
+                "Componente Obbligatoria",
+                all_owned_components
+            )
+            
+            comp_escludere = st.selectbox(
+                "Componente da Escludere",
+                all_owned_components
+            )
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🚀 CALCOLA DECK COMPETITIVO", use_container_width=True):
+            st.info("L'integrazione con l'IA sarà attiva non appena avremo configurato le API Key. Per ora i dati sono pronti per essere inviati!")
