@@ -65,8 +65,8 @@ FILES = {"inv": "inventario.json", "decks": "decks.json"}
 
 if GEMINI_KEY:
     genai.configure(api_key=GEMINI_KEY)
-    # MODIFICA QUI: Aggiunta stringa completa del modello per evitare l'errore 404
-    model = genai.GenerativeModel('models/gemini-1.5-flash-latest')
+    # Usiamo il nome stabile per evitare errori 404
+    model = genai.GenerativeModel('gemini-1.5-flash')
 
 def github_action(file_key, data=None, method="GET"):
     ts = int(time.time())
@@ -175,7 +175,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 
 tab1, tab2, tab3, tab4 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🤖 AI Advisor"])
 
-# --- TAB 1: AGGIUNGI (Invariata) ---
+# --- TAB 1: AGGIUNGI (INTOCCABILE) ---
 with tab1:
     search_q = st.text_input("Cerca Beyblade...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(10)
@@ -201,7 +201,7 @@ with tab1:
                             user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                             save_cloud()
 
-# --- TAB 2: INVENTARIO (Invariata) ---
+# --- TAB 2: INVENTARIO ---
 with tab2:
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
     op = 1 if "Aggiungi" in modo else -1
@@ -214,7 +214,7 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
-# --- TAB 3: DECK BUILDER (Invariata) ---
+# --- TAB 3: DECK BUILDER ---
 with tab3:
     inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
@@ -223,6 +223,7 @@ with tab3:
         for s in deck["slots"].values():
             all_selected.extend([v for k, v in s.items() if v and v != "-" and k != "tipo"])
         with st.expander(deck['name'].upper(), expanded=False):
+            # Header Slot Summary
             for s_idx in range(3):
                 curr = deck["slots"].get(str(s_idx), {})
                 tipo_sys = curr.get("tipo", "BX/UX")
@@ -233,13 +234,18 @@ with tab3:
                 ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
                 alert_html = f"<span class='slot-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
                 st.markdown(f"<div class='slot-summary-box'><span class='slot-summary-name'>{nome_bey}</span>{alert_html}</div>", unsafe_allow_html=True)
+            
             st.markdown("<hr>", unsafe_allow_html=True)
+            
+            # Slot Edit Area
             for s_idx in range(3):
-                s_key = str(s_idx); curr = deck["slots"].setdefault(s_key, {"tipo": "BX/UX"})
-                with st.expander(f"SLOT {s_idx+1}"):
+                s_key = str(s_idx)
+                curr = deck["slots"].setdefault(s_key, {"tipo": "BX/UX"})
+                with st.expander(f"CONFIGURA SLOT {s_idx+1}"):
                     old_t = curr.get("tipo", "BX/UX")
                     tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(old_t), key=f"t_{user_sel}_{d_idx}_{s_idx}")
                     if tipo != old_t: curr["tipo"] = tipo; st.rerun()
+                    
                     is_th = "Theory" in tipo
                     def update_comp(label, cat, k_comp):
                         opts = theory_opts[cat] if is_th else inv_opts[cat]
@@ -248,6 +254,8 @@ with tab3:
                         d_label = f"{label} ⚠️" if cur_v != "-" and all_selected.count(cur_v) > 1 else label
                         res = st.selectbox(d_label, opts, index=opts.index(cur_v), key=f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}")
                         if curr.get(k_comp) != res: curr[k_comp] = res; st.rerun()
+
+                    k_img_o = []
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         update_comp("Blade", "blade", "b"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
                         k_img_o = ["b", "r", "bi"]
@@ -260,24 +268,29 @@ with tab3:
                             k_img_o = ["lb", "mb", "ab", "rib"]
                         else: update_comp("Blade", "blade", "b"); k_img_o = ["b", "rib"]
                         update_comp("RIB", "ratchet_integrated_bit", "rib")
+                    
                     cols = st.columns(5)
                     for idx, k in enumerate(k_img_o):
                         v = curr.get(k)
                         if v and v != "-":
                             img_obj = get_img(global_img_map.get(v))
                             if img_obj: cols[idx].image(img_obj, width=80)
+            
+            # Bottoni Deck
             c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
             if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"): st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
             if c2.button("Salva Deck", key=f"s_{user_sel}_{d_idx}"): save_cloud()
             if c3.button("Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"): user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
+            
             if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
                 n_name = st.text_input("Nuovo nome:", deck['name'], key=f"i_{d_idx}")
                 if st.button("OK", key=f"o_{d_idx}"): deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
+
     if st.button("Nuovo Deck"):
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
 
-# --- TAB 4: AI ADVISOR (Versione Corretta 404) ---
+# --- TAB 4: AI ADVISOR (CON PANDAS CLEANING & MODELLO FIX) ---
 with tab4:
     st.markdown("### 🤖 Strategia & Ottimizzazione Deck")
     
@@ -303,21 +316,19 @@ with tab4:
                         if os.path.exists("meta.csv"):
                             m_df = pd.read_csv("meta.csv", encoding='latin-1')
                             
-                            # Colonne scelte dall'utente
+                            # Pulizia nomi colonne e selezione specifica
+                            m_df.columns = m_df.columns.str.strip()
                             colonne_scelte = [
                                 "Lock Chip", "Blade", "Assist Blade", "Ratchet", 
                                 "Bit", "Points", "Sample Size (Win Count)", 
                                 "Combo Rank", "Rank Change"
                             ]
-                            
-                            # Pulizia nomi colonne (rimuove spazi extra)
-                            m_df.columns = m_df.columns.str.strip()
                             cols_presenti = [c for c in colonne_scelte if c in m_df.columns]
                             
                             # Prepariamo l'estratto (top 200 combo)
                             meta_pulito = m_df[cols_presenti].head(200).to_csv(index=False)
                         else:
-                            meta_pulito = "Dati meta non disponibili locali."
+                            meta_pulito = "Dati meta non disponibili."
 
                         # 2. Lettura file di supporto
                         def safe_read(fname):
@@ -331,11 +342,11 @@ with tab4:
                         regolamento = safe_read("Regolamenti IBNA.txt")
                         inv_json = json.dumps(user_data["inv"], indent=2)
 
-                        # 3. Mega Prompt (Protocollo Omni Integrato)
+                        # 3. Mega Prompt
                         full_prompt = f"""
                         Sei un analista professionale di Beyblade X per il metagame WBO competitivo.
                         
-                        DATABASE TOP COMBO ATTUALI:
+                        DATABASE TOP COMBO ATTUALI (Dati filtrati):
                         {meta_pulito}
 
                         REGOLE E WINNING COMBOS:
@@ -353,7 +364,7 @@ with tab4:
                         - Escludere: {comp_escl}
 
                         REPORT RICHIESTO:
-                        Genera un'analisi tecnica che includa la scelta del Deck (3 slot), l'analisi dei matchup contro il meta attuale (basandoti sui dati Points e Rank del database) e istruzioni di lancio dettagliate.
+                        Genera un'analisi tecnica che includa la scelta del Deck (3 slot), l'analisi dei matchup contro il meta attuale e istruzioni di lancio dettagliate.
                         """
                         
                         response = model.generate_content(full_prompt)
