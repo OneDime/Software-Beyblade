@@ -43,12 +43,11 @@ def inject_css():
         }
         .slot-summary-name { font-weight: bold; color: #f1f5f9; text-transform: uppercase; }
         .slot-summary-alert { color: #fbbf24; font-weight: bold; margin-left: 8px; font-size: 0.85rem; }
-        /* Stile specifico per l'output dell'AI */
         .ai-response-area { 
             background-color: #1e293b; border: 1px solid #60a5fa; 
             padding: 25px; border-radius: 12px; color: #f1f5f9;
             line-height: 1.7; text-align: left !important; white-space: pre-wrap;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -188,10 +187,9 @@ if st.sidebar.button("📂 Aggiorna Database CSV"):
 
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
-# AGGIUNTO IL QUARTO TAB
 tab1, tab2, tab3, tab4 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🤖 AI Advisor"])
 
-# --- TAB 1: AGGIUNGI (RIPRISTINATO) ---
+# --- TAB 1: AGGIUNGI ---
 with tab1:
     search_q = st.text_input("Cerca Beyblade...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(10)
@@ -217,7 +215,7 @@ with tab1:
                             user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                             save_cloud()
 
-# --- TAB 2: INVENTARIO (RIPRISTINATO) ---
+# --- TAB 2: INVENTARIO ---
 with tab2:
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
     op = 1 if "Aggiungi" in modo else -1
@@ -230,7 +228,7 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
-# --- TAB 3: DECK BUILDER (RIPRISTINATO) ---
+# --- TAB 3: DECK BUILDER ---
 with tab3:
     inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
@@ -318,45 +316,58 @@ with tab3:
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
 
-# --- TAB 4: AI ADVISOR (NUOVO LAVORO) ---
+# --- TAB 4: AI ADVISOR ---
 with tab4:
-    st.markdown("### 🤖 Analisi Competitiva WBO")
+    st.markdown("### 🤖 Strategia Meta-Analitica WBO")
+    
     if not GEMINI_KEY:
-        st.error("Chiave API mancante.")
+        st.error("⚠️ Chiave API Gemini non configurata.")
     else:
         with st.container(border=True):
-            col1, col2 = st.columns(2)
-            with col1:
-                tipo_deck = st.selectbox("🎯 Approccio", ["Aggro puro", "Anti-meta", "Stamina", "Difensivo", "Top meta", "Equilibrato"])
-                torneo = st.selectbox("🎯 Tipo di Torneo", ["Locale / Amichevole", "Regionale", "Nazionale", "WBO Competitivo"])
-            with col2:
-                lancio = st.select_slider("🎯 Intensità Lancio", options=list(range(1, 11)), value=5)
-                comp_obbl = st.selectbox("✅ Componente Obbligatoria", ["nessuna"] + sorted([item for sub in user_data["inv"].values() for item in sub]))
+            # Raccolta componenti per i menu a tendina
+            tutti_pezzi = []
+            for cat in user_data["inv"]:
+                tutti_pezzi.extend(sorted(user_data["inv"][cat].keys()))
+            tutti_pezzi = sorted(list(set(tutti_pezzi)))
 
-            if st.button("🚀 GENERA ANALISI", use_container_width=True):
-                with st.spinner("L'AI sta studiando i tuoi pezzi..."):
+            col_a, col_b = st.columns(2)
+            with col_a:
+                tipo_deck_ai = st.selectbox("🎯 Approccio", ["Aggro puro", "Anti-meta", "Stamina", "Difensivo", "Top meta", "Equilibrato"])
+                # CORRETTO: capacità di lancio
+                lancio_ai = st.select_slider("🎯 Capacità di lancio (1-10)", options=list(range(1, 11)), value=5)
+                torneo_ai = st.selectbox("🎯 Tipo di Torneo", ["Locale / Amichevole", "Regionale", "Nazionale", "WBO Competitivo"])
+            
+            with col_b:
+                comp_obbl = st.selectbox("✅ Componente Obbligatoria", ["nessuna"] + tutti_pezzi)
+                # CORRETTO: multiselect per escludere
+                comp_escl = st.multiselect("❌ Componenti da evitare", tutti_pezzi)
+            
+            if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
+                with st.spinner("L'AI sta analizzando il meta..."):
                     try:
-                        # Lettura dati per il prompt
-                        meta_csv = ""
+                        # Recupero dati dal CSV meta
+                        meta_context = ""
                         if os.path.exists("meta.csv"):
                             m_df = pd.read_csv("meta.csv", encoding='latin-1').fillna("")
                             m_df.columns = m_df.columns.str.strip()
-                            cols = ["Lock Chip", "Blade", "Assist Blade", "Ratchet", "Bit", "Points", "Sample Size (Win Count)", "Combo Rank"]
-                            meta_csv = m_df[[c for c in cols if c in m_df.columns]].head(100).to_csv(index=False)
+                            col_sel = ["Lock Chip", "Blade", "Assist Blade", "Ratchet", "Bit", "Points", "Sample Size (Win Count)", "Combo Rank"]
+                            meta_context = m_df[[c for c in col_sel if c in m_df.columns]].head(100).to_csv(index=False)
                         
                         inv_json = json.dumps(user_data["inv"], indent=2)
-                        
-                        prompt = f"""Analizza questi dati meta WBO: {meta_csv}
+                        esclusi_str = ", ".join(comp_escl) if comp_escl else "nessuno"
+
+                        full_prompt = f"""Dati Meta WBO: {meta_context}
                         Inventario Utente: {inv_json}
-                        Parametri richiesti: {tipo_deck}, Torneo: {torneo}, Lancio: {lancio}/10. 
-                        Componente obbligatoria: {comp_obbl}.
-                        
-                        REGOLE: 
-                        1. Crea un Deck da 3 Beyblade usando SOLO i pezzi in inventario.
-                        2. Spiega i matchup contro i Top Rank del meta.
-                        3. Fornisci consigli tecnici su angoli di lancio e stamina."""
-                        
-                        response = model_engine.generate_content(prompt)
+                        Parametri: Approccio {tipo_deck_ai}, Torneo {torneo_ai}, Capacità Lancio {lancio_ai}/10.
+                        Pezzo obbligatorio: {comp_obbl}.
+                        COMPONENTI DA EVITARE: {esclusi_str}.
+
+                        REGOLE:
+                        1. Crea un Deck da 3 Beyblade usando SOLO i pezzi disponibili (non quelli esclusi).
+                        2. Analizza i matchup contro i Top Rank del CSV fornito.
+                        3. Dai consigli sugli angoli di lancio in base alla capacità {lancio_ai}."""
+
+                        response = model_engine.generate_content(full_prompt)
                         st.session_state.ai_report = response.text
                     except Exception as e:
                         st.error(f"Errore: {e}")
