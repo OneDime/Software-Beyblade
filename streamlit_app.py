@@ -56,7 +56,7 @@ st.set_page_config(page_title="Officina Beyblade X", layout="wide", initial_side
 inject_css()
 
 # =========================
-# LOGICA GITHUB & AI (AUTO-REPAIR MODEL)
+# LOGICA GITHUB & AI (AUTO-FIX)
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -67,14 +67,11 @@ def get_working_model():
     if not GEMINI_KEY: return None
     genai.configure(api_key=GEMINI_KEY)
     try:
-        # Tenta di elencare i modelli e selezionare quello supportato dall'account
         for m in genai.list_models():
             if 'generateContent' in m.supported_generation_methods:
-                if 'gemini-1.5-flash' in m.name:
-                    return genai.GenerativeModel(m.name)
+                if 'gemini-1.5-flash' in m.name: return genai.GenerativeModel(m.name)
         return genai.GenerativeModel('gemini-1.5-flash')
-    except:
-        return genai.GenerativeModel('gemini-1.5-flash')
+    except: return genai.GenerativeModel('gemini-1.5-flash')
 
 model_engine = get_working_model()
 
@@ -113,11 +110,11 @@ def save_cloud():
         st.toast("✅ Dati salvati!", icon="💾")
     else: st.error("❌ Errore sincronizzazione")
 
-if 'users' not in st.session_state:
-    force_load()
+if 'users' not in st.session_state: force_load()
+if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
 # =========================
-# DATABASE E LOGIN
+# LOGIN & DB
 # =========================
 valid_users = ["Antonio", "Andrea", "Fabio"]
 if 'user_sel' not in st.session_state:
@@ -134,8 +131,7 @@ if 'user_sel' not in st.session_state:
 def load_db():
     if not os.path.exists("beyblade_x.csv"): return pd.DataFrame(), {}, {}
     df = pd.read_csv("beyblade_x.csv").fillna("")
-    img_map = {}
-    theory_opts = {}
+    img_map, theory_opts = {}, {}
     mapping = [('lock_chip', 'lock_chip_image', 'lock_bit'), ('blade', 'blade_image', 'blade'), 
                ('main_blade', 'main_blade_image', 'main_blade'), ('assist_blade', 'assist_blade_image', 'assist_blade'), 
                ('ratchet', 'ratchet_image', 'ratchet'), ('bit', 'bit_image', 'bit'), 
@@ -154,8 +150,7 @@ def get_img(url, size=(100, 100)):
     if not url or url == "n/a": return None
     h = hashlib.md5(url.encode()).hexdigest()
     path = os.path.join("images", f"{h}.png")
-    if os.path.exists(path):
-        return Image.open(path).resize(size, Image.Resampling.LANCZOS)
+    if os.path.exists(path): return Image.open(path).resize(size, Image.Resampling.LANCZOS)
     return None
 
 df_db, global_img_map, theory_opts = load_db()
@@ -164,7 +159,7 @@ user_data = st.session_state.users[user_sel]
 
 # Sidebar
 st.sidebar.title(f"👤 {user_sel}")
-if st.sidebar.button("Esci / Cambia Utente"):
+if st.sidebar.button("Esci"):
     for key in list(st.session_state.keys()): del st.session_state[key]
     st.rerun()
 
@@ -209,7 +204,7 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
-# --- TAB 3: DECK BUILDER (INTOCCABILE) ---
+# --- TAB 3: DECK BUILDER (INTOCCABILE - RIPRISTINATO) ---
 with tab3:
     inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
@@ -231,7 +226,7 @@ with tab3:
             st.markdown("<hr>", unsafe_allow_html=True)
             for s_idx in range(3):
                 s_key = str(s_idx); curr = deck["slots"].setdefault(s_key, {"tipo": "BX/UX"})
-                with st.expander(f"SLOT {s_idx+1}"):
+                with st.expander(f"CONFIGURA SLOT {s_idx+1}"):
                     old_t = curr.get("tipo", "BX/UX")
                     tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(old_t), key=f"t_{user_sel}_{d_idx}_{s_idx}")
                     if tipo != old_t: curr["tipo"] = tipo; st.rerun()
@@ -243,29 +238,51 @@ with tab3:
                         d_label = f"{label} ⚠️" if cur_v != "-" and all_selected.count(cur_v) > 1 else label
                         res = st.selectbox(d_label, opts, index=opts.index(cur_v), key=f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}")
                         if curr.get(k_comp) != res: curr[k_comp] = res; st.rerun()
+                    
+                    k_img_o = []
                     if "BX/UX" in tipo and "+RIB" not in tipo:
                         update_comp("Blade", "blade", "b"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                        k_img_o = ["b", "r", "bi"]
                     elif "CX" in tipo and "+RIB" not in tipo:
                         update_comp("Lock Bit", "lock_bit", "lb"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                        k_img_o = ["lb", "mb", "ab", "r", "bi"]
                     elif "+RIB" in tipo:
                         if "CX" in tipo: update_comp("Lock Bit", "lock_bit", "lb"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab")
                         else: update_comp("Blade", "blade", "b")
                         update_comp("RIB", "ratchet_integrated_bit", "rib")
-            if st.button("Salva Deck", key=f"s_{user_sel}_{d_idx}"): save_cloud()
+                        k_img_o = ["lb", "mb", "ab", "rib"] if "CX" in tipo else ["b", "rib"]
+                    
+                    cols = st.columns(5)
+                    for idx, k in enumerate(k_img_o):
+                        v = curr.get(k)
+                        if v and v != "-":
+                            img_obj = get_img(global_img_map.get(v))
+                            if img_obj: cols[idx].image(img_obj, width=80)
 
-# --- TAB 4: AI ADVISOR (LAVORO ATTIVO QUI) ---
+            c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
+            if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"): st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
+            if c2.button("Salva Deck", key=f"s_{user_sel}_{d_idx}"): save_cloud()
+            if c3.button("Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"): user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
+            if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
+                n_name = st.text_input("Nuovo nome:", deck['name'], key=f"i_{d_idx}")
+                if st.button("OK", key=f"o_{d_idx}"): deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
+
+    if st.button("Nuovo Deck"):
+        user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
+        save_cloud(); st.rerun()
+
+# --- TAB 4: AI ADVISOR (UNICO CAMPO DI LAVORO) ---
 with tab4:
     st.markdown("### 🤖 Strategia Meta-Analitica WBO")
     
     if not GEMINI_KEY:
-        st.error("⚠️ Chiave API Gemini non trovata.")
+        st.error("⚠️ Chiave API Gemini non configurata nei Secrets.")
     else:
         with st.container(border=True):
             col_a, col_b = st.columns(2)
             with col_a:
                 tipo_deck_ai = st.selectbox("🎯 Approccio", ["Aggro puro", "Anti-meta", "Stamina", "Difensivo", "Top meta", "Equilibrato"])
                 lancio_ai = st.select_slider("🎯 Lancio (1-10)", options=list(range(1, 11)), value=5)
-                # RIPRISTINATO: Selettore Torneo
                 torneo_ai = st.selectbox("🎯 Tipo di Torneo", ["Locale / Amichevole", "Regionale", "Nazionale", "WBO Competitivo"])
             with col_b:
                 all_owned = ["nessuna"]
@@ -274,9 +291,9 @@ with tab4:
                 comp_escl = st.selectbox("❌ Escludi", all_owned)
             
             if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
-                with st.spinner("Interrogando il database WBO..."):
+                with st.spinner("Analisi in corso..."):
                     try:
-                        # 1. Pulizia Meta CSV (Solo colonne richieste)
+                        # Pulizia Meta CSV
                         if os.path.exists("meta.csv"):
                             m_df = pd.read_csv("meta.csv", encoding='latin-1')
                             m_df.columns = m_df.columns.str.strip()
@@ -284,7 +301,6 @@ with tab4:
                             meta_context = m_df[[c for c in col_sel if c in m_df.columns]].head(150).to_csv(index=False)
                         else: meta_context = "Meta non disponibile."
 
-                        # 2. Prompt
                         inv_json = json.dumps(user_data["inv"], indent=2)
                         full_prompt = f"""Analizza i dati WBO: {meta_context}. 
                         Usa ESCLUSIVAMENTE l'inventario: {inv_json}. 
@@ -292,7 +308,6 @@ with tab4:
                         Obbligatorio: {comp_obbl}. Escludi: {comp_escl}. 
                         Genera un report su Deck (3 combo), Matchup vs i Rank più alti e angoli di lancio."""
 
-                        # 3. Generazione
                         response = model_engine.generate_content(full_prompt)
                         st.session_state.ai_report = response.text
                     except Exception as e:
