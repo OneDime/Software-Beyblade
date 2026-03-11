@@ -8,10 +8,10 @@ import base64
 import time
 from datetime import datetime
 from PIL import Image
-import google.generativeai as genai  # <-- Libreria Gemini
+import google.generativeai as genai
 
 # =========================
-# CONFIGURAZIONE & STILE (Invariato)
+# CONFIGURAZIONE & STILE
 # =========================
 def inject_css():
     st.markdown("""
@@ -44,9 +44,9 @@ def inject_css():
         .slot-summary-name { font-weight: bold; color: #f1f5f9; text-transform: uppercase; }
         .slot-summary-alert { color: #fbbf24; font-weight: bold; margin-left: 8px; font-size: 0.85rem; }
         .ai-response-area { 
-            background-color: #1e293b; border: 1px solid #60a5fa; 
+            background-color: #0f172a; border: 1px solid #60a5fa; 
             padding: 20px; border-radius: 10px; color: #f1f5f9;
-            line-height: 1.6; text-align: left;
+            line-height: 1.6; text-align: left !important; white-space: pre-wrap;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -59,7 +59,7 @@ inject_css()
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
-GEMINI_KEY = st.secrets.get("gemini_api_key") # Aggiungi nei secrets di Streamlit
+GEMINI_KEY = st.secrets.get("gemini_api_key")
 FILES = {"inv": "inventario.json", "decks": "decks.json"}
 
 if GEMINI_KEY:
@@ -83,9 +83,6 @@ def github_action(file_key, data=None, method="GET"):
     except: return False
     return False
 
-# ... [Funzioni force_load, save_cloud, load_db, get_img rimangono invariate] ...
-
-# (Assumiamo che le funzioni siano qui come nel tuo file originale)
 def force_load():
     inv_c = github_action("inv", method="GET")
     deck_c = github_action("decks", method="GET")
@@ -107,8 +104,12 @@ def save_cloud():
 if 'users' not in st.session_state:
     force_load()
 
+# =========================
+# LOGIN & DATABASE
+# =========================
 valid_users = ["Antonio", "Andrea", "Fabio"]
 url_user = st.query_params.get("user")
+
 if url_user in valid_users and 'user_sel' not in st.session_state:
     st.session_state.user_sel = url_user
     force_load()
@@ -156,12 +157,146 @@ df_db, global_img_map, theory_opts = load_db()
 user_sel = st.session_state.user_sel
 user_data = st.session_state.users[user_sel]
 
-# ... [Tab 1, 2, 3 rimangono invariate] ...
-# (Per brevità salto il codice delle prime 3 tab che hai già)
+# Sidebar
+st.sidebar.title(f"👤 {user_sel}")
+if st.sidebar.button("Esci / Cambia Utente"):
+    st.query_params.clear()
+    for key in list(st.session_state.keys()): del st.session_state[key]
+    st.rerun()
+if st.sidebar.button("🔄 Forza Sync Cloud"):
+    force_load(); st.rerun()
+if st.sidebar.button("📂 Aggiorna Database CSV"):
+    st.cache_data.clear(); st.cache_resource.clear()
+    st.toast("Database ricaricato!", icon="📂"); time.sleep(1); st.rerun()
+
+if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
 tab1, tab2, tab3, tab4 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🤖 AI Advisor"])
 
-# --- (Ometti qui il codice di Tab 1, 2, 3 per brevità) ---
+# --- TAB 1: AGGIUNGI (INTOCCABILE) ---
+with tab1:
+    search_q = st.text_input("Cerca Beyblade...", "").lower()
+    filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(10)
+    for i, (_, row) in enumerate(filtered.iterrows()):
+        with st.expander(f"**{row['name'].upper()}**"):
+            with st.container(border=True):
+                img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
+                if img: st.image(img)
+                comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
+                         ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
+                         ("ratchet_integrated_bit", "ratchet_integrated_bit")]
+                if st.button("Aggiungi tutto", key=f"all_{i}"):
+                    for ck, ik in comps:
+                        val = row[ck]
+                        if val and val != "n/a": user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
+                    save_cloud()
+                st.markdown("<hr>", unsafe_allow_html=True)
+                for ck, ik in comps:
+                    val = row[ck]
+                    if val and val != "n/a":
+                        st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
+                        if st.button("＋", key=f"btn_{i}_{ck}"):
+                            user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
+                            save_cloud()
+
+# --- TAB 2: INVENTARIO ---
+with tab2:
+    modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
+    op = 1 if "Aggiungi" in modo else -1
+    for cat, items in user_data["inv"].items():
+        if items:
+            with st.expander(cat.replace('_', ' ').upper()):
+                for n in sorted(list(items.keys())):
+                    if st.button(f"{n} x{items[n]}", key=f"inv_{user_sel}_{cat}_{n}"):
+                        user_data["inv"][cat][n] += op
+                        if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
+                        save_cloud(); st.rerun()
+
+# --- TAB 3: DECK BUILDER ---
+with tab3:
+    inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
+    tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
+    
+    for d_idx, deck in enumerate(user_data["decks"]):
+        all_selected = []
+        for s in deck["slots"].values():
+            all_selected.extend([v for k, v in s.items() if v and v != "-" and k != "tipo"])
+
+        with st.expander(deck['name'].upper(), expanded=False):
+            for s_idx in range(3):
+                curr = deck["slots"].get(str(s_idx), {})
+                tipo_sys = curr.get("tipo", "BX/UX")
+                if "CX" in tipo_sys:
+                    keys_order = ["lb", "mb", "ab", "rib"] if "+RIB" in tipo_sys else ["lb", "mb", "ab", "r", "bi"]
+                else:
+                    keys_order = ["b", "rib"] if "+RIB" in tipo_sys else ["b", "r", "bi"]
+                
+                titolo_base = [curr.get(k) for k in keys_order if curr.get(k) and curr.get(k) != "-"]
+                nome_bey = " ".join(titolo_base).strip() or f"Slot {s_idx+1} Vuoto"
+                ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
+                alert_html = f"<span class='slot-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
+                st.markdown(f"<div class='slot-summary-box'><span class='slot-summary-name'>{nome_bey}</span>{alert_html}</div>", unsafe_allow_html=True)
+            
+            st.markdown("<hr>", unsafe_allow_html=True)
+
+            for s_idx in range(3):
+                s_key = str(s_idx)
+                if s_key not in deck["slots"]: deck["slots"][s_key] = {"tipo": "BX/UX"}
+                curr = deck["slots"][s_key]
+                with st.expander(f"SLOT {s_idx+1}"):
+                    old_tipo = curr.get("tipo", "BX/UX")
+                    tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(old_tipo), key=f"t_{user_sel}_{d_idx}_{s_idx}")
+                    if tipo != old_tipo:
+                        curr["tipo"] = tipo; st.rerun()
+
+                    is_th = "Theory" in tipo
+                    def update_comp(label, cat, k_comp):
+                        opts = theory_opts[cat] if is_th else inv_opts[cat]
+                        current_val = curr.get(k_comp, "-")
+                        if current_val not in opts: current_val = "-"
+                        display_label = f"{label} ⚠️" if current_val != "-" and all_selected.count(current_val) > 1 else label
+                        res = st.selectbox(display_label, opts, index=opts.index(current_val), key=f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}")
+                        if curr.get(k_comp) != res:
+                            curr[k_comp] = res; st.rerun()
+
+                    if "BX/UX" in tipo and "+RIB" not in tipo:
+                        update_comp("Blade", "blade", "b"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                        k_img_order = ["b", "r", "bi"]
+                    elif "CX" in tipo and "+RIB" not in tipo:
+                        update_comp("Lock Bit", "lock_bit", "lb"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                        k_img_order = ["lb", "mb", "ab", "r", "bi"]
+                    elif "+RIB" in tipo:
+                        if "CX" in tipo:
+                            update_comp("Lock Bit", "lock_bit", "lb"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab")
+                            k_img_order = ["lb", "mb", "ab", "rib"]
+                        else: 
+                            update_comp("Blade", "blade", "b")
+                            k_img_order = ["b", "rib"]
+                        update_comp("RIB", "ratchet_integrated_bit", "rib")
+
+                    st.write("") 
+                    cols = st.columns(5)
+                    col_idx = 0
+                    for k in k_img_order:
+                        v = curr.get(k)
+                        if v and v != "-":
+                            img_obj = get_img(global_img_map.get(v))
+                            if img_obj: cols[col_idx].image(img_obj, width=80); col_idx += 1
+
+            c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
+            if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
+                st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
+            if c2.button("Salva Deck", key=f"s_{user_sel}_{d_idx}"): save_cloud()
+            if c3.button("Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
+                user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
+            if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
+                n_name = st.text_input("Nuovo nome:", deck['name'], key=f"i_{d_idx}")
+                if st.button("OK", key=f"o_{d_idx}"):
+                    deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
+
+    if st.button("Nuovo Deck"):
+        user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
+        save_cloud(); st.rerun()
 
 # --- TAB 4: AI ADVISOR ---
 with tab4:
@@ -173,42 +308,25 @@ with tab4:
     with st.container(border=True):
         col_a, col_b = st.columns(2)
         with col_a:
-            tipo_deck_ai = st.selectbox("Tipo di Deck", ["Aggro puro", "Anti-meta", "Stamina dominante", "Difensivo / Counter", "Top meta ottimizzato", "Equilibrato", "High-risk High-reward", "Tech specialist"])
-            lancio_ai = st.select_slider("Capacità di Lancio", options=list(range(1, 11)), value=5)
-            torneo_ai = st.selectbox("Livello Torneo", ["Locale", "Regionale", "Nazionale", "WBO competitivo"])
+            tipo_deck_ai = st.selectbox("Obiettivo", ["Aggro puro", "Anti-meta", "Stamina dominante", "Difensivo / Counter", "Top meta ottimizzato", "Equilibrato"])
+            lancio_ai = st.select_slider("Capacità Lancio", options=list(range(1, 11)), value=5)
+            torneo_ai = st.selectbox("Torneo", ["Locale", "Regionale", "Nazionale", "Competitivo WBO"])
 
         with col_b:
-            all_owned_components = ["nessuna"]
-            for cat in user_data["inv"]:
-                all_owned_components.extend(sorted(user_data["inv"][cat].keys()))
-            comp_obbligatoria = st.selectbox("Componente Obbligatoria", all_owned_components)
-            comp_escludere = st.selectbox("Componente da Escludere", all_owned_components)
+            all_owned = ["nessuna"]
+            for cat in user_data["inv"]: all_owned.extend(sorted(user_data["inv"][cat].keys()))
+            comp_obbl = st.selectbox("Obbligatoria", all_owned)
+            comp_escl = st.selectbox("Escludi", all_owned)
 
-        if st.button("🚀 GENERA STRATEGIA GEMINI", use_container_width=True) and GEMINI_KEY:
-            with st.spinner("Gemini sta analizzando il meta..."):
+        if st.button("🚀 GENERA STRATEGIA", use_container_width=True) and GEMINI_KEY:
+            with st.spinner("Analisi in corso..."):
                 try:
-                    # Prepariamo l'inventario testuale per l'IA
                     inv_text = json.dumps(user_data["inv"], indent=2)
-                    
-                    prompt = f"""
-                    Sei un esperto mondiale di Beyblade X. Analizza questo inventario e crea un deck da 3 slot.
-                    Inventario disponibile: {inv_text}
-                    Obiettivo: {tipo_deck_ai}
-                    Livello Torneo: {torneo_ai}
-                    Capacità Lancio Utente: {lancio_ai}/10
-                    Obbligatorio usare: {comp_obbligatoria}
-                    Escludere assolutamente: {comp_escludere}
-                    
-                    Rispondi in italiano. Per ogni Beyblade specifica:
-                    1. Nome e Combo (Blade, Ratchet, Bit)
-                    2. Perché questa combo è efficace nel meta attuale.
-                    3. Consigli sul lancio.
-                    """
-                    
+                    prompt = f"Sei un esperto di Beyblade X. Inventario: {inv_text}. Crea un deck da 3 basato su: {tipo_deck_ai}. Torneo: {torneo_ai}. Obbligatorio: {comp_obbl}. Escludi: {comp_escl}."
                     response = model.generate_content(prompt)
                     st.session_state.last_ai_resp = response.text
                 except Exception as e:
-                    st.error(f"Errore Gemini: {e}")
+                    st.error(f"Errore: {e}")
 
     if 'last_ai_resp' in st.session_state:
         st.markdown(f"<div class='ai-response-area'>{st.session_state.last_ai_resp}</div>", unsafe_allow_html=True)
