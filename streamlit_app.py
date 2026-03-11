@@ -174,7 +174,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 
 tab1, tab2, tab3, tab4 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🤖 AI Advisor"])
 
-# --- TAB 1: AGGIUNGI (Invariata) ---
+# --- TAB 1: AGGIUNGI ---
 with tab1:
     search_q = st.text_input("Cerca Beyblade...", "").lower()
     filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(10)
@@ -200,7 +200,7 @@ with tab1:
                             user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
                             save_cloud()
 
-# --- TAB 2: INVENTARIO (Invariata) ---
+# --- TAB 2: INVENTARIO ---
 with tab2:
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
     op = 1 if "Aggiungi" in modo else -1
@@ -213,7 +213,7 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
-# --- TAB 3: DECK BUILDER (Invariata) ---
+# --- TAB 3: DECK BUILDER ---
 with tab3:
     inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
@@ -276,7 +276,7 @@ with tab3:
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
 
-# --- TAB 4: AI ADVISOR (Mega Prompt Integrato) ---
+# --- TAB 4: AI ADVISOR ---
 with tab4:
     st.markdown("### 🤖 Strategia & Ottimizzazione Deck")
     
@@ -296,27 +296,52 @@ with tab4:
                 comp_escl = st.selectbox("❌ Componente da Escludere", all_owned)
             
             if st.button("🚀 GENERA ANALISI COMPETITIVA WBO", use_container_width=True):
-                with st.spinner("Analisi meta.csv e database WBO in corso..."):
+                with st.spinner("Analisi database in corso..."):
                     try:
-                        # Caricamento file di supporto
+                        # 1. Caricamento e Pulizia mirata del Meta CSV con colonne scelte dall'utente
+                        if os.path.exists("meta.csv"):
+                            m_df = pd.read_csv("meta.csv", encoding='latin-1')
+                            
+                            # Colonne definite dall'utente
+                            colonne_scelte = [
+                                "Lock Chip", "Blade", "Assist Blade", "Ratchet", 
+                                "Bit", "Points", "Sample Size (Win Count)", 
+                                "Combo Rank", "Rank Change"
+                            ]
+                            
+                            # Filtriamo solo le colonne presenti
+                            cols_to_keep = [c for c in colonne_scelte if c in m_df.columns]
+                            
+                            # Inviamo le top combo filtrate (limitando a 200 per massimizzare la qualità del prompt)
+                            meta_pulito = m_df[cols_to_keep].head(200).to_csv(index=False)
+                        else:
+                            meta_pulito = "Dati meta non disponibili."
+
+                        # 2. Lettura file di supporto
                         def safe_read(fname):
-                            return open(fname, "r", encoding="utf-8").read() if os.path.exists(fname) else "File non trovato."
-                        
-                        meta_csv = safe_read("meta.csv")
+                            if not os.path.exists(fname): return "N/A"
+                            try:
+                                with open(fname, "r", encoding="utf-8") as f: return f.read()
+                            except:
+                                with open(fname, "r", encoding="latin-1") as f: return f.read()
+
                         winning_combos = safe_read("WBO Winning Combinations.txt")
                         regolamento = safe_read("Regolamenti IBNA.txt")
                         inv_json = json.dumps(user_data["inv"], indent=2)
 
+                        # 3. Mega Prompt
                         full_prompt = f"""
-                        Sei un sistema esperto specializzato esclusivamente nel competitivo di Beyblade X (sistemi BX, UX, CX) con focus su metagame internazionale WBO nel formato torneo 3v3...
-                        [... Il tuo Mega Prompt qui sopra omesso per brevità nel codice ma integrato logicamente ...]
-                        
-                        📚 FONTI UFFICIALI DI RIFERIMENTO:
+                        Sei un sistema esperto specializzato esclusivamente nel competitivo di Beyblade X (sistemi BX, UX, CX) con focus su metagame internazionale WBO nel formato torneo 3v3.
+                        Operi come analista professionale, deck builder strategico e coach da competizione internazionale.
+
+                        📚 DATABASE COMPETITIVO (ESTRATTO TOP COMBO):
+                        {meta_pulito}
+
+                        📚 FONTI DI SUPPORTO:
                         - Regolamento: {regolamento}
                         - Winning Combinations info: {winning_combos}
-                        - Database Meta CSV (prime 100 righe): {meta_csv[:8000]}
                         
-                        🔒 INVENTARIO ATTUALE GIOCATORE:
+                        🔒 INVENTARIO ATTUALE GIOCATORE (VERITÀ ASSOLUTA):
                         {inv_json}
                         
                         🎯 PARAMETRI SESSIONE:
@@ -326,7 +351,10 @@ with tab4:
                         - Obbligatorio: {comp_obbl}
                         - Escludere: {comp_escl}
 
-                        ISTRUZIONE FINALE: Genera ora il report tecnico seguendo la STRUTTURA OBBLIGATORIA (Lista Deck, Analisi, Pre-Shuffle, Lancio, Matchup).
+                        ISTRUZIONE FINALE:
+                        Analizza il dataset fornito per identificare archetipi e frequenze. 
+                        Incrocia i dati con l'inventario per generare la risposta seguendo la struttura: 
+                        1. Lista Deck, 2. Analisi Tecnica, 3. Strategia Pre-Shuffle, 4. Strategia di Lancio (gradi e %), 5. Matchup vs Top 8 Meta.
                         """
                         
                         response = model.generate_content(full_prompt)
@@ -336,4 +364,4 @@ with tab4:
 
         if 'ai_report' in st.session_state:
             st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
-            st.download_button("Scarica Report Strategico", st.session_state.ai_report, file_name="strategia_deck.txt")
+            st.download_button("Scarica Report Strategico", st.session_state.ai_report, file_name=f"strategia_deck_{user_sel}.txt")
