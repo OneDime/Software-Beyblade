@@ -1,0 +1,51 @@
+			THIS TOOL IS BROUGHT TO YOU BY RYAN WITH ANTI WIZARD WIZARD CLUB!														
+			SUPPORT THIS TOOL BY SUBSCRIBING TO MY YOUTUBE CHANNEL, CLICK HERE TO CHECK IT OUT!														
+																	
+			This sheet summarizes combo and part performance data pulled from the WBO Winners Thread, a public record of podium-finishing combos from WBO-sanctioned Beyblade X tournaments.														
+																	
+			Each combo or part is assigned “Competitive Points” based on how often it appears on the podium and how recently it won. More recent results are weighted more heavily.														
+				Competitive Points = Frequency × Recency Weight (recency weight only applied to the full dataset, not monthly datasets)													
+				Wins from the past 30 days = ×10													
+				Wins from 31–90 days ago = ×3													
+USE CODE 'WIZARD' AT BEYS & BRICKS TO SUPPORT THE CHANNEL AND GET 8% OFF YOUR PURCHASE!				Wins from 91–180 days ago = ×1													
+				Wins 181+ days ago = ×0.25													
+			The “Sample Size (n)” column shows how many times that combo or part appeared in the dataset — giving context to the points total.														
+																	
+			Note: For CX Lockchip performance, I've removed all lockchips that are not weighted in order for blade performance to be captured entirely in one row. So if Dran Brave Slash 3-60 Low Rush has 1 point, and Pegasus Brave Slash 3-60 Low Rush has 1 point, the data is cleaned so it just shows Brave Slash 3-60 Low Rush with 2 points. Combos that utilize a weighted lockchip (Valkyrie, Emperor, etc.) are in their own category, so in this example, Valkyrie Brave Slash 3-60 Low Rush would NOT be bundled with Brave Slash 3-60 Low Rush.														
+																	
+																	
+																	
+			Data is broken down across different views:														
+				Full combo rankings													
+				Combo rank changes vs. previous month													
+				Individual part rankings (Blade, Ratchet, Bit, Assist Blade)													
+				Individual sheets for specific time ranges (e.g., June 2025 only)													
+USE CODE 'WIZARD' AT NOOZLE3D TO SUPPORT THE CHANNEL AND GET 10% OFF YOUR PURCHASE!																	
+			This is not opinion-based or tier list speculation — it’s a data-driven snapshot of what has actually performed in tournaments.														
+			The tool used to generate this data is custom-coded and not yet public, but this sheet contains all the output data you need to explore trends, optimize builds, and track performance.														
+																	
+			NOTE: IF YOU WANT TO FILTER THE DATA, CLICK 'DATA' AT THE TOP AND CLICK 'CREATE FILTER VIEW': THIS WILL CREATE A TEMPORARY FILTER FOR THE DATA THAT ONLY YOU CAN SEE! 														
+																	
+																	
+																	
+																	
+			"WBO Winning Combinations Thread | Anti Wizard Wizard Club Data Analysis Tool Results © 2025 by Ryan Woodman is licensed under CC BY-NC-ND 4.0. 
+
+This means you may only copy and distribute this material (both the database and the data itself) in UNADAPTED FORM ONLY WITH NO PERMISSION FOR DERIVATIVE WORKS (meaning no changes to the data, the database structure, the visual identity of the database, or anything else found here) for NON COMMERCIAL PURPOSES (no payments or requests for donations), and ONLY with permission from me, Ryan Woodman, owner of this database. Your redistribution of this material must also explicitly state that it is in no way affiliated with Ryan Woodman or Anti Wizard Wizard Club.
+
+To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-nd/4.0/"														
+																	
+																	
+																	
+USE CODE 'WIZARD' AT BEYLOCKER TO SUPPORT THE CHANNEL AND GET 8% OFF YOUR PURCHASE!																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
+																	
