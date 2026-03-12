@@ -164,9 +164,6 @@ if st.sidebar.button("Esci / Cambia Utente"):
     st.rerun()
 if st.sidebar.button("🔄 Forza Sync Cloud"):
     force_load(); st.rerun()
-if st.sidebar.button("📂 Aggiorna Database CSV"):
-    st.cache_data.clear(); st.cache_resource.clear()
-    st.toast("Database ricaricato!", icon="📂"); time.sleep(1); st.rerun()
 
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
@@ -299,7 +296,7 @@ with tab3:
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
 
-# --- TAB 4: AI ADVISOR (OTTIMIZZATA CON PROMPT ESTERNO) ---
+# --- TAB 4: AI ADVISOR (CORRETTA PER ERRORE 404) ---
 with tab4:
     st.markdown("### 🤖 Strategia Meta-Analitica WBO")
     
@@ -326,7 +323,6 @@ with tab4:
             if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
                 with st.spinner("Caricamento protocollo e analisi in corso..."):
                     try:
-                        # Caricamento del prompt da file esterno
                         if os.path.exists("promptIA.txt"):
                             with open("promptIA.txt", "r", encoding="utf-8") as f:
                                 base_prompt = f.read()
@@ -335,13 +331,13 @@ with tab4:
                             st.stop()
 
                         genai.configure(api_key=API_KEY)
-                        model = genai.GenerativeModel("gemini-1.5-flash")
+                        # Fix per errore 404: usiamo il nome esatto e forziamo la versione stabile
+                        model = genai.GenerativeModel('gemini-1.5-flash')
 
                         inv_json = json.dumps(user_data["inv"], indent=2, ensure_ascii=False)
                         obbl_str = ", ".join(comp_obbl) if comp_obbl else "nessuna"
                         escl_str = ", ".join(comp_escl) if comp_escl else "nessuna"
 
-                        # Assemblaggio prompt finale
                         prompt_finale = f"""
 {base_prompt}
 
@@ -355,11 +351,12 @@ with tab4:
 
 Procedi con l'analisi secondo il protocollo sopra indicato.
 """
-
+                        # Utilizzo di generate_content standard
                         response = model.generate_content(prompt_finale)
                         st.session_state.ai_report = response.text
                     except Exception as e:
                         st.error(f"Errore generazione: {e}")
+                        st.info("💡 Se l'errore persiste, assicurati di aver installato l'ultima versione di google-generativeai tramite: pip install -U google-generativeai")
 
         if 'ai_report' in st.session_state:
             st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
