@@ -280,7 +280,7 @@ Concentrati sull’adattamento tecnico.
 
 • Linguaggio tecnico
 
-• Nessuna semplificazione
+• Nessuna semplificazione; anche se con nomi simili, le componenti sono completamente diverse tra loro, non puoi quindi supporre che, per esempio, in assenza di SharkScale si possa usare SharkEdge o casi simili, devi basarti INTERAMENTE E INDEROGABILMENTE sui dati statistici forniti dalle fonti indicate
 
 • Nessun consiglio casual
 
@@ -290,9 +290,10 @@ Concentrati sull’adattamento tecnico.
 
 • DEVI ASSOLUTAMENTE E AL 100% BASARTI SULLE FONTI INDICATE, NON DEVI INVENTARTI NULLA IN NESSUN CASO
 
-• Non devi esporre ciò che hai compreso, devi andare diretto sull'indicare le informazioni relative al deck calcolato
+• Non devi esporre ciò che hai compreso, devi andare diretto sull'indicare le informazioni relative al deck calcolato, questo è fondamentale. Niente esposizione del meta attuale, niente esposizione di una valutazione delle componenti. Procedi esponendo solamente il deck che hai calcolato
 
 • Anche se specificato prima, è FONDAMENTALE considerare che una stessa componente non può essere utilizzata più di una volta all'interno di un deck, anche se il giocatore ne possiede più copie
+
 
 
 #INIZIO REGOLAMENTO UFFICIALE ITALIANO#
