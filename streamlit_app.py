@@ -208,7 +208,7 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
-# --- TAB 3: DECK BUILDER (INTOCCABILE - RIPRISTINATO) ---
+# --- TAB 3: DECK BUILDER (INTOCCABILE) ---
 with tab3:
     inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
@@ -296,7 +296,7 @@ with tab3:
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
 
-# --- TAB 4: AI ADVISOR (MODIFICHE RICHIESTE CON FIX 404) ---
+# --- TAB 4: AI ADVISOR (FIX AUTO-DISCOVERY PER EVITARE 404) ---
 with tab4:
     st.markdown("### 🤖 Strategia Meta-Analitica WBO")
     
@@ -321,9 +321,29 @@ with tab4:
                 comp_escl = st.multiselect("❌ Componenti da evitare", tutti_pezzi)
             
             if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
-                with st.spinner("Inizializzazione modelli e analisi..."):
+                with st.spinner("Ricerca modello e generazione analisi..."):
                     try:
-                        # 1. Lettura del file promptIA.txt
+                        # 1. Configurazione
+                        genai.configure(api_key=API_KEY)
+                        
+                        # 2. AUTO-DISCOVERY MODELLO (Fix 404)
+                        # Recuperiamo i nomi esatti dei modelli supportati dall'account
+                        try:
+                            valid_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+                            # Cerchiamo flash, poi pro, poi il primo della lista
+                            if any("gemini-1.5-flash" in m for m in valid_models):
+                                target = next(m for m in valid_models if "gemini-1.5-flash" in m)
+                            elif any("gemini-1.5-pro" in m for m in valid_models):
+                                target = next(m for m in valid_models if "gemini-1.5-pro" in m)
+                            else:
+                                target = valid_models[0]
+                            
+                            model = genai.GenerativeModel(target)
+                        except Exception as e_mod:
+                            st.error(f"Errore inizializzazione modelli: {e_mod}")
+                            st.stop()
+
+                        # 3. Lettura Prompt da file
                         if os.path.exists("promptIA.txt"):
                             with open("promptIA.txt", "r", encoding="utf-8") as f:
                                 base_prompt = f.read()
@@ -331,37 +351,15 @@ with tab4:
                             st.error("File promptIA.txt non trovato.")
                             st.stop()
 
-                        # 2. Configurazione API
-                        genai.configure(api_key=API_KEY)
-                        
-                        # 3. Logica Multi-Modello per evitare 404
-                        models_to_try = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-001"]
-                        model = None
-                        last_err = ""
-
-                        for model_name in models_to_try:
-                            try:
-                                model = genai.GenerativeModel(model_name)
-                                # Test minimo per verificare se il modello risponde effettivamente
-                                model.generate_content("test", generation_config={"max_output_tokens": 1})
-                                break 
-                            except Exception as e:
-                                last_err = str(e)
-                                model = None
-
-                        if not model:
-                            st.error(f"Errore generazione: {last_err}")
-                            st.stop()
-
                         # 4. Assemblaggio Dati
                         inv_json = json.dumps(user_data["inv"], indent=2, ensure_ascii=False)
                         obbl_str = ", ".join(comp_obbl) if comp_obbl else "nessuna"
                         escl_str = ", ".join(comp_escl) if comp_escl else "nessuna"
 
-                        prompt_finale = f"""
+                        prompt_completo = f"""
 {base_prompt}
 
-### DATI GIOCATORE ATTUALI:
+### DATI GIOCATORE CORRENTI (INTEGRA NEL REPORT):
 - INVENTARIO: {inv_json}
 - APPROCCIO: {tipo_deck_ai}
 - SKILL LANCIO: {lancio_ai}/10
@@ -369,14 +367,14 @@ with tab4:
 - COMPONENTI OBBLIGATORIE: {obbl_str}
 - COMPONENTI VIETATE: {escl_str}
 
-Procedi con l'analisi tecnica.
+Procedi con l'analisi tecnica rigorosa.
 """
-                        # 5. Generazione
-                        response = model.generate_content(prompt_finale)
+                        # 5. Esecuzione
+                        response = model.generate_content(prompt_completo)
                         st.session_state.ai_report = response.text
                         
                     except Exception as e:
-                        st.error(f"Errore critico durante la generazione: {e}")
+                        st.error(f"Errore critico: {str(e)}")
 
         if 'ai_report' in st.session_state:
             st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
