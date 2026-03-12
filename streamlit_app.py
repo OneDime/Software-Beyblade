@@ -296,7 +296,7 @@ with tab3:
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
 
-# --- TAB 4: AI ADVISOR (CORRETTA PER ERRORE 404) ---
+# --- TAB 4: AI ADVISOR (FIX DEFINITIVO 404) ---
 with tab4:
     st.markdown("### 🤖 Strategia Meta-Analitica WBO")
     
@@ -331,8 +331,15 @@ with tab4:
                             st.stop()
 
                         genai.configure(api_key=API_KEY)
-                        # Fix per errore 404: usiamo il nome esatto e forziamo la versione stabile
-                        model = genai.GenerativeModel('gemini-1.5-flash')
+                        
+                        # Tenta con il nome modello più standard e aggiornato
+                        try:
+                            model = genai.GenerativeModel("models/gemini-1.5-flash-latest")
+                            # Test rapido per validare il modello
+                            model.generate_content("test", generation_config={"max_output_tokens": 1})
+                        except:
+                            # Fallback su versione specifica se il puntatore 'latest' fallisce
+                            model = genai.GenerativeModel("models/gemini-1.5-flash")
 
                         inv_json = json.dumps(user_data["inv"], indent=2, ensure_ascii=False)
                         obbl_str = ", ".join(comp_obbl) if comp_obbl else "nessuna"
@@ -351,12 +358,11 @@ with tab4:
 
 Procedi con l'analisi secondo il protocollo sopra indicato.
 """
-                        # Utilizzo di generate_content standard
                         response = model.generate_content(prompt_finale)
                         st.session_state.ai_report = response.text
                     except Exception as e:
                         st.error(f"Errore generazione: {e}")
-                        st.info("💡 Se l'errore persiste, assicurati di aver installato l'ultima versione di google-generativeai tramite: pip install -U google-generativeai")
+                        st.info("⚠️ Se l'errore 404 persiste, prova a cambiare il nome modello in 'gemini-pro' nel codice della Tab 4.")
 
         if 'ai_report' in st.session_state:
             st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
