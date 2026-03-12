@@ -56,23 +56,6 @@ st.set_page_config(page_title="Officina Beyblade X", layout="wide", initial_side
 inject_css()
 
 # =========================
-# LOGICA AI (AUTO-DISCOVERY)
-# =========================
-GEMINI_KEY = st.secrets.get("gemini_api_key")
-
-def get_working_model():
-    if not GEMINI_KEY: return None
-    genai.configure(api_key=GEMINI_KEY)
-    try:
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                if 'gemini-1.5-flash' in m.name: return genai.GenerativeModel(m.name)
-        return genai.GenerativeModel('gemini-1.5-flash')
-    except: return genai.GenerativeModel('gemini-1.5-flash')
-
-model_engine = get_working_model()
-
-# =========================
 # LOGICA GITHUB
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
@@ -320,11 +303,12 @@ with tab3:
 with tab4:
     st.markdown("### 🤖 Strategia Meta-Analitica WBO")
     
-    if not GEMINI_KEY:
-        st.error("⚠️ Chiave API Gemini non configurata.")
+    GEMINI_KEY_TAB4 = st.secrets.get("gemini_api_key")
+    if not GEMINI_KEY_TAB4:
+        st.error("⚠️ Chiave API Gemini non configurata nei Secrets di Streamlit.")
     else:
         with st.container(border=True):
-            # Raccolta componenti per i menu a tendina
+            # Raccolta di tutti i componenti presenti nell'inventario per i menu
             tutti_pezzi = []
             for cat in user_data["inv"]:
                 tutti_pezzi.extend(sorted(user_data["inv"][cat].keys()))
@@ -333,44 +317,75 @@ with tab4:
             col_a, col_b = st.columns(2)
             with col_a:
                 tipo_deck_ai = st.selectbox("🎯 Approccio", ["Aggro puro", "Anti-meta", "Stamina", "Difensivo", "Top meta", "Equilibrato"])
-                # CORRETTO: capacità di lancio
                 lancio_ai = st.select_slider("🎯 Capacità di lancio (1-10)", options=list(range(1, 11)), value=5)
                 torneo_ai = st.selectbox("🎯 Tipo di Torneo", ["Locale / Amichevole", "Regionale", "Nazionale", "WBO Competitivo"])
             
             with col_b:
                 comp_obbl = st.selectbox("✅ Componente Obbligatoria", ["nessuna"] + tutti_pezzi)
-                # CORRETTO: multiselect per escludere
                 comp_escl = st.multiselect("❌ Componenti da evitare", tutti_pezzi)
             
             if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
-                with st.spinner("L'AI sta analizzando il meta..."):
+                with st.spinner("Connessione all'IA e analisi meta in corso..."):
                     try:
-                        # Recupero dati dal CSV meta
-                        meta_context = ""
+                        # 1. INIZIALIZZAZIONE DINAMICA MODELLO (FIX 404 DEFINITIVO)
+                        genai.configure(api_key=GEMINI_KEY_TAB4)
+                        valid_model = "gemini-1.5-flash" # fallback
+                        modelli_disponibili = []
+                        
+                        try:
+                            for m in genai.list_models():
+                                if 'generateContent' in m.supported_generation_methods:
+                                    m_name = m.name.replace("models/", "")
+                                    modelli_disponibili.append(m_name)
+                            
+                            flash_models = [m for m in modelli_disponibili if "1.5-flash" in m]
+                            if flash_models:
+                                valid_model = flash_models[0]
+                            elif modelli_disponibili:
+                                valid_model = modelli_disponibili[0]
+                        except:
+                            pass # Fallisce list_models? Prova a forzare il fallback
+                            
+                        model_engine = genai.GenerativeModel(valid_model)
+
+                        # 2. LETTURA CSV E PULIZIA
                         if os.path.exists("meta.csv"):
-                            m_df = pd.read_csv("meta.csv", encoding='latin-1').fillna("")
+                            m_df = pd.read_csv("meta.csv", encoding='latin-1')
                             m_df.columns = m_df.columns.str.strip()
                             col_sel = ["Lock Chip", "Blade", "Assist Blade", "Ratchet", "Bit", "Points", "Sample Size (Win Count)", "Combo Rank"]
                             meta_context = m_df[[c for c in col_sel if c in m_df.columns]].head(100).to_csv(index=False)
-                        
+                        else:
+                            meta_context = "Dati meta non disponibili."
+
+                        # 3. CREAZIONE PROMPT
                         inv_json = json.dumps(user_data["inv"], indent=2)
                         esclusi_str = ", ".join(comp_escl) if comp_escl else "nessuno"
+                        
+                        full_prompt = f"""Analizza i dati meta WBO: {meta_context}. 
+                        Usa ESCLUSIVAMENTE i pezzi presenti in questo inventario: {inv_json}. 
+                        
+                        Parametri utente: 
+                        - Approccio: {tipo_deck_ai}
+                        - Tipo di Torneo: {torneo_ai}
+                        - Capacità di lancio: {lancio_ai}/10
+                        - Pezzo obbligatorio: {comp_obbl}
+                        - PEZZI DA EVITARE ASSOLUTAMENTE: {esclusi_str}
+                        
+                        Richiesta:
+                        1. Suggerisci un Deck da 3 Beyblade (Combo complete).
+                        2. Spiega la strategia di gioco contro i Tier 0/1 del meta attuale.
+                        3. Indica angoli di lancio specifici basati sulla capacità di lancio {lancio_ai}."""
 
-                        full_prompt = f"""Dati Meta WBO: {meta_context}
-                        Inventario Utente: {inv_json}
-                        Parametri: Approccio {tipo_deck_ai}, Torneo {torneo_ai}, Capacità Lancio {lancio_ai}/10.
-                        Pezzo obbligatorio: {comp_obbl}.
-                        COMPONENTI DA EVITARE: {esclusi_str}.
-
-                        REGOLE:
-                        1. Crea un Deck da 3 Beyblade usando SOLO i pezzi disponibili (non quelli esclusi).
-                        2. Analizza i matchup contro i Top Rank del CSV fornito.
-                        3. Dai consigli sugli angoli di lancio in base alla capacità {lancio_ai}."""
-
+                        # 4. GENERAZIONE
                         response = model_engine.generate_content(full_prompt)
                         st.session_state.ai_report = response.text
+                        
                     except Exception as e:
-                        st.error(f"Errore: {e}")
+                        err_str = str(e)
+                        if "404" in err_str and 'modelli_disponibili' in locals() and modelli_disponibili:
+                            st.error(f"Errore 404 (Modello inaccessibile). Ho provato ad usare: '{valid_model}'. \n\nI modelli che la tua chiave API vede sono: {modelli_disponibili}. \n\nDettaglio tecnico: {err_str}")
+                        else:
+                            st.error(f"Errore nella generazione: {err_str}")
 
         if 'ai_report' in st.session_state:
             st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)

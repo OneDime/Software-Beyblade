@@ -1,4 +1,4 @@
 pandas
 Pillow
 st-gsheets-connection
-google-generativeai
+google-generativeai>=0.7.2
