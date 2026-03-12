@@ -294,7 +294,7 @@ Concentrati sull’adattamento tecnico.
 
 • Anche se specificato prima, è FONDAMENTALE considerare che una stessa componente non può essere utilizzata più di una volta all'interno di un deck, anche se il giocatore ne possiede più copie
 
-• Le statistiche relative ad una combinazione sono molto più importanti di quelle relative alle singole componenti; se, per esempio, il bit Hexa risulta molto forte e molto usato su WizardRod, non sognifica che lo stesso accada per altre blade; valuta quindi basandoti principalmente sulle combo, se poi questo causa conflitti nella creazione del deck (es. duplicazione di componenti) allora puoi iniziare a valutare l'idea di creare combinazioni differenti, ma sempre basandoti sui dati forniti
+• Le statistiche relative ad una combinazione sono molto più importanti di quelle relative alle singole componenti; se, per esempio, il bit Hexa risulta molto forte e molto usato su WizardRod, non sognifica che lo stesso accada per altre blade; valuta quindi basandoti principalmente sulle combo
 
 
 
