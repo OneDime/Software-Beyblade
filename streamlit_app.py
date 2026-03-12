@@ -299,13 +299,13 @@ with tab3:
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
 
-# --- TAB 4: AI ADVISOR (LOGICA AVANZATA INTEGRATA) ---
+# --- TAB 4: AI ADVISOR (VERSIONE REFINITED) ---
 with tab4:
     st.markdown("### 🤖 Strategia Meta-Analitica WBO")
     
     API_KEY = st.secrets.get("gemini_api_key")
     if not API_KEY:
-        st.error("⚠️ Configura la chiave API.")
+        st.error("⚠️ Chiave API mancante.")
     else:
         with st.container(border=True):
             tutti_pezzi = []
@@ -320,69 +320,71 @@ with tab4:
                 torneo_ai = st.selectbox("🎯 Tipo di Torneo", ["Locale / Amichevole", "Regionale", "Nazionale", "WBO Competitivo"])
             
             with col_b:
-                comp_obbl = st.selectbox("✅ Componente Obbligatoria", ["nessuna"] + tutti_pezzi)
+                comp_obbl = st.multiselect("✅ Componenti Obbligatorie", tutti_pezzi)
                 comp_escl = st.multiselect("❌ Componenti da evitare", tutti_pezzi)
             
             if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
-                with st.spinner("Analisi tecnica avanzata..."):
+                with st.spinner("Elaborazione tattica in corso..."):
                     try:
                         genai.configure(api_key=API_KEY)
-                        # Ricerca automatica modello flash o pro
-                        model_name = "gemini-1.5-flash"
+                        # Selezione modello resiliente
                         try:
                             models = [m.name for m in genai.list_models() if "generateContent" in m.supported_generation_methods]
                             model_name = models[0] if models else "gemini-1.5-flash"
-                        except: pass
+                        except: model_name = "gemini-1.5-flash"
                         
                         engine = genai.GenerativeModel(model_name)
 
-                        # Caricamento CSV Meta
-                        meta_data = "File meta.csv non trovato."
+                        # Caricamento contestuale Meta
+                        meta_context = ""
                         if os.path.exists("meta.csv"):
-                            m_df = pd.read_csv("meta.csv", encoding='latin-1').head(80)
-                            meta_data = m_df.to_csv(index=False)
+                            m_df = pd.read_csv("meta.csv", encoding='latin-1').head(100)
+                            meta_context = m_df.to_csv(index=False)
 
-                        # Caricamento eventuale file di istruzioni tecniche (se presente nel repo)
-                        istruzioni_tecniche = """
-                        LOGICA STRUTTURALE BEYBLADE X:
-                        1. BX/UX (Standard): Blade + Ratchet + Bit.
-                        2. CX (Custom): Lock Chip + Main Blade + Assist Blade + Ratchet + Bit.
-                        3. RIB: Se la Bit è 'Integrated' (RIB), non può esserci una Ratchet separata.
-                        4. REGOLE DECK: Non puoi usare la stessa Blade o lo stesso Bit più di una volta nel deck da 3.
-                        """
+                        # Definizione prompt con vincoli stringenti richiesti
+                        inv_json = json.dumps(user_data["inv"], indent=2)
+                        obbl_str = ", ".join(comp_obbl) if comp_obbl else "nessuna"
+                        escl_str = ", ".join(comp_escl) if comp_escl else "nessuna"
 
-                        inv_status = json.dumps(user_data["inv"], indent=2)
-                        esclusi = ", ".join(comp_escl) if comp_escl else "nessuno"
-
-                        # PROMPT AD ALTA PRECISIONE
-                        prompt_final = f"""
-                        Sei un Analista Esperto di Beyblade X Competitivo (WBO).
+                        prompt = f"""
+                        Sei un Analista Tecnico WBO. Genera un report strategico.
                         
-                        DATI DA USARE (PRIORITÀ ASSOLUTA):
-                        - Meta CSV (Top Combo): {meta_data}
-                        - Regole Strutturali: {istruzioni_tecniche}
-                        - Inventario Utente: {inv_status}
+                        REGOLE DI OUTPUT (IMPORTANTE):
+                        1. NON mostrare l'analisi dell'inventario o dei meta dati all'inizio.
+                        2. NON esporre i controlli di coerenza strutturale. Falli e basta.
+                        3. Per la FORZA DI LANCIO, usa ESCLUSIVAMENTE una percentuale (es. 'Potenza: 85%').
+                        4. ORDINE REPORT: 
+                           A. Formazione Deck (3 Beyblade completi).
+                           B. Motivazione tecnica (perché battono i Tier del meta CSV).
+                           C. Priorità di Lancio (Potenza % e Angolo) per ogni Beyblade.
+
+                        CONTESTO TECNICO:
+                        - Meta WBO: {meta_context}
+                        - Inventario Disponibile: {inv_json}
+                        - Componenti Obbligatorie da includere nel deck: {obbl_str}
+                        - Componenti VIETATE: {escl_str}
                         
                         PARAMETRI UTENTE:
-                        - Stile: {tipo_deck_ai}
-                        - Torneo: {torneo_ai}
                         - Skill Lancio: {lancio_ai}/10
-                        - Obbligatorio: {comp_obbl}
-                        - VIETATO USARE: {esclusi}
-                        
-                        TASK:
-                        1. Crea un Deck da 3 Beyblade (Slot 1, 2, 3) usando SOLO i pezzi in inventario.
-                        2. Verifica la coerenza: se è CX deve avere Lock/Main/Assist. Se è RIB non deve avere Ratchet.
-                        3. Per ogni Beyblade, spiega perché è efficace contro i 'Combo Rank' più alti del CSV.
-                        4. Suggerisci la sequenza di uscita (chi lancia per primo) e l'angolo di lancio ottimale per la skill {lancio_ai}.
-                        
-                        Sii tecnico, preciso e non inventare pezzi che non esistono nell'inventario.
+                        - Approccio: {tipo_deck_ai}
+                        - Torneo: {torneo_ai}
+
+                        Assicurati che i CX abbiano Lock/Main/Assist e che i RIB non abbiano Ratchet.
                         """
 
-                        res = engine.generate_content(prompt_final)
-                        st.session_state.ai_report = res.text
+                        response = engine.generate_content(prompt)
+                        st.session_state.ai_report = response.text
                     except Exception as e:
                         st.error(f"Errore: {e}")
 
         if 'ai_report' in st.session_state:
             st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
+            
+            # Pulsante di Download per il Report
+            st.download_button(
+                label="📥 Scarica Report (.txt)",
+                data=st.session_state.ai_report,
+                file_name=f"Analisi_Meta_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
