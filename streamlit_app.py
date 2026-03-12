@@ -299,7 +299,7 @@ with tab3:
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
 
-# --- TAB 4: AI ADVISOR (VERSIONE REFINITED) ---
+# --- TAB 4: AI ADVISOR (SOLO MODIFICHE RICHIESTE) ---
 with tab4:
     st.markdown("### 🤖 Strategia Meta-Analitica WBO")
     
@@ -324,10 +324,9 @@ with tab4:
                 comp_escl = st.multiselect("❌ Componenti da evitare", tutti_pezzi)
             
             if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
-                with st.spinner("Elaborazione tattica in corso..."):
+                with st.spinner("Analisi compatibilità meccanica e meta-data..."):
                     try:
                         genai.configure(api_key=API_KEY)
-                        # Selezione modello resiliente
                         try:
                             models = [m.name for m in genai.list_models() if "generateContent" in m.supported_generation_methods]
                             model_name = models[0] if models else "gemini-1.5-flash"
@@ -335,56 +334,52 @@ with tab4:
                         
                         engine = genai.GenerativeModel(model_name)
 
-                        # Caricamento contestuale Meta
                         meta_context = ""
                         if os.path.exists("meta.csv"):
-                            m_df = pd.read_csv("meta.csv", encoding='latin-1').head(100)
+                            m_df = pd.read_csv("meta.csv", encoding='latin-1').head(150)
                             meta_context = m_df.to_csv(index=False)
 
-                        # Definizione prompt con vincoli stringenti richiesti
                         inv_json = json.dumps(user_data["inv"], indent=2)
                         obbl_str = ", ".join(comp_obbl) if comp_obbl else "nessuna"
                         escl_str = ", ".join(comp_escl) if comp_escl else "nessuna"
 
                         prompt = f"""
-                        Sei un Analista Tecnico WBO. Genera un report strategico.
-                        
-                        REGOLE DI OUTPUT (IMPORTANTE):
-                        1. NON mostrare l'analisi dell'inventario o dei meta dati all'inizio.
-                        2. NON esporre i controlli di coerenza strutturale. Falli e basta.
-                        3. Per la FORZA DI LANCIO, usa ESCLUSIVAMENTE una percentuale (es. 'Potenza: 85%').
-                        4. ORDINE REPORT: 
-                           A. Formazione Deck (3 Beyblade completi).
-                           B. Motivazione tecnica (perché battono i Tier del meta CSV).
-                           C. Priorità di Lancio (Potenza % e Angolo) per ogni Beyblade.
+                        Sei un Analista Tecnico WBO ed Ingegnere Beyblade X. 
+                        Genera un report strategico seguendo queste REGOLE INVIOLABILI:
 
-                        CONTESTO TECNICO:
-                        - Meta WBO: {meta_context}
-                        - Inventario Disponibile: {inv_json}
-                        - Componenti Obbligatorie da includere nel deck: {obbl_str}
-                        - Componenti VIETATE: {escl_str}
-                        
-                        PARAMETRI UTENTE:
-                        - Skill Lancio: {lancio_ai}/10
-                        - Approccio: {tipo_deck_ai}
-                        - Torneo: {torneo_ai}
+                        1. COMPATIBILITÀ MECCANICA (ERRORE CRITICO DA EVITARE):
+                           - Sistema BX/UX (Standard): Blade + Ratchet + Bit. NON PUOI aggiungere Lock Chip o Assist Blade (es. SilverWolf, WizardRod, SharkEdge sono BX/UX).
+                           - Sistema CX (Custom): Lock Chip + Main Blade + Assist Blade + Ratchet + Bit.
+                           - Regola RIB: Se la Bit è 'Integrated' (RIB), lo slot Ratchet deve restare vuoto.
 
-                        Assicurati che i CX abbiano Lock/Main/Assist e che i RIB non abbiano Ratchet.
+                        2. REGOLE DI OUTPUT:
+                           - NON mostrare analisi preliminari o ragionamenti sulla coerenza.
+                           - Indica il SISTEMA (BX, UX o CX) per ogni beyblade.
+                           - FORZA DI LANCIO: Usa ESCLUSIVAMENTE una percentuale (es. 'Potenza: 85%').
+                           - Analizza il Meta basandoti sul file CSV fornito.
+
+                        DATI:
+                        - Meta CSV: {meta_context}
+                        - Inventario: {inv_json}
+                        - Obbligatori: {obbl_str}
+                        - VIETATI: {escl_str}
+                        
+                        PARAMETRI:
+                        - Approccio: {tipo_deck_ai} | Torneo: {torneo_ai} | Skill: {lancio_ai}/10
                         """
 
                         response = engine.generate_content(prompt)
                         st.session_state.ai_report = response.text
                     except Exception as e:
-                        st.error(f"Errore: {e}")
+                        st.error(f"Errore generazione: {e}")
 
         if 'ai_report' in st.session_state:
             st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
             
-            # Pulsante di Download per il Report
             st.download_button(
                 label="📥 Scarica Report (.txt)",
                 data=st.session_state.ai_report,
-                file_name=f"Analisi_Meta_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+                file_name=f"Report_WBO_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
                 mime="text/plain",
                 use_container_width=True
             )
