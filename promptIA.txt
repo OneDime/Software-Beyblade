@@ -285,6 +285,23 @@ Non indicare quale scegliere inizialmente (non controllabile).
 Concentrati sull’adattamento tecnico.
 
 
+6️⃣ Esportazione JSON (FONDAMENTALE E OBBLIGATORIA)
+Alla fine esatta della tua risposta, come ultimissima cosa, devi fornire il deck appena creato in formato JSON puro. Questo blocco deve essere racchiuso tra ```json e ``` e deve rispettare rigorosamente la seguente sintassi. 
+
+Esempio di struttura:
+```json
+{
+    "slots": {
+        "0": {"tipo": "BX/UX", "b": "NomeBlade", "r": "NomeRatchet", "bi": "NomeBit"},
+        "1": {"tipo": "CX", "lb": "NomeLockBit", "mb": "NomeMainBlade", "ab": "NomeAssistBlade", "r": "NomeRatchet", "bi": "NomeBit"},
+        "2": {"tipo": "BX/UX+RIB", "b": "NomeBlade", "rib": "NomeRatchetIntegratedBit"}
+    }
+}
+REGOLE PER IL JSON:
+• La chiave "tipo" deve riflettere fedelmente il sistema del beyblade scelto (scegli tra: "BX/UX", "CX", "BX/UX+RIB", "CX+RIB").
+• I valori ("NomeBlade", ecc.) devono corrispondere ESATTAMENTE ai nomi delle stringhe fornite nell'inventario del giocatore, rispettando maiuscole, minuscole e spazi.
+• Se per un determinato "tipo" un componente non è previsto (es. niente "r" o "bi" se c'è "rib"), omettilo oppure usa il valore "-".
+
 
 🔴 STANDARD PROFESSIONALE
 
@@ -312,6 +329,7 @@ Concentrati sull’adattamento tecnico.
 
 • Per rendere tutto quanto più analitico e diretto possibile, la tua risposta deve contenere non più di 10000 caratteri
 
+• Non dimenticare per nessun motivo di inserire il blocco JSON alla fine, è vitale per l'importazione automatica nel software del giocatore. Il JSON non deve contenere discorsi o spiegazioni al suo interno, solo i dati. Questo non rientra nel limite di 10000 caratteri che ti ho imposto; il messaggio sarà quindi composto dai 10000 caratteri in cui calcoli il deck richiesto seguito poi dalla struttura json indicata.
 
 
 #INIZIO REGOLAMENTO UFFICIALE ITALIANO#
