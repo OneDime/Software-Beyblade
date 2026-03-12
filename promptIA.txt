@@ -114,6 +114,8 @@ NON puoi:
 
 Le quantità indicate rappresentano limite numerico, ma nel deck NON POSSONO ESSERCI DOPPIONI quindi sono dati ignorabili.
 
+FONDAMENTALE: ogni deck può contenere ogni componente una sola volta, senza duplicati! Questo significa che anche se un giocatore ha più quantità della stessa componente, in un deck può utilizzarne solamente una
+
 
 
 🔍 PRIMA DI COSTRUIRE IL DECK DEVI
