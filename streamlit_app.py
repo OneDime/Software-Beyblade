@@ -299,7 +299,7 @@ with tab3:
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
 
-# --- TAB 4: AI ADVISOR (SOLO MODIFICHE RICHIESTE) ---
+# --- TAB 4: AI ADVISOR (OTTIMIZZATA CON PROMPT ESTERNO) ---
 with tab4:
     st.markdown("### 🤖 Strategia Meta-Analitica WBO")
     
@@ -324,51 +324,39 @@ with tab4:
                 comp_escl = st.multiselect("❌ Componenti da evitare", tutti_pezzi)
             
             if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
-                with st.spinner("Analisi compatibilità meccanica e meta-data..."):
+                with st.spinner("Caricamento protocollo e analisi in corso..."):
                     try:
+                        # Caricamento del prompt da file esterno
+                        if os.path.exists("promptIA.txt"):
+                            with open("promptIA.txt", "r", encoding="utf-8") as f:
+                                base_prompt = f.read()
+                        else:
+                            st.error("File promptIA.txt non trovato.")
+                            st.stop()
+
                         genai.configure(api_key=API_KEY)
-                        try:
-                            models = [m.name for m in genai.list_models() if "generateContent" in m.supported_generation_methods]
-                            model_name = models[0] if models else "gemini-1.5-flash"
-                        except: model_name = "gemini-1.5-flash"
-                        
-                        engine = genai.GenerativeModel(model_name)
+                        model = genai.GenerativeModel("gemini-1.5-flash")
 
-                        meta_context = ""
-                        if os.path.exists("meta.csv"):
-                            m_df = pd.read_csv("meta.csv", encoding='latin-1').head(150)
-                            meta_context = m_df.to_csv(index=False)
-
-                        inv_json = json.dumps(user_data["inv"], indent=2)
+                        inv_json = json.dumps(user_data["inv"], indent=2, ensure_ascii=False)
                         obbl_str = ", ".join(comp_obbl) if comp_obbl else "nessuna"
                         escl_str = ", ".join(comp_escl) if comp_escl else "nessuna"
 
-                        prompt = f"""
-                        Sei un Analista Tecnico WBO ed Ingegnere Beyblade X. 
-                        Genera un report strategico seguendo queste REGOLE INVIOLABILI:
+                        # Assemblaggio prompt finale
+                        prompt_finale = f"""
+{base_prompt}
 
-                        1. COMPATIBILITÀ MECCANICA (ERRORE CRITICO DA EVITARE):
-                           - Sistema BX/UX (Standard): Blade + Ratchet + Bit. NON PUOI aggiungere Lock Chip o Assist Blade (es. SilverWolf, WizardRod, SharkEdge sono BX/UX).
-                           - Sistema CX (Custom): Lock Chip + Main Blade + Assist Blade + Ratchet + Bit.
-                           - Regola RIB: Se la Bit è 'Integrated' (RIB), lo slot Ratchet deve restare vuoto.
+### DATI GIOCATORE ATTUALI:
+- INVENTARIO: {inv_json}
+- APPROCCIO: {tipo_deck_ai}
+- SKILL LANCIO: {lancio_ai}/10
+- TIPO TORNEO: {torneo_ai}
+- COMPONENTI OBBLIGATORIE: {obbl_str}
+- COMPONENTI VIETATE: {escl_str}
 
-                        2. REGOLE DI OUTPUT:
-                           - NON mostrare analisi preliminari o ragionamenti sulla coerenza.
-                           - Indica il SISTEMA (BX, UX o CX) per ogni beyblade.
-                           - FORZA DI LANCIO: Usa ESCLUSIVAMENTE una percentuale (es. 'Potenza: 85%').
-                           - Analizza il Meta basandoti sul file CSV fornito.
+Procedi con l'analisi secondo il protocollo sopra indicato.
+"""
 
-                        DATI:
-                        - Meta CSV: {meta_context}
-                        - Inventario: {inv_json}
-                        - Obbligatori: {obbl_str}
-                        - VIETATI: {escl_str}
-                        
-                        PARAMETRI:
-                        - Approccio: {tipo_deck_ai} | Torneo: {torneo_ai} | Skill: {lancio_ai}/10
-                        """
-
-                        response = engine.generate_content(prompt)
+                        response = model.generate_content(prompt_finale)
                         st.session_state.ai_report = response.text
                     except Exception as e:
                         st.error(f"Errore generazione: {e}")
