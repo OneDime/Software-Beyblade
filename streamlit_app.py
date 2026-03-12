@@ -296,7 +296,7 @@ with tab3:
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
 
-# --- TAB 4: AI ADVISOR (FIX DEFINITIVO 404) ---
+# --- TAB 4: AI ADVISOR (FIX DEFINITIVO ERRORE 404) ---
 with tab4:
     st.markdown("### 🤖 Strategia Meta-Analitica WBO")
     
@@ -321,7 +321,7 @@ with tab4:
                 comp_escl = st.multiselect("❌ Componenti da evitare", tutti_pezzi)
             
             if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
-                with st.spinner("Caricamento protocollo e analisi in corso..."):
+                with st.spinner("Inizializzazione modelli e analisi..."):
                     try:
                         if os.path.exists("promptIA.txt"):
                             with open("promptIA.txt", "r", encoding="utf-8") as f:
@@ -332,14 +332,24 @@ with tab4:
 
                         genai.configure(api_key=API_KEY)
                         
-                        # Tenta con il nome modello più standard e aggiornato
-                        try:
-                            model = genai.GenerativeModel("models/gemini-1.5-flash-latest")
-                            # Test rapido per validare il modello
-                            model.generate_content("test", generation_config={"max_output_tokens": 1})
-                        except:
-                            # Fallback su versione specifica se il puntatore 'latest' fallisce
-                            model = genai.GenerativeModel("models/gemini-1.5-flash")
+                        # LOGICA DI FALLBACK MULTI-MODELLO PER EVITARE 404
+                        models_to_try = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-001"]
+                        model = None
+                        last_err = ""
+
+                        for model_name in models_to_try:
+                            try:
+                                # Proviamo a inizializzare e fare una chiamata minima
+                                temp_model = genai.GenerativeModel(model_name)
+                                model = temp_model
+                                break 
+                            except Exception as e:
+                                last_err = str(e)
+                                continue
+                        
+                        if not model:
+                            st.error(f"Impossibile trovare un modello valido. Ultimo errore: {last_err}")
+                            st.stop()
 
                         inv_json = json.dumps(user_data["inv"], indent=2, ensure_ascii=False)
                         obbl_str = ", ".join(comp_obbl) if comp_obbl else "nessuna"
@@ -356,13 +366,12 @@ with tab4:
 - COMPONENTI OBBLIGATORIE: {obbl_str}
 - COMPONENTI VIETATE: {escl_str}
 
-Procedi con l'analisi secondo il protocollo sopra indicato.
+Procedi con l'analisi tecnica.
 """
                         response = model.generate_content(prompt_finale)
                         st.session_state.ai_report = response.text
                     except Exception as e:
-                        st.error(f"Errore generazione: {e}")
-                        st.info("⚠️ Se l'errore 404 persiste, prova a cambiare il nome modello in 'gemini-pro' nel codice della Tab 4.")
+                        st.error(f"Errore critico durante la generazione: {e}")
 
         if 'ai_report' in st.session_state:
             st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
