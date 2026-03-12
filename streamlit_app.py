@@ -208,7 +208,7 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
-# --- TAB 3: DECK BUILDER (INTOCCABILE) ---
+# --- TAB 3: DECK BUILDER (INTOCCABILE - RIPRISTINATO) ---
 with tab3:
     inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
     tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
@@ -296,7 +296,7 @@ with tab3:
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
 
-# --- TAB 4: AI ADVISOR (FIX DEFINITIVO ERRORE 404) ---
+# --- TAB 4: AI ADVISOR (MODIFICHE RICHIESTE CON FIX 404) ---
 with tab4:
     st.markdown("### 🤖 Strategia Meta-Analitica WBO")
     
@@ -323,6 +323,7 @@ with tab4:
             if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
                 with st.spinner("Inizializzazione modelli e analisi..."):
                     try:
+                        # 1. Lettura del file promptIA.txt
                         if os.path.exists("promptIA.txt"):
                             with open("promptIA.txt", "r", encoding="utf-8") as f:
                                 base_prompt = f.read()
@@ -330,27 +331,29 @@ with tab4:
                             st.error("File promptIA.txt non trovato.")
                             st.stop()
 
+                        # 2. Configurazione API
                         genai.configure(api_key=API_KEY)
                         
-                        # LOGICA DI FALLBACK MULTI-MODELLO PER EVITARE 404
+                        # 3. Logica Multi-Modello per evitare 404
                         models_to_try = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-001"]
                         model = None
                         last_err = ""
 
                         for model_name in models_to_try:
                             try:
-                                # Proviamo a inizializzare e fare una chiamata minima
-                                temp_model = genai.GenerativeModel(model_name)
-                                model = temp_model
+                                model = genai.GenerativeModel(model_name)
+                                # Test minimo per verificare se il modello risponde effettivamente
+                                model.generate_content("test", generation_config={"max_output_tokens": 1})
                                 break 
                             except Exception as e:
                                 last_err = str(e)
-                                continue
-                        
+                                model = None
+
                         if not model:
-                            st.error(f"Impossibile trovare un modello valido. Ultimo errore: {last_err}")
+                            st.error(f"Errore generazione: {last_err}")
                             st.stop()
 
+                        # 4. Assemblaggio Dati
                         inv_json = json.dumps(user_data["inv"], indent=2, ensure_ascii=False)
                         obbl_str = ", ".join(comp_obbl) if comp_obbl else "nessuna"
                         escl_str = ", ".join(comp_escl) if comp_escl else "nessuna"
@@ -368,8 +371,10 @@ with tab4:
 
 Procedi con l'analisi tecnica.
 """
+                        # 5. Generazione
                         response = model.generate_content(prompt_finale)
                         st.session_state.ai_report = response.text
+                        
                     except Exception as e:
                         st.error(f"Errore critico durante la generazione: {e}")
 
