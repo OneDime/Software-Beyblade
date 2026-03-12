@@ -296,7 +296,7 @@ with tab3:
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
 
-# --- TAB 4: AI ADVISOR (FIX AUTO-DISCOVERY PER EVITARE 404) ---
+# --- TAB 4: AI ADVISOR ---
 with tab4:
     st.markdown("### 🤖 Strategia Meta-Analitica WBO")
     
@@ -312,7 +312,18 @@ with tab4:
 
             col_a, col_b = st.columns(2)
             with col_a:
-                tipo_deck_ai = st.selectbox("🎯 Approccio", ["Aggro puro", "Anti-meta", "Stamina", "Difensivo", "Top meta", "Equilibrato"])
+                # Ripristinate le tipologie originali richieste
+                approcci = [
+                    "Aggro puro", 
+                    "Anti-meta", 
+                    "Stamina dominante", 
+                    "Difensivo/Counter", 
+                    "Top Meta ottimizzato", 
+                    "Equilibrato", 
+                    "High-risk High-reward", 
+                    "Tech specialist"
+                ]
+                tipo_deck_ai = st.selectbox("🎯 Approccio", approcci)
                 lancio_ai = st.select_slider("🎯 Capacità di lancio (1-10)", options=list(range(1, 11)), value=5)
                 torneo_ai = st.selectbox("🎯 Tipo di Torneo", ["Locale / Amichevole", "Regionale", "Nazionale", "WBO Competitivo"])
             
@@ -323,27 +334,22 @@ with tab4:
             if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
                 with st.spinner("Ricerca modello e generazione analisi..."):
                     try:
-                        # 1. Configurazione
                         genai.configure(api_key=API_KEY)
                         
-                        # 2. AUTO-DISCOVERY MODELLO (Fix 404)
-                        # Recuperiamo i nomi esatti dei modelli supportati dall'account
+                        # AUTO-DISCOVERY MODELLO per prevenire 404
                         try:
                             valid_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-                            # Cerchiamo flash, poi pro, poi il primo della lista
                             if any("gemini-1.5-flash" in m for m in valid_models):
                                 target = next(m for m in valid_models if "gemini-1.5-flash" in m)
                             elif any("gemini-1.5-pro" in m for m in valid_models):
                                 target = next(m for m in valid_models if "gemini-1.5-pro" in m)
                             else:
                                 target = valid_models[0]
-                            
                             model = genai.GenerativeModel(target)
                         except Exception as e_mod:
                             st.error(f"Errore inizializzazione modelli: {e_mod}")
                             st.stop()
 
-                        # 3. Lettura Prompt da file
                         if os.path.exists("promptIA.txt"):
                             with open("promptIA.txt", "r", encoding="utf-8") as f:
                                 base_prompt = f.read()
@@ -351,7 +357,6 @@ with tab4:
                             st.error("File promptIA.txt non trovato.")
                             st.stop()
 
-                        # 4. Assemblaggio Dati
                         inv_json = json.dumps(user_data["inv"], indent=2, ensure_ascii=False)
                         obbl_str = ", ".join(comp_obbl) if comp_obbl else "nessuna"
                         escl_str = ", ".join(comp_escl) if comp_escl else "nessuna"
@@ -359,7 +364,7 @@ with tab4:
                         prompt_completo = f"""
 {base_prompt}
 
-### DATI GIOCATORE CORRENTI (INTEGRA NEL REPORT):
+### DATI GIOCATORE CORRENTI:
 - INVENTARIO: {inv_json}
 - APPROCCIO: {tipo_deck_ai}
 - SKILL LANCIO: {lancio_ai}/10
@@ -369,7 +374,6 @@ with tab4:
 
 Procedi con l'analisi tecnica rigorosa.
 """
-                        # 5. Esecuzione
                         response = model.generate_content(prompt_completo)
                         st.session_state.ai_report = response.text
                         
@@ -378,7 +382,6 @@ Procedi con l'analisi tecnica rigorosa.
 
         if 'ai_report' in st.session_state:
             st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
-            
             st.download_button(
                 label="📥 Scarica Report (.txt)",
                 data=st.session_state.ai_report,
