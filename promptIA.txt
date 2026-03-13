@@ -327,9 +327,11 @@ REGOLE PER IL JSON:
 
 • In merito alle statistiche mensili, prendi in considerazione solo le prime 80 posizioni (fai riferimento alla colonna "rank" relativa alle combo, non alle singole componenti); puoi considerare i Beyblade con rank peggiore (quindi da 81 in poi) solo se vengono richieste componenti specifiche per le quali non trovi dati né nelle combo delle prime 80 posizioni né nel forum https://worldbeyblade.org/Thread-Winning-Combinations-at-WBO-Organized-Events-Beyblade-X-BBX
 
-• Per rendere tutto quanto più analitico e diretto possibile, la tua risposta deve contenere non più di 10000 caratteri
+• Spesso blade aggressive vengono usate difensivamente e viceversa, per definire il comportamento di un Beyblade (aggressivo, stamina, difensivo, counter, ecc) fai prima ricerche approfondite e basati sulla combo di pezzi e soprattutto sul bit, dato che è quella la componente che definisce il movimento del Beyblade nell'arena
 
-• Non dimenticare per nessun motivo di inserire il blocco JSON alla fine, è vitale per l'importazione automatica nel software del giocatore. Il JSON non deve contenere discorsi o spiegazioni al suo interno, solo i dati. Questo non rientra nel limite di 10000 caratteri che ti ho imposto; il messaggio sarà quindi composto dai 10000 caratteri in cui calcoli il deck richiesto seguito poi dalla struttura json indicata.
+• Per rendere tutto quanto più analitico e diretto possibile, la tua risposta deve contenere non più di 7000 caratteri
+
+• Non dimenticare per nessun motivo di inserire il blocco JSON alla fine, è vitale per l'importazione automatica nel software del giocatore. Il JSON non deve contenere discorsi o spiegazioni al suo interno, solo i dati. Questo non rientra nel limite di 10000 caratteri che ti ho imposto; il messaggio sarà quindi composto dai 7000 caratteri in cui calcoli il deck richiesto seguito poi dalla struttura json indicata.
 
 
 #INIZIO REGOLAMENTO UFFICIALE ITALIANO#
