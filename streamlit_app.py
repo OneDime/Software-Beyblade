@@ -6,6 +6,7 @@ import json
 import requests
 import base64
 import time
+import re
 from datetime import datetime
 from PIL import Image
 import google.generativeai as genai
@@ -64,7 +65,7 @@ FILES = {"inv": "inventario.json", "decks": "decks.json"}
 
 def github_action(file_key, data=None, method="GET"):
     ts = int(time.time())
-    url = f"https://api.github.com/repos/{REPO}/contents/{FILES[file_key]}"
+    url = f"[https://api.github.com/repos/](https://api.github.com/repos/){REPO}/contents/{FILES[file_key]}"
     headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
     try:
         r_get = requests.get(f"{url}?t={ts}", headers=headers)
@@ -312,7 +313,6 @@ with tab4:
 
             col_a, col_b = st.columns(2)
             with col_a:
-                # Ripristinate le tipologie originali richieste
                 approcci = [
                     "Aggro puro", 
                     "Anti-meta", 
@@ -336,7 +336,6 @@ with tab4:
                     try:
                         genai.configure(api_key=API_KEY)
                         
-                        # AUTO-DISCOVERY MODELLO per prevenire 404
                         try:
                             valid_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
                             if any("gemini-1.5-flash" in m for m in valid_models):
@@ -382,10 +381,47 @@ Procedi con l'analisi tecnica rigorosa.
 
         if 'ai_report' in st.session_state:
             st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
-            st.download_button(
-                label="📥 Scarica Report (.txt)",
-                data=st.session_state.ai_report,
-                file_name=f"Report_WBO_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
-                mime="text/plain",
-                use_container_width=True
-            )
+            
+            # --- LOGICA DI ESTRAZIONE JSON DAL TESTO GENERATO ---
+            extracted_json = None
+            # Regex robusta: cerca il primo "{" che contiene "slots" fino all'ultimo "}"
+            match = re.search(r'\{[\s\n]*"slots"[\s\n]*:[\s\S]*\}', st.session_state.ai_report, re.DOTALL)
+            if match:
+                raw_json = match.group(0)
+                # Pulisce eventuali caratteri residui post-JSON (come i markdown codeblocks)
+                raw_json = raw_json[:raw_json.rfind('}')+1]
+                try:
+                    extracted_json = json.loads(raw_json)
+                except Exception as e:
+                    pass
+            
+            # Visualizziamo i bottoni affiancati
+            col_dl, col_imp = st.columns(2)
+            with col_dl:
+                st.download_button(
+                    label="📥 Scarica Report (.txt)",
+                    data=st.session_state.ai_report,
+                    file_name=f"Report_WBO_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+                    mime="text/plain",
+                    use_container_width=True
+                )
+            
+            with col_imp:
+                if extracted_json and "slots" in extracted_json:
+                    if st.button("🚀 Importa Deck nel Builder", type="primary", use_container_width=True):
+                        # Nome del deck: <approccio>_<data di oggi>
+                        oggi_str = datetime.now().strftime('%d/%m/%Y')
+                        nome_deck = f"{tipo_deck_ai}_{oggi_str}"
+                        
+                        nuovo_deck = {
+                            "name": nome_deck,
+                            "slots": extracted_json["slots"]
+                        }
+                        
+                        user_data["decks"].append(nuovo_deck)
+                        save_cloud()
+                        st.success(f"Deck '{nome_deck}' importato con successo nel Tab 3!")
+                        time.sleep(1)
+                        st.rerun()
+                else:
+                    st.info("⚠️ L'AI non ha fornito un JSON compatibile in questa run.")
