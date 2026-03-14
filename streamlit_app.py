@@ -65,19 +65,26 @@ FILES = {"inv": "inventario.json", "decks": "decks.json"}
 
 def github_action(file_key, data=None, method="GET"):
     ts = int(time.time())
-    url = f"[https://api.github.com/repos/](https://api.github.com/repos/){REPO}/contents/{FILES[file_key]}"
+    url = f"https://api.github.com/repos/{REPO}/contents/{FILES[file_key]}"
     headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
     try:
         r_get = requests.get(f"{url}?t={ts}", headers=headers)
         sha = r_get.json().get("sha") if r_get.status_code == 200 else None
+        
         if method == "GET":
             if r_get.status_code == 200:
                 return json.loads(base64.b64decode(r_get.json()["content"]).decode('utf-8'))
             return None
         elif method == "PUT":
-            payload = {"message": f"App Update {FILES[file_key]}", "content": base64.b64encode(json.dumps(data, indent=4).encode('utf-8')).decode('utf-8'), "sha": sha}
+            payload = {
+                "message": f"App Update {FILES[file_key]}", 
+                "content": base64.b64encode(json.dumps(data, indent=4).encode('utf-8')).decode('utf-8'), 
+                "sha": sha
+            }
             return requests.put(url, headers=headers, json=payload).status_code in [200, 201]
-    except: return False
+    except Exception as e:
+        print(f"Errore API GitHub: {e}")
+        return False
     return False
 
 def force_load():
@@ -384,18 +391,15 @@ Procedi con l'analisi tecnica rigorosa.
             
             # --- LOGICA DI ESTRAZIONE JSON DAL TESTO GENERATO ---
             extracted_json = None
-            # Regex robusta: cerca il primo "{" che contiene "slots" fino all'ultimo "}"
             match = re.search(r'\{[\s\n]*"slots"[\s\n]*:[\s\S]*\}', st.session_state.ai_report, re.DOTALL)
             if match:
                 raw_json = match.group(0)
-                # Pulisce eventuali caratteri residui post-JSON (come i markdown codeblocks)
                 raw_json = raw_json[:raw_json.rfind('}')+1]
                 try:
                     extracted_json = json.loads(raw_json)
                 except Exception as e:
                     pass
             
-            # Visualizziamo i bottoni affiancati
             col_dl, col_imp = st.columns(2)
             with col_dl:
                 st.download_button(
@@ -409,7 +413,6 @@ Procedi con l'analisi tecnica rigorosa.
             with col_imp:
                 if extracted_json and "slots" in extracted_json:
                     if st.button("🚀 Importa Deck nel Builder", type="primary", use_container_width=True):
-                        # Nome del deck: <approccio>_<data di oggi>
                         oggi_str = datetime.now().strftime('%d/%m/%Y')
                         nome_deck = f"{tipo_deck_ai}_{oggi_str}"
                         
