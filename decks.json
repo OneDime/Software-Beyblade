@@ -1,25 +1,25 @@
 {
     "Antonio": [
         {
-            "name": "DECK 2",
+            "name": "Anti-Meta",
             "slots": {
                 "0": {
                     "tipo": "BX/UX",
-                    "b": "-",
-                    "r": "-",
-                    "bi": "-"
+                    "b": "SilverWolf",
+                    "r": "9-70",
+                    "bi": "Hexa"
                 },
                 "1": {
                     "tipo": "BX/UX",
-                    "b": "-",
-                    "r": "-",
-                    "bi": "-"
+                    "b": "WyvernHover",
+                    "r": "1-60",
+                    "bi": "Low Rush"
                 },
                 "2": {
                     "tipo": "BX/UX",
-                    "b": "-",
-                    "r": "-",
-                    "bi": "-"
+                    "b": "CobaltDragoon",
+                    "r": "5-60",
+                    "bi": "Elevate"
                 }
             }
         }
