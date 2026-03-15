@@ -112,7 +112,7 @@ NON puoi:
 
 • Suggerire acquisti
 
-Le quantità indicate rappresentano limite numerico, ma nel deck NON POSSONO ESSERCI DOPPIONI quindi sono dati ignorabili.
+Le quantità indicate rappresentano limite numerico, ma nel deck NON POSSONO ESSERCI DOPPIONI quindi sono dati da ignorare. In altre parole, puoi considerare tutte le quantità pari a 1, come se il giocatore avesse una sola componente nonostante ti vengano indicate quantità differenti.
 
 FONDAMENTALE: ogni deck può contenere ogni componente una sola volta, senza duplicati! Questo significa che anche se un giocatore ha più quantità della stessa componente, in un deck può utilizzarne solamente una
 
@@ -230,10 +230,6 @@ Per ogni beyblade:
 
 • Logica di apertura
 
-• Obiettivo psicologico
-
-• Pressione iniziale o controllo
-
 • Piano contro avversario sconosciuto
 
 • Adattamento se il primo round (quindi prima dello shuffle) viene perso
@@ -260,8 +256,6 @@ Per ogni beyblade:
 
 • Gestione contro difensivi pesanti
 
-• Quando ridurre volontariamente potenza (%)
-
 • Errori meccanici comuni
 
 
@@ -276,9 +270,7 @@ Per ciascun profilo meta dominante:
 
 • Cosa evitare
 
-• Adattamento post-primo round
-
-• Come gestire shuffle psicologico
+• Come gestire lo shuffle
 
 Non indicare quale scegliere inizialmente (non controllabile).
 
@@ -330,6 +322,8 @@ REGOLE PER IL JSON:
 • Spesso blade aggressive vengono usate difensivamente e viceversa, per definire il comportamento di un Beyblade (aggressivo, stamina, difensivo, counter, ecc) fai prima ricerche approfondite e basati sulla combo di pezzi e soprattutto sul bit, dato che è quella la componente che definisce il movimento del Beyblade nell'arena
 
 • Per rendere tutto quanto più analitico e diretto possibile, la tua risposta deve contenere non più di 7000 caratteri
+
+• Come già specificato, NON FARE CONGETTURE!!! Devi basarti al 100% sui dati forniti e sui tornei ufficiali WBO presenti nel forum. Puoi considerare ulteriori fonti SOLO ED ESCLUSIVAMENTE qualora vengano imposte come obbligatorie componenti non presenti né nei dati statistici né nei tornei ufficiali degli ultimi 21 giorni (vedi regola indicata prima); in questo caso, usa comunque le fonti più recenti possibile. RIPETO: il fatto che il giocatore richieda come obbligatorie componenti non presenti nelle fonti indicate è L'UNICO CASO in cui puoi utilizzare fonti esterne
 
 • Non dimenticare per nessun motivo di inserire il blocco JSON alla fine, è vitale per l'importazione automatica nel software del giocatore. Il JSON non deve contenere discorsi o spiegazioni al suo interno, solo i dati. Questo non rientra nel limite di 10000 caratteri che ti ho imposto; il messaggio sarà quindi composto dai 7000 caratteri in cui calcoli il deck richiesto seguito poi dalla struttura json indicata.
 
