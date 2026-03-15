@@ -1,29 +1,6 @@
 {
     "Antonio": [
         {
-            "name": "PowerGuys",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "WyvernHover",
-                    "r": "9-60",
-                    "bi": "Kick"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "CobaltDragoon",
-                    "r": "5-60",
-                    "bi": "Elevate"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "WizardRod",
-                    "r": "1-60",
-                    "bi": "Free Ball"
-                }
-            }
-        },
-        {
             "name": "Immortals",
             "slots": {
                 "0": {
