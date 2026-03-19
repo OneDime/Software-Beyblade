@@ -27,13 +27,22 @@
             "name": "DECK 2",
             "slots": {
                 "0": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "DranBuster",
+                    "r": "4-50",
+                    "bi": "Low Orb"
                 },
                 "1": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "SharkScale",
+                    "r": "9-60",
+                    "bi": "Hexa"
                 },
                 "2": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "TyrannoRoar",
+                    "r": "3-60",
+                    "bi": "Rush"
                 }
             }
         }
