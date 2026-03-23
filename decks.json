@@ -58,13 +58,13 @@
                 },
                 "1": {
                     "b": "TyrannoBeat",
-                    "r": "1-60",
-                    "bi": "Rush"
+                    "r": "5-60",
+                    "bi": "Point"
                 },
                 "2": {
                     "b": "PhoenixWing",
                     "r": "3-60",
-                    "bi": "Kick"
+                    "bi": "Rush"
                 }
             }
         }
