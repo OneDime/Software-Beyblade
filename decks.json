@@ -1,29 +1,6 @@
 {
     "Antonio": [
         {
-            "name": "Anti-Meta",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "SilverWolf",
-                    "r": "9-70",
-                    "bi": "Hexa"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "WyvernHover",
-                    "r": "1-60",
-                    "bi": "Low Rush"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "CobaltDragoon",
-                    "r": "5-60",
-                    "bi": "Elevate"
-                }
-            }
-        },
-        {
             "name": "The Tony Boys",
             "slots": {
                 "0": {
