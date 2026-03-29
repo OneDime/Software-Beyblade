@@ -7,6 +7,7 @@ import requests
 import base64
 import time
 import re
+import io
 from datetime import datetime
 from PIL import Image
 import google.generativeai as genai
@@ -419,7 +420,6 @@ Procedi con l'analisi tecnica rigorosa.
 with tab5:
     st.markdown("### 📊 Registro Rapido Scontri")
     
-    # ADDED FOR RESET
     if 'match_counter' not in st.session_state:
         st.session_state.match_counter = 0
     
@@ -449,7 +449,6 @@ with tab5:
     beys_g2 = get_bey_names(g2, "G2")
     punteggi = ["-", "1-0", "2-0", "3-0", "0-1", "0-2", "0-3"]
 
-    # 1. Righe partono da 1
     df_init = pd.DataFrame(
         [{"Bey G1": "-", "Bey G2": "-", "Punti": "-"} for _ in range(7)],
         index=range(1, 8)
@@ -463,7 +462,6 @@ with tab5:
             "Punti": st.column_config.SelectboxColumn("Punti", options=punteggi, width="small"),
         },
         use_container_width=True,
-        # MODIFIED FOR RESET: chiave dinamica
         key=f"match_editor_vFINAL_{st.session_state.match_counter}"
     )
 
@@ -473,23 +471,21 @@ with tab5:
         if valid_rows.empty:
             st.warning("Compila almeno un round.")
         else:
-            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # Salvataggio data limitato a gg/mm/aaaa
+            now_str = datetime.now().strftime("%d/%m/%Y")
             new_records = []
             
             for _, row in valid_rows.iterrows():
                 p1_raw, p2_raw = map(int, row["Punti"].split("-"))
                 
-                # 4. Logica punteggio vincitore/perdente
                 if p1_raw > p2_raw:
                     val_g1, val_g2 = p1_raw, -p1_raw
                 else:
                     val_g1, val_g2 = -p2_raw, p2_raw
                 
-                # MODIFICATO: Pulizia nome Beyblade (rimuove il prefisso del deck)
                 b1_clean = row["Bey G1"].split(" - ", 1)[-1] if " - " in row["Bey G1"] else row["Bey G1"]
                 b2_clean = row["Bey G2"].split(" - ", 1)[-1] if " - " in row["Bey G2"] else row["Bey G2"]
                 
-                # MODIFICATO: Formato richiesto per archivio Excel (Aggiunta Nomi Giocatori e Bey puliti)
                 new_records.append({
                     "Data": now_str,
                     "NomeGiocatore1": g1,
@@ -500,17 +496,88 @@ with tab5:
                     "PunteggioBeyG2": val_g2
                 })
             
-            # 3. Archivio cumulativo (non sovrascrittura di stato)
             with st.spinner("Aggiornamento archivio..."):
                 full_archive = github_action("stats", method="GET") or []
                 full_archive.extend(new_records)
                 
                 if github_action("stats", full_archive, "PUT"):
                     st.success("Scontri archiviati con successo!")
-                    # MODIFICATO PER RESET: Incrementa il contatore per rigenerare la tabella
                     st.session_state.match_counter += 1
                     time.sleep(1)
-                    # 2. Reset tabella tramite rerun
                     st.rerun()
                 else:
                     st.error("Errore salvataggio statistiche.")
+
+    st.markdown("---")
+    st.markdown("### 📥 Esporta Statistiche in Excel")
+    
+    start_date = st.date_input("Esporta dati a partire da:", value=datetime.today().date())
+    
+    if st.button("⚙️ Prepara File Excel", use_container_width=True):
+        with st.spinner("Recupero dati e generazione Excel..."):
+            stats_data = github_action("stats", method="GET") or []
+            if not stats_data:
+                st.warning("Nessun dato presente nel registro.")
+            else:
+                filtered_data = []
+                for row in stats_data:
+                    d_str = row.get("Data", "")
+                    # Logica robusta per la data (sia vecchio che nuovo formato per evitare crash sui vecchi dati)
+                    try:
+                        row_date = datetime.strptime(d_str, "%d/%m/%Y").date()
+                    except ValueError:
+                        try:
+                            row_date = datetime.strptime(d_str, "%Y-%m-%d %H:%M:%S").date()
+                        except ValueError:
+                            row_date = datetime.min.date()
+                            
+                    if row_date >= start_date:
+                        filtered_data.append(row)
+                        
+                if not filtered_data:
+                    st.warning("Nessun dato trovato a partire da questa data.")
+                else:
+                    df_history = pd.DataFrame(filtered_data)
+                    
+                    # Generazione Punteggi Beyblade (Foglio 2)
+                    df1 = df_history[['BeyG1', 'PunteggioBeyG1']].rename(columns={'BeyG1': 'Bey', 'PunteggioBeyG1': 'Score'})
+                    df2 = df_history[['BeyG2', 'PunteggioBeyG2']].rename(columns={'BeyG2': 'Bey', 'PunteggioBeyG2': 'Score'})
+                    
+                    df_concat = pd.concat([df1, df2])
+                    df_concat['Score'] = pd.to_numeric(df_concat['Score'], errors='coerce').fillna(0)
+                    df_scores = df_concat.groupby('Bey')['Score'].sum().reset_index().sort_values(by='Score', ascending=False)
+                    
+                    output = io.BytesIO()
+                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                        # Foglio 1: match history
+                        df_history.to_excel(writer, sheet_name='match history', index=False)
+                        worksheet_history = writer.sheets['match history']
+                        worksheet_history.autofilter(0, 0, len(df_history), len(df_history.columns) - 1)
+                        
+                        # Foglio 2: Punteggi Beyblade
+                        df_scores.to_excel(writer, sheet_name='Punteggi Beyblade', index=False)
+                        
+                        # Fogli Utenti: Antonio, Andrea, Fabio
+                        for u in ["Antonio", "Andrea", "Fabio"]:
+                            if 'NomeGiocatore1' in df_history.columns and 'NomeGiocatore2' in df_history.columns:
+                                df_u = df_history[(df_history['NomeGiocatore1'] == u) | (df_history['NomeGiocatore2'] == u)]
+                            else:
+                                df_u = pd.DataFrame() 
+                                
+                            df_u.to_excel(writer, sheet_name=u, index=False)
+                            worksheet_u = writer.sheets[u]
+                            if not df_u.empty:
+                                worksheet_u.autofilter(0, 0, len(df_u), len(df_u.columns) - 1)
+                                
+                    st.session_state.excel_bytes = output.getvalue()
+                    st.success("✅ File Excel pronto!")
+
+    if 'excel_bytes' in st.session_state:
+        st.download_button(
+            label="📥 SCARICA EXCEL (.xlsx)",
+            data=st.session_state.excel_bytes,
+            file_name=f"Beyblade_Match_History_{datetime.now().strftime('%d_%m_%Y')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+            type="primary"
+        )
