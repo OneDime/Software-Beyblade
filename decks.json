@@ -1,71 +1,48 @@
 {
     "Antonio": [
         {
-            "name": "TopMeta",
+            "name": "Anti wizard",
             "slots": {
                 "0": {
                     "tipo": "BX/UX",
-                    "b": "WyvernHover",
+                    "b": "CobaltDragoon",
                     "r": "9-60",
-                    "bi": "Kick"
+                    "bi": "Elevate"
                 },
                 "1": {
                     "tipo": "BX/UX",
-                    "b": "CobaltDragoon",
-                    "r": "5-60",
-                    "bi": "Elevate"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "WizardRod",
-                    "r": "1-60",
-                    "bi": "Hexa"
-                }
-            }
-        },
-        {
-            "name": "PowerGuys",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "WyvernHover",
-                    "r": "9-60",
-                    "bi": "Kick"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "CobaltDragoon",
-                    "r": "5-60",
-                    "bi": "Elevate"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "WizardRod",
-                    "r": "1-60",
-                    "bi": "Free Ball"
-                }
-            }
-        },
-        {
-            "name": "Immortals",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "WizardRod",
-                    "r": "1-60",
-                    "bi": "Hexa"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "CobaltDragoon",
-                    "r": "5-60",
-                    "bi": "Elevate"
+                    "b": "SharkScale",
+                    "r": "4-50",
+                    "bi": "Low Rush"
                 },
                 "2": {
                     "tipo": "BX/UX",
                     "b": "SilverWolf",
                     "r": "9-70",
                     "bi": "Free Ball"
+                }
+            }
+        },
+        {
+            "name": "top meta",
+            "slots": {
+                "0": {
+                    "tipo": "BX/UX",
+                    "b": "WizardRod",
+                    "r": "1-60",
+                    "bi": "Hexa"
+                },
+                "1": {
+                    "tipo": "BX/UX",
+                    "b": "SharkScale",
+                    "r": "4-50",
+                    "bi": "Low Rush"
+                },
+                "2": {
+                    "tipo": "BX/UX",
+                    "b": "CobaltDragoon",
+                    "r": "9-60",
+                    "bi": "Elevate"
                 }
             }
         }
@@ -81,36 +58,13 @@
                 },
                 "1": {
                     "b": "TyrannoBeat",
-                    "r": "1-60",
-                    "bi": "Rush"
+                    "r": "5-60",
+                    "bi": "Point"
                 },
                 "2": {
                     "b": "PhoenixWing",
                     "r": "3-60",
-                    "bi": "Kick"
-                }
-            }
-        },
-        {
-            "name": "DECK 2",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "WizardRod",
-                    "r": "5-70",
-                    "bi": "Ball"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "TyrannoBeat",
-                    "r": "1-60",
                     "bi": "Rush"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "PhoenixWing",
-                    "r": "9-60",
-                    "bi": "Taper"
                 }
             }
         }

@@ -3,7 +3,7 @@
         "lock_bit": {
             "Wizard": 1,
             "Kraken": 1,
-            "Hells": 1,
+            "Hells": 2,
             "Fox": 1
         },
         "blade": {
@@ -18,19 +18,22 @@
             "PhoenixWing": 2,
             "SilverWolf": 1,
             "SamuraiSaber": 1,
-            "HellsHammer": 1
+            "HellsHammer": 1,
+            "SharkScale": 1,
+            "TyrannoRoar": 1
         },
         "main_blade": {
             "Arc": 1,
             "Wriggle": 1,
             "Reaper": 1,
-            "Brush": 1
+            "Brush": 1,
+            "Brave": 1
         },
         "assist_blade": {
             "Round": 1,
             "Slash": 1,
             "Turn": 1,
-            "Jaggy": 1
+            "Jaggy": 2
         },
         "ratchet": {
             "4-55": 1,
@@ -38,7 +41,7 @@
             "5-70": 1,
             "5-80": 2,
             "2-60": 1,
-            "3-60": 1,
+            "3-60": 2,
             "3-85": 2,
             "9-60": 2,
             "5-60": 1,
@@ -46,7 +49,9 @@
             "3-80": 1,
             "2-70": 1,
             "3-70": 1,
-            "9-70": 1
+            "9-70": 1,
+            "4-50": 1,
+            "1-70": 1
         },
         "bit": {
             "Low Orb": 1,
@@ -63,9 +68,10 @@
             "Kick": 1,
             "Hexa": 2,
             "Free Ball": 1,
-            "Gear Flat": 1,
-            "Level": 1,
-            "Gear Rush": 1
+            "Gear Flat": 2,
+            "Level": 2,
+            "Gear Rush": 1,
+            "Under Flat": 1
         },
         "ratchet_integrated_bit": {}
     },
