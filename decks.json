@@ -1,29 +1,5 @@
 {
-    "Antonio": [
-        {
-            "name": "The Tony Boys",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "SharkScale",
-                    "r": "9-70",
-                    "bi": "Hexa"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "WyvernHover",
-                    "r": "1-60",
-                    "bi": "Low Flat"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "CobaltDragoon",
-                    "r": "9-60",
-                    "bi": "Elevate"
-                }
-            }
-        }
-    ],
+    "Antonio": [],
     "Andrea": [
         {
             "name": "DECK 1",
