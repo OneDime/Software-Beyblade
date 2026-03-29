@@ -61,7 +61,8 @@ inject_css()
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
-FILES = {"inv": "inventario.json", "decks": "decks.json"}
+# Aggiunto "stats" per gestire il salvataggio dei match
+FILES = {"inv": "inventario.json", "decks": "decks.json", "stats": "match_stats.json"}
 
 def github_action(file_key, data=None, method="GET"):
     ts = int(time.time())
@@ -74,7 +75,7 @@ def github_action(file_key, data=None, method="GET"):
         if method == "GET":
             if r_get.status_code == 200:
                 return json.loads(base64.b64decode(r_get.json()["content"]).decode('utf-8'))
-            return None
+            return [] if file_key == "stats" else None
         elif method == "PUT":
             payload = {
                 "message": f"App Update {FILES[file_key]}", 
@@ -175,7 +176,8 @@ if st.sidebar.button("🔄 Forza Sync Cloud"):
 
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
-tab1, tab2, tab3, tab4 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🤖 AI Advisor"])
+# TABS: Definizione (aggiunta Tab 5)
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🤖 AI Advisor", "📊 Registro Match"])
 
 # --- TAB 1: AGGIUNGI (INTOCCABILE) ---
 with tab1:
@@ -304,7 +306,7 @@ with tab3:
         user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
         save_cloud(); st.rerun()
 
-# --- TAB 4: AI ADVISOR ---
+# --- TAB 4: AI ADVISOR (INTOCCABILE) ---
 with tab4:
     st.markdown("### 🤖 Strategia Meta-Analitica WBO")
     
@@ -389,7 +391,6 @@ Procedi con l'analisi tecnica rigorosa.
         if 'ai_report' in st.session_state:
             st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
             
-            # --- LOGICA DI ESTRAZIONE JSON DAL TESTO GENERATO ---
             extracted_json = None
             match = re.search(r'\{[\s\n]*"slots"[\s\n]*:[\s\S]*\}', st.session_state.ai_report, re.DOTALL)
             if match:
@@ -415,16 +416,74 @@ Procedi con l'analisi tecnica rigorosa.
                     if st.button("🚀 Importa Deck nel Builder", type="primary", use_container_width=True):
                         oggi_str = datetime.now().strftime('%d/%m/%Y')
                         nome_deck = f"{tipo_deck_ai}_{oggi_str}"
-                        
-                        nuovo_deck = {
-                            "name": nome_deck,
-                            "slots": extracted_json["slots"]
-                        }
-                        
+                        nuovo_deck = {"name": nome_deck, "slots": extracted_json["slots"]}
                         user_data["decks"].append(nuovo_deck)
                         save_cloud()
-                        st.success(f"Deck '{nome_deck}' importato con successo nel Tab 3!")
+                        st.success(f"Deck '{nome_deck}' importato!")
                         time.sleep(1)
                         st.rerun()
                 else:
                     st.info("⚠️ L'AI non ha fornito un JSON compatibile in questa run.")
+
+# --- TAB 5: REGISTRO MATCH (NUOVO) ---
+with tab5:
+    st.markdown("### 📊 Registro Rapido Scontri")
+    
+    # Selezione Giocatori
+    col_p1, col_p2 = st.columns(2)
+    p_options = ["Antonio", "Andrea", "Fabio", "Esterno"]
+    with col_p1: g1 = st.selectbox("Giocatore 1", p_options, index=p_options.index(user_sel) if user_sel in p_options else 0)
+    with col_p2: g2 = st.selectbox("Giocatore 2", p_options, index=1 if user_sel != "Andrea" else 0)
+
+    # Helper per estrarre i nomi dei Bey dai deck salvati
+    def get_bey_names(player_name, suffix):
+        if player_name == "Esterno":
+            with st.expander(f"⚙️ Configura Bey Esterni ({suffix})"):
+                return [st.text_input(f"Bey {i+1} ({suffix})", f"Esterno {i+1}", key=f"ext_{suffix}_{i}") for i in range(3)]
+        else:
+            p_decks = st.session_state.users[player_name]["decks"]
+            names = []
+            for d in p_decks:
+                for s_idx in range(3):
+                    curr = d["slots"].get(str(s_idx), {})
+                    tipo = curr.get("tipo", "BX/UX")
+                    keys = ["lb", "mb", "ab", "r", "bi"] if "CX" in tipo else ["b", "r", "bi"]
+                    if "+RIB" in tipo: keys = ["lb", "mb", "ab", "rib"] if "CX" in tipo else ["b", "rib"]
+                    n = " ".join([curr.get(k) for k in keys if curr.get(k) and curr.get(k) != "-"]).strip()
+                    if n: names.append(f"{d['name']} - {n}")
+            return sorted(list(set(names))) if names else ["-"]
+
+    beys_g1 = get_bey_names(g1, "G1")
+    beys_g2 = get_bey_names(g2, "G2")
+    punteggi = ["-", "1-0", "2-0", "3-0", "0-1", "0-2", "0-3"]
+
+    # Griglia di inserimento
+    df_init = pd.DataFrame([{"Bey G1": "-", "Bey G2": "-", "Punti": "-"} for _ in range(7)])
+    
+    edited_df = st.data_editor(
+        df_init,
+        column_config={
+            "Bey G1": st.column_config.SelectboxColumn("Bey G1", options=beys_g1, width="medium"),
+            "Bey G2": st.column_config.SelectboxColumn("Bey G2", options=beys_g2, width="medium"),
+            "Punti": st.column_config.SelectboxColumn("Punti", options=punteggi, width="small"),
+        },
+        hide_index=False,
+        use_container_width=True,
+        key="editor_match_v2"
+    )
+
+    if st.button("🚀 SALVA MATCH NEL CLOUD", use_container_width=True, type="primary"):
+        valid_rounds = edited_df[edited_df["Punti"] != "-"].to_dict('records')
+        if not valid_rounds:
+            st.warning("Compila almeno un round.")
+        else:
+            match_data = {
+                "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "p1": g1, "p2": g2,
+                "rounds": valid_rounds
+            }
+            stats = github_action("stats", method="GET") or []
+            stats.append(match_data)
+            if github_action("stats", stats, "PUT"):
+                st.success("Statistiche salvate correttamente!")
+                time.sleep(1); st.rerun()
