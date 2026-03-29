@@ -5,5 +5,14 @@
         "BeyG2": "DECK 1 - TyrannoBeat 5-60 Point",
         "PunteggioBeyG1": 3,
         "PunteggioBeyG2": -3
+    },
+    {
+        "Data": "2026-03-29 20:46:48",
+        "NomeGiocatore1": "Antonio",
+        "BeyG1": "SharkScale 4-50 Low Rush",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "WizardRod 9-60 Ball",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
     }
 ]
