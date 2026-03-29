@@ -61,7 +61,7 @@ inject_css()
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
-# Aggiunto "stats" per gestire il salvataggio dei match
+# AGGIUNTO SOLO IL FILE STATS
 FILES = {"inv": "inventario.json", "decks": "decks.json", "stats": "match_stats.json"}
 
 def github_action(file_key, data=None, method="GET"):
@@ -176,7 +176,6 @@ if st.sidebar.button("🔄 Forza Sync Cloud"):
 
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
-# TABS: Definizione (aggiunta Tab 5)
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🤖 AI Advisor", "📊 Registro Match"])
 
 # --- TAB 1: AGGIUNGI (INTOCCABILE) ---
@@ -322,16 +321,7 @@ with tab4:
 
             col_a, col_b = st.columns(2)
             with col_a:
-                approcci = [
-                    "Aggro puro", 
-                    "Anti-meta", 
-                    "Stamina dominante", 
-                    "Difensivo/Counter", 
-                    "Top Meta ottimizzato", 
-                    "Equilibrato", 
-                    "High-risk High-reward", 
-                    "Tech specialist"
-                ]
+                approcci = ["Aggro puro", "Anti-meta", "Stamina dominante", "Difensivo/Counter", "Top Meta ottimizzato", "Equilibrato", "High-risk High-reward", "Tech specialist"]
                 tipo_deck_ai = st.selectbox("🎯 Approccio", approcci)
                 lancio_ai = st.select_slider("🎯 Capacità di lancio (1-10)", options=list(range(1, 11)), value=5)
                 torneo_ai = st.selectbox("🎯 Tipo di Torneo", ["Locale / Amichevole", "Regionale", "Nazionale", "WBO Competitivo"])
@@ -425,17 +415,15 @@ Procedi con l'analisi tecnica rigorosa.
                 else:
                     st.info("⚠️ L'AI non ha fornito un JSON compatibile in questa run.")
 
-# --- TAB 5: REGISTRO MATCH (NUOVO) ---
+# --- TAB 5: REGISTRO MATCH (LAVORAZIONE ESCLUSIVA) ---
 with tab5:
     st.markdown("### 📊 Registro Rapido Scontri")
     
-    # Selezione Giocatori
     col_p1, col_p2 = st.columns(2)
     p_options = ["Antonio", "Andrea", "Fabio", "Esterno"]
     with col_p1: g1 = st.selectbox("Giocatore 1", p_options, index=p_options.index(user_sel) if user_sel in p_options else 0)
     with col_p2: g2 = st.selectbox("Giocatore 2", p_options, index=1 if user_sel != "Andrea" else 0)
 
-    # Helper per estrarre i nomi dei Bey dai deck salvati
     def get_bey_names(player_name, suffix):
         if player_name == "Esterno":
             with st.expander(f"⚙️ Configura Bey Esterni ({suffix})"):
@@ -457,8 +445,11 @@ with tab5:
     beys_g2 = get_bey_names(g2, "G2")
     punteggi = ["-", "1-0", "2-0", "3-0", "0-1", "0-2", "0-3"]
 
-    # Griglia di inserimento
-    df_init = pd.DataFrame([{"Bey G1": "-", "Bey G2": "-", "Punti": "-"} for _ in range(7)])
+    # 1. Righe partono da 1
+    df_init = pd.DataFrame(
+        [{"Bey G1": "-", "Bey G2": "-", "Punti": "-"} for _ in range(7)],
+        index=range(1, 8)
+    )
     
     edited_df = st.data_editor(
         df_init,
@@ -467,23 +458,46 @@ with tab5:
             "Bey G2": st.column_config.SelectboxColumn("Bey G2", options=beys_g2, width="medium"),
             "Punti": st.column_config.SelectboxColumn("Punti", options=punteggi, width="small"),
         },
-        hide_index=False,
         use_container_width=True,
-        key="editor_match_v2"
+        key="match_editor_vFINAL"
     )
 
     if st.button("🚀 SALVA MATCH NEL CLOUD", use_container_width=True, type="primary"):
-        valid_rounds = edited_df[edited_df["Punti"] != "-"].to_dict('records')
-        if not valid_rounds:
+        valid_rows = edited_df[edited_df["Punti"] != "-"]
+        
+        if valid_rows.empty:
             st.warning("Compila almeno un round.")
         else:
-            match_data = {
-                "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "p1": g1, "p2": g2,
-                "rounds": valid_rounds
-            }
-            stats = github_action("stats", method="GET") or []
-            stats.append(match_data)
-            if github_action("stats", stats, "PUT"):
-                st.success("Statistiche salvate correttamente!")
-                time.sleep(1); st.rerun()
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            new_records = []
+            
+            for _, row in valid_rows.iterrows():
+                p1_raw, p2_raw = map(int, row["Punti"].split("-"))
+                
+                # 4. Logica punteggio vincitore/perdente
+                if p1_raw > p2_raw:
+                    val_g1, val_g2 = p1_raw, -p1_raw
+                else:
+                    val_g1, val_g2 = -p2_raw, p2_raw
+                
+                # Formato richiesto per archivio Excel
+                new_records.append({
+                    "Data": now_str,
+                    "BeyG1": row["Bey G1"],
+                    "BeyG2": row["Bey G2"],
+                    "PunteggioBeyG1": val_g1,
+                    "PunteggioBeyG2": val_g2
+                })
+            
+            # 3. Archivio cumulativo (non sovrascrittura di stato)
+            with st.spinner("Aggiornamento archivio..."):
+                full_archive = github_action("stats", method="GET") or []
+                full_archive.extend(new_records)
+                
+                if github_action("stats", full_archive, "PUT"):
+                    st.success("Scontri archiviati con successo!")
+                    time.sleep(1)
+                    # 2. Reset tabella tramite rerun
+                    st.rerun()
+                else:
+                    st.error("Errore salvataggio statistiche.")
