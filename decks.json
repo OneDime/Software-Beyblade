@@ -27,13 +27,22 @@
             "name": "DECK 2",
             "slots": {
                 "0": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "WizardRod",
+                    "r": "1-60",
+                    "bi": "Hexa"
                 },
                 "1": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "SharkScale",
+                    "r": "4-50",
+                    "bi": "Low Rush"
                 },
                 "2": {
-                    "tipo": "BX/UX"
+                    "tipo": "BX/UX",
+                    "b": "CobaltDragoon",
+                    "r": "9-60",
+                    "bi": "Elevate"
                 }
             }
         }
