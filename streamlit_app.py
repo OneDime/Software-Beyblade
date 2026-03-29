@@ -419,6 +419,10 @@ Procedi con l'analisi tecnica rigorosa.
 with tab5:
     st.markdown("### 📊 Registro Rapido Scontri")
     
+    # ADDED FOR RESET
+    if 'match_counter' not in st.session_state:
+        st.session_state.match_counter = 0
+    
     col_p1, col_p2 = st.columns(2)
     p_options = ["Antonio", "Andrea", "Fabio", "Esterno"]
     with col_p1: g1 = st.selectbox("Giocatore 1", p_options, index=p_options.index(user_sel) if user_sel in p_options else 0)
@@ -459,7 +463,8 @@ with tab5:
             "Punti": st.column_config.SelectboxColumn("Punti", options=punteggi, width="small"),
         },
         use_container_width=True,
-        key="match_editor_vFINAL"
+        # MODIFIED FOR RESET: chiave dinamica
+        key=f"match_editor_vFINAL_{st.session_state.match_counter}"
     )
 
     if st.button("🚀 SALVA MATCH NEL CLOUD", use_container_width=True, type="primary"):
@@ -480,11 +485,17 @@ with tab5:
                 else:
                     val_g1, val_g2 = -p2_raw, p2_raw
                 
-                # Formato richiesto per archivio Excel
+                # MODIFICATO: Pulizia nome Beyblade (rimuove il prefisso del deck)
+                b1_clean = row["Bey G1"].split(" - ", 1)[-1] if " - " in row["Bey G1"] else row["Bey G1"]
+                b2_clean = row["Bey G2"].split(" - ", 1)[-1] if " - " in row["Bey G2"] else row["Bey G2"]
+                
+                # MODIFICATO: Formato richiesto per archivio Excel (Aggiunta Nomi Giocatori e Bey puliti)
                 new_records.append({
                     "Data": now_str,
-                    "BeyG1": row["Bey G1"],
-                    "BeyG2": row["Bey G2"],
+                    "NomeGiocatore1": g1,
+                    "BeyG1": b1_clean,
+                    "NomeGiocatore2": g2,
+                    "BeyG2": b2_clean,
                     "PunteggioBeyG1": val_g1,
                     "PunteggioBeyG2": val_g2
                 })
@@ -496,6 +507,8 @@ with tab5:
                 
                 if github_action("stats", full_archive, "PUT"):
                     st.success("Scontri archiviati con successo!")
+                    # MODIFICATO PER RESET: Incrementa il contatore per rigenerare la tabella
+                    st.session_state.match_counter += 1
                     time.sleep(1)
                     # 2. Reset tabella tramite rerun
                     st.rerun()
