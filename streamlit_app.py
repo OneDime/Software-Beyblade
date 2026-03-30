@@ -8,7 +8,7 @@ import base64
 import time
 import re
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
 from PIL import Image
 import google.generativeai as genai
 
@@ -62,7 +62,6 @@ inject_css()
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
-# AGGIUNTO SOLO IL FILE STATS
 FILES = {"inv": "inventario.json", "decks": "decks.json", "stats": "match_stats.json"}
 
 def github_action(file_key, data=None, method="GET"):
@@ -177,7 +176,7 @@ if st.sidebar.button("🔄 Forza Sync Cloud"):
 
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🤖 AI Advisor", "📊 Registro Match"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🤖 AI Advisor", "📊 Registro Match", "🏆 Classifica Beyblade"])
 
 # --- TAB 1: AGGIUNGI (INTOCCABILE) ---
 with tab1:
@@ -416,7 +415,7 @@ Procedi con l'analisi tecnica rigorosa.
                 else:
                     st.info("⚠️ L'AI non ha fornito un JSON compatibile in questa run.")
 
-# --- TAB 5: REGISTRO MATCH (LAVORAZIONE ESCLUSIVA) ---
+# --- TAB 5: REGISTRO MATCH (INTOCCABILE) ---
 with tab5:
     st.markdown("### 📊 Registro Rapido Scontri")
     
@@ -471,7 +470,6 @@ with tab5:
         if valid_rows.empty:
             st.warning("Compila almeno un round.")
         else:
-            # Salvataggio data limitato a gg/mm/aaaa
             now_str = datetime.now().strftime("%d/%m/%Y")
             new_records = []
             
@@ -522,7 +520,6 @@ with tab5:
                 filtered_data = []
                 for row in stats_data:
                     d_str = row.get("Data", "")
-                    # Logica robusta per la data (sia vecchio che nuovo formato per evitare crash sui vecchi dati)
                     try:
                         row_date = datetime.strptime(d_str, "%d/%m/%Y").date()
                     except ValueError:
@@ -539,7 +536,6 @@ with tab5:
                 else:
                     df_history = pd.DataFrame(filtered_data)
                     
-                    # Generazione Punteggi Beyblade (Foglio 2)
                     df1 = df_history[['BeyG1', 'PunteggioBeyG1']].rename(columns={'BeyG1': 'Bey', 'PunteggioBeyG1': 'Score'})
                     df2 = df_history[['BeyG2', 'PunteggioBeyG2']].rename(columns={'BeyG2': 'Bey', 'PunteggioBeyG2': 'Score'})
                     
@@ -549,15 +545,12 @@ with tab5:
                     
                     output = io.BytesIO()
                     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                        # Foglio 1: match history
                         df_history.to_excel(writer, sheet_name='match history', index=False)
                         worksheet_history = writer.sheets['match history']
                         worksheet_history.autofilter(0, 0, len(df_history), len(df_history.columns) - 1)
                         
-                        # Foglio 2: Punteggi Beyblade
                         df_scores.to_excel(writer, sheet_name='Punteggi Beyblade', index=False)
                         
-                        # Fogli Utenti: Antonio, Andrea, Fabio
                         for u in ["Antonio", "Andrea", "Fabio"]:
                             if 'NomeGiocatore1' in df_history.columns and 'NomeGiocatore2' in df_history.columns:
                                 df_u = df_history[(df_history['NomeGiocatore1'] == u) | (df_history['NomeGiocatore2'] == u)]
@@ -581,3 +574,64 @@ with tab5:
             use_container_width=True,
             type="primary"
         )
+
+# --- TAB 6: CLASSIFICA BEYBLADE (NUOVO) ---
+with tab6:
+    st.markdown("### 🏆 Classifica Globale Beyblade")
+    
+    stats_data = github_action("stats", method="GET") or []
+    
+    if not stats_data:
+        st.info("Nessun match registrato finora nel cloud.")
+    else:
+        col_f1, col_f2 = st.columns(2)
+        with col_f1:
+            oggi = datetime.today().date()
+            inizio_default = oggi - timedelta(days=30)
+            date_range = st.date_input("📅 Range temporale", value=(inizio_default, oggi))
+        
+        with col_f2:
+            opzioni_filtro = ["Tutti", "Antonio", "Andrea", "Fabio"]
+            idx_default = opzioni_filtro.index(user_sel) if user_sel in opzioni_filtro else 0
+            filtro_utente = st.selectbox("👤 Filtra per Utente", opzioni_filtro, index=idx_default)
+
+        if isinstance(date_range, tuple) and len(date_range) == 2:
+            start_d, end_d = date_range
+        elif isinstance(date_range, tuple) and len(date_range) == 1:
+            start_d = end_d = date_range[0]
+        else:
+            start_d = end_d = date_range
+
+        filtered_data = []
+        for row in stats_data:
+            d_str = row.get("Data", "")
+            try:
+                row_date = datetime.strptime(d_str, "%d/%m/%Y").date()
+            except ValueError:
+                try:
+                    row_date = datetime.strptime(d_str, "%Y-%m-%d %H:%M:%S").date()
+                except ValueError:
+                    row_date = datetime.min.date()
+            
+            if start_d <= row_date <= end_d:
+                filtered_data.append(row)
+
+        if not filtered_data:
+            st.warning("Nessun dato trovato per il periodo selezionato.")
+        else:
+            df_storico = pd.DataFrame(filtered_data)
+            
+            df_g1 = df_storico[['NomeGiocatore1', 'BeyG1', 'PunteggioBeyG1']].rename(columns={'NomeGiocatore1': 'Giocatore', 'BeyG1': 'Bey', 'PunteggioBeyG1': 'Punteggio'})
+            df_g2 = df_storico[['NomeGiocatore2', 'BeyG2', 'PunteggioBeyG2']].rename(columns={'NomeGiocatore2': 'Giocatore', 'BeyG2': 'Bey', 'PunteggioBeyG2': 'Punteggio'})
+            
+            df_totale = pd.concat([df_g1, df_g2])
+            
+            if filtro_utente != "Tutti":
+                df_totale = df_totale[df_totale['Giocatore'] == filtro_utente]
+            
+            df_totale['Punteggio'] = pd.to_numeric(df_totale['Punteggio'], errors='coerce').fillna(0)
+            
+            df_classifica = df_totale.groupby('Bey')['Punteggio'].sum().reset_index().sort_values(by='Punteggio', ascending=False)
+            df_classifica.index = range(1, len(df_classifica) + 1)
+            
+            st.dataframe(df_classifica, use_container_width=True)
