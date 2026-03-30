@@ -25,5 +25,32 @@
         "BeyG2": "WizardRod 9-60 Ball",
         "PunteggioBeyG1": 2,
         "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "30/03/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Hover Wyvern 3-70 Jolt",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "TyrannoBeat 5-60 Point",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "30/03/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "MeteorDragoon 5-60 Level",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "PhoenixWing 3-60 Rush",
+        "PunteggioBeyG1": 3,
+        "PunteggioBeyG2": -3
+    },
+    {
+        "Data": "30/03/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "WizardRod 9-60 Ball",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "WizardRod 9-60 Ball",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
     }
 ]
