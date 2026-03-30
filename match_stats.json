@@ -41,8 +41,8 @@
         "BeyG1": "MeteorDragoon 5-60 Level",
         "NomeGiocatore2": "Andrea",
         "BeyG2": "PhoenixWing 3-60 Rush",
-        "PunteggioBeyG1": 3,
-        "PunteggioBeyG2": -3
+        "PunteggioBeyG1": -3,
+        "PunteggioBeyG2": 3
     },
     {
         "Data": "30/03/2026",
