@@ -52,5 +52,14 @@
         "BeyG2": "WizardRod 9-60 Ball",
         "PunteggioBeyG1": -1,
         "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "30/03/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "GolemRock 6-60 Rush",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "PhoenixWing 3-60 Rush",
+        "PunteggioBeyG1": -2,
+        "PunteggioBeyG2": 2
     }
 ]
