@@ -58,7 +58,7 @@ st.set_page_config(page_title="Officina Beyblade X", layout="wide", initial_side
 inject_css()
 
 # =========================
-# LOGICA GITHUB E MIGRAZIONE DATI
+# LOGICA GITHUB
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
@@ -93,15 +93,19 @@ def force_load():
     deck_c = github_action("decks", method="GET")
     new_users = {}
     
+    # Lista delle chiavi necessarie per il nuovo sistema
     req_keys = ["lock_chip", "blade", "over_blade", "metal_blade", "main_blade", "assist_blade", "r_i_blade", "ratchet", "bit", "r_i_bit"]
     
     for u in ["Antonio", "Andrea", "Fabio"]:
+        # Prende i dati salvati dal cloud, se esistono
         user_inv = inv_c.get(u, {}) if inv_c else {}
         
+        # Retrocompatibilità: Assicuriamoci che tutte le chiavi esistano, per evitare KeyError
         for k in req_keys:
             if k not in user_inv:
                 user_inv[k] = {}
                 
+        # Migrazione vecchi nomi (trasferisce gli oggetti dai vecchi nomi ai nuovi)
         if "lock_bit" in user_inv:
             user_inv["lock_chip"].update(user_inv.pop("lock_bit"))
         if "ratchet_integrated_bit" in user_inv:
@@ -109,31 +113,9 @@ def force_load():
         if "ratchet_integrated_blade" in user_inv:
             user_inv["r_i_blade"].update(user_inv.pop("ratchet_integrated_blade"))
             
-        # Nuova struttura per i Deck e migrazione automatica dei vecchi salvataggi
-        raw_decks = deck_c.get(u, [])
-        if isinstance(raw_decks, list):
-            beys_list = []
-            deck_list = []
-            for d in raw_decks:
-                new_deck = {"name": d.get("name", "DECK"), "slots": {}}
-                for s_idx, s_data in d.get("slots", {}).items():
-                    if isinstance(s_data, dict) and s_data.get("tipo"):
-                        bey_id = hashlib.md5(f"{u}_{d.get('name')}_{s_idx}_{time.time()}".encode()).hexdigest()[:8]
-                        s_data["id"] = bey_id
-                        beys_list.append(s_data)
-                        new_deck["slots"][str(s_idx)] = bey_id
-                    else:
-                        new_deck["slots"][str(s_idx)] = "-"
-                deck_list.append(new_deck)
-            if not deck_list:
-                deck_list.append({"name": "DECK 1", "slots": {"0":"-", "1":"-", "2":"-"}})
-            decks_obj = {"beys": beys_list, "deck_list": deck_list}
-        else:
-            decks_obj = raw_decks
-            
         new_users[u] = {
             "inv": user_inv,
-            "decks": decks_obj
+            "decks": deck_c.get(u, [{"name": "DECK 1", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}}]) if deck_c else [{"name": "DECK 1", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}}]
         }
     st.session_state.users = new_users
 
@@ -188,6 +170,7 @@ def load_db():
                ('bit', 'bit_image', 'bit'), 
                ('ratchet_integrated_bit', 'ratchet_integrated_bit_image', 'r_i_bit')]
     
+    # Inizializza tutte le chiavi per evitare KeyError nei sistemi Theory
     for _, _, state_key in mapping:
         theory_opts[state_key] = ["-"]
 
@@ -198,6 +181,7 @@ def load_db():
                 for _, r in df.iterrows():
                     if r[csv_col] and r[csv_col] != "n/a": img_map[r[csv_col]] = r[img_col]
     
+    # Mappatura immagini universale
     for _, r in df.iterrows():
         for c_col, i_col, _ in mapping:
             if c_col in df.columns and i_col in df.columns:
@@ -216,21 +200,6 @@ def get_img(url, size=(100, 100)):
     if os.path.exists(path):
         return Image.open(path).resize(size, Image.Resampling.LANCZOS)
     return None
-
-def get_bey_name_and_comps(curr):
-    t_sys = curr.get("tipo", "BX/UX")
-    if "CX Infinity" in t_sys:
-        k_order = ["lc", "ob", "meb", "ab", "rib"] if "+R-I-Bit" in t_sys else ["lc", "ob", "meb", "ab", "r", "bi"]
-    elif "CX" in t_sys:
-        k_order = ["lc", "mb", "ab", "rib"] if "+R-I-Bit" in t_sys else ["lc", "mb", "ab", "r", "bi"]
-    elif "R-I-Blade" in t_sys:
-        k_order = ["ribl", "bi"]
-    else:
-        k_order = ["b", "rib"] if "+R-I-Bit" in t_sys else ["b", "r", "bi"]
-    
-    parts = [curr.get(k) for k in k_order if curr.get(k) and curr.get(k) != "-"]
-    nome_bey = " ".join(parts).strip() or "Nuovo Beyblade"
-    return nome_bey, parts, k_order
 
 df_db, global_img_map, theory_opts = load_db()
 user_sel = st.session_state.user_sel
@@ -251,7 +220,7 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 # =========================
 # MENU DI NAVIGAZIONE
 # =========================
-menu_scelta = st.selectbox("🧭 Menu di Navigazione", ["Inventario", "Builder", "Match!", "AI Advisor"])
+menu_scelta = st.selectbox("🧭 Menu di Navigazione", ["Inventario", "Deck Builder", "Match!", "AI Advisor"])
 
 if menu_scelta == "Inventario":
     tab1, tab2 = st.tabs(["🔍 Aggiungi", "📦 Inventario"])
@@ -305,169 +274,111 @@ if menu_scelta == "Inventario":
                             if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                             save_cloud(); st.rerun()
 
-elif menu_scelta == "Builder":
-    tab_bey, tab_deck = st.tabs(["🧩 Beyblade Builder", "🃏 Deck Builder"])
+elif menu_scelta == "Deck Builder":
+    tab3, = st.tabs(["🧩 Deck Builder"])
 
-    # --- BEYBLADE BUILDER ---
-    with tab_bey:
-        if st.button("➕ Crea Beyblade", type="primary"):
-            new_id = hashlib.md5(str(time.time()).encode()).hexdigest()[:8]
-            user_data["decks"]["beys"].append({"id": new_id, "tipo": "BX/UX"})
-            save_cloud(); st.rerun()
-            
+    # --- TAB 3: DECK BUILDER ---
+    with tab3:
         inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
         tipologie = ["BX/UX", "BX/UX+R-I-Bit", "CX", "CX+R-I-Bit", "CX Infinity", "CX Infinity+R-I-Bit", "R-I-Blade+Bit", "BX/UX Theory", "BX/UX+R-I-Bit Theory", "CX Theory", "CX+R-I-Bit Theory", "CX Infinity Theory", "CX Infinity+R-I-Bit Theory", "R-I-Blade+Bit Theory"]
         
-        for b_idx, bey in enumerate(user_data["decks"]["beys"]):
-            nome_bey, _, _ = get_bey_name_and_comps(bey)
-            
-            with st.expander(nome_bey.upper(), expanded=False):
-                tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(bey.get("tipo", "BX/UX")), key=f"tb_sys_{b_idx}")
-                if tipo != bey.get("tipo"):
-                    bey["tipo"] = tipo; st.rerun()
-
-                is_th = "Theory" in tipo
-                def update_comp_bey(label, cat, k_comp):
-                    opts = theory_opts.get(cat, ["-"]) if is_th else inv_opts.get(cat, ["-"])
-                    val = bey.get(k_comp, "-")
-                    if val not in opts: val = "-"
-                    res = st.selectbox(label, opts, index=opts.index(val), key=f"sel_{k_comp}_{b_idx}")
-                    if bey.get(k_comp) != res:
-                        bey[k_comp] = res; st.rerun()
-
-                if "CX Infinity" in tipo:
-                    update_comp_bey("Lock Chip", "lock_chip", "lc")
-                    update_comp_bey("Over Blade", "over_blade", "ob")
-                    update_comp_bey("Metal Blade", "metal_blade", "meb")
-                    update_comp_bey("Assist Blade", "assist_blade", "ab")
-                    if "+R-I-Bit" in tipo:
-                        update_comp_bey("R-I-Bit", "r_i_bit", "rib")
-                        k_imgs = ["lc", "ob", "meb", "ab", "rib"]
-                    else:
-                        update_comp_bey("Ratchet", "ratchet", "r")
-                        update_comp_bey("Bit", "bit", "bi")
-                        k_imgs = ["lc", "ob", "meb", "ab", "r", "bi"]
-                
-                elif "CX" in tipo:
-                    update_comp_bey("Lock Chip", "lock_chip", "lc")
-                    update_comp_bey("Main Blade", "main_blade", "mb")
-                    update_comp_bey("Assist Blade", "assist_blade", "ab")
-                    if "+R-I-Bit" in tipo:
-                        update_comp_bey("R-I-Bit", "r_i_bit", "rib")
-                        k_imgs = ["lc", "mb", "ab", "rib"]
-                    else:
-                        update_comp_bey("Ratchet", "ratchet", "r")
-                        update_comp_bey("Bit", "bit", "bi")
-                        k_imgs = ["lc", "mb", "ab", "r", "bi"]
-                
-                elif "R-I-Blade" in tipo:
-                    update_comp_bey("R-I-Blade", "r_i_blade", "ribl")
-                    update_comp_bey("Bit", "bit", "bi")
-                    k_imgs = ["ribl", "bi"]
-                else:
-                    update_comp_bey("Blade", "blade", "b")
-                    if "+R-I-Bit" in tipo:
-                        update_comp_bey("R-I-Bit", "r_i_bit", "rib")
-                        k_imgs = ["b", "rib"]
-                    else:
-                        update_comp_bey("Ratchet", "ratchet", "r")
-                        update_comp_bey("Bit", "bit", "bi")
-                        k_imgs = ["b", "r", "bi"]
-
-                st.write("") 
-                cols = st.columns(len(k_imgs) if len(k_imgs) > 0 else 1)
-                col_idx = 0
-                for k in k_imgs:
-                    v = bey.get(k)
-                    if v and v != "-":
-                        img_obj = get_img(global_img_map.get(v))
-                        if img_obj: cols[col_idx].image(img_obj, width=80); col_idx += 1
-                        
-                st.markdown("<hr>", unsafe_allow_html=True)
-                c1, c2 = st.columns(2)
-                if c1.button("Salva", key=f"sv_bey_{b_idx}"):
-                    save_cloud(); st.success("Salvato!")
-                if c2.button("Elimina", key=f"rm_bey_{b_idx}", type="primary"):
-                    b_id_to_rem = bey["id"]
-                    user_data["decks"]["beys"].pop(b_idx)
-                    for d in user_data["decks"]["deck_list"]:
-                        for s_k, s_v in d["slots"].items():
-                            if s_v == b_id_to_rem: d["slots"][s_k] = "-"
-                    save_cloud(); st.rerun()
-
-    # --- DECK BUILDER ---
-    with tab_deck:
-        bey_options = {"-": "- Nessuno -"}
-        for b in user_data["decks"]["beys"]:
-            n, _, _ = get_bey_name_and_comps(b)
-            bey_options[b["id"]] = n
-            
-        bey_list_display = ["-"] + [b["id"] for b in user_data["decks"]["beys"]]
-        
-        def format_bey_opt(b_id):
-            return bey_options.get(b_id, "-")
-            
-        for d_idx, deck in enumerate(user_data["decks"]["deck_list"]):
-            all_deck_comps = []
-            slot_names = []
-            
-            # Raccoglie i componenti di tutti e 3 gli slot per trovare eventuali duplicati
-            for s_idx in range(3):
-                b_id = deck["slots"].get(str(s_idx), "-")
-                if b_id != "-" and b_id in bey_options:
-                    bey = next((x for x in user_data["decks"]["beys"] if x["id"] == b_id), None)
-                    if bey:
-                        n, parts, _ = get_bey_name_and_comps(bey)
-                        all_deck_comps.extend(parts)
-                        slot_names.append(n)
-                    else:
-                        slot_names.append(f"Slot {s_idx+1} Vuoto")
-                else:
-                    slot_names.append(f"Slot {s_idx+1} Vuoto")
+        for d_idx, deck in enumerate(user_data["decks"]):
+            all_selected = []
+            for s in deck["slots"].values():
+                all_selected.extend([v for k, v in s.items() if v and v != "-" and k != "tipo"])
 
             with st.expander(deck['name'].upper(), expanded=False):
-                # Box di riepilogo con segnalazione duplicati
                 for s_idx in range(3):
-                    b_id = deck["slots"].get(str(s_idx), "-")
-                    ha_duplicati = False
-                    if b_id != "-" and b_id in bey_options:
-                        bey = next((x for x in user_data["decks"]["beys"] if x["id"] == b_id), None)
-                        if bey:
-                            _, parts, _ = get_bey_name_and_comps(bey)
-                            if any(all_deck_comps.count(p) > 1 for p in parts):
-                                ha_duplicati = True
+                    curr = deck["slots"].get(str(s_idx), {})
+                    tipo_sys = curr.get("tipo", "BX/UX")
                     
-                    alert = f"<span class='slot-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
-                    st.markdown(f"<div class='slot-summary-box'><span class='slot-summary-name'>{slot_names[s_idx]}</span>{alert}</div>", unsafe_allow_html=True)
+                    if "CX Infinity" in tipo_sys:
+                        keys_order = ["lc", "ob", "meb", "ab", "rib"] if "+R-I-Bit" in tipo_sys else ["lc", "ob", "meb", "ab", "r", "bi"]
+                    elif "CX" in tipo_sys:
+                        keys_order = ["lc", "mb", "ab", "rib"] if "+R-I-Bit" in tipo_sys else ["lc", "mb", "ab", "r", "bi"]
+                    elif "R-I-Blade" in tipo_sys:
+                        keys_order = ["ribl", "bi"]
+                    else:
+                        keys_order = ["b", "rib"] if "+R-I-Bit" in tipo_sys else ["b", "r", "bi"]
+                    
+                    titolo_base = [curr.get(k) for k in keys_order if curr.get(k) and curr.get(k) != "-"]
+                    nome_bey = " ".join(titolo_base).strip() or f"Slot {s_idx+1} Vuoto"
+                    ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
+                    alert_html = f"<span class='slot-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
+                    st.markdown(f"<div class='slot-summary-box'><span class='slot-summary-name'>{nome_bey}</span>{alert_html}</div>", unsafe_allow_html=True)
                 
                 st.markdown("<hr>", unsafe_allow_html=True)
-                
-                # Selettori per inserire i beyblade nei 3 slot
+
                 for s_idx in range(3):
                     s_key = str(s_idx)
-                    curr_val = deck["slots"].get(s_key, "-")
-                    if curr_val not in bey_list_display: curr_val = "-"
+                    if s_key not in deck["slots"]: deck["slots"][s_key] = {"tipo": "BX/UX"}
+                    curr = deck["slots"][s_key]
                     
-                    new_val = st.selectbox(f"Seleziona Beyblade per Slot {s_idx+1}", bey_list_display, format_func=format_bey_opt, index=bey_list_display.index(curr_val), key=f"sel_dkbey_{d_idx}_{s_idx}")
-                    if new_val != curr_val:
-                        deck["slots"][s_key] = new_val; st.rerun()
-                
-                st.write("")
-                c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
-                if c1.button("Rinomina", key=f"ren_d_{d_idx}"):
-                    st.session_state.edit_name_idx = f"deck_{d_idx}"; st.rerun()
-                if c2.button("Salva Deck", key=f"sav_d_{d_idx}"): 
-                    save_cloud(); st.success("Salvato!")
-                if c3.button("Elimina", key=f"del_d_{d_idx}", type="primary"):
-                    user_data["decks"]["deck_list"].pop(d_idx); save_cloud(); st.rerun()
-                
-                if st.session_state.edit_name_idx == f"deck_{d_idx}":
-                    n_name = st.text_input("Nuovo nome:", deck['name'], key=f"inp_ren_{d_idx}")
-                    if st.button("OK", key=f"ok_ren_{d_idx}"):
-                        deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
+                    with st.expander(f"SLOT {s_idx+1}"):
+                        old_tipo = curr.get("tipo", "BX/UX")
+                        old_tipo = old_tipo.replace("+RIB", "+R-I-Bit")
+                        if old_tipo not in tipologie: old_tipo = "BX/UX"
                         
-        if st.button("➕ Nuovo Deck", type="primary"):
-            user_data["decks"]["deck_list"].append({"name": f"DECK {len(user_data['decks']['deck_list'])+1}", "slots": {"0":"-", "1":"-", "2":"-"}})
+                        tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(old_tipo), key=f"t_{user_sel}_{d_idx}_{s_idx}")
+                        if tipo != old_tipo:
+                            curr["tipo"] = tipo; st.rerun()
+
+                        is_th = "Theory" in tipo
+                        def update_comp(label, cat, k_comp):
+                            opts = theory_opts.get(cat, ["-"]) if is_th else inv_opts.get(cat, ["-"])
+                            current_val = curr.get(k_comp, "-")
+                            if current_val not in opts: current_val = "-"
+                            display_label = f"{label} ⚠️" if current_val != "-" and all_selected.count(current_val) > 1 else label
+                            res = st.selectbox(display_label, opts, index=opts.index(current_val), key=f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}")
+                            if curr.get(k_comp) != res:
+                                curr[k_comp] = res; st.rerun()
+
+                        if "BX/UX" in tipo and "+R-I-Bit" not in tipo:
+                            update_comp("Blade", "blade", "b"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                            k_img_order = ["b", "r", "bi"]
+                        elif "CX Infinity" in tipo and "+R-I-Bit" not in tipo:
+                            update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Over Blade", "over_blade", "ob"); update_comp("Metal Blade", "metal_blade", "meb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                            k_img_order = ["lc", "ob", "meb", "ab", "r", "bi"]
+                        elif "CX" in tipo and "+R-I-Bit" not in tipo:
+                            update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                            k_img_order = ["lc", "mb", "ab", "r", "bi"]
+                        elif "R-I-Blade" in tipo:
+                            update_comp("R-I-Blade", "r_i_blade", "ribl"); update_comp("Bit", "bit", "bi")
+                            k_img_order = ["ribl", "bi"]
+                        elif "+R-I-Bit" in tipo:
+                            if "CX Infinity" in tipo:
+                                update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Over Blade", "over_blade", "ob"); update_comp("Metal Blade", "metal_blade", "meb"); update_comp("Assist Blade", "assist_blade", "ab")
+                                k_img_order = ["lc", "ob", "meb", "ab", "rib"]
+                            elif "CX" in tipo:
+                                update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab")
+                                k_img_order = ["lc", "mb", "ab", "rib"]
+                            else: 
+                                update_comp("Blade", "blade", "b")
+                                k_img_order = ["b", "rib"]
+                            update_comp("R-I-Bit", "r_i_bit", "rib")
+
+                        st.write("") 
+                        cols = st.columns(len(k_img_order) if len(k_img_order) > 0 else 1)
+                        col_idx = 0
+                        for k in k_img_order:
+                            v = curr.get(k)
+                            if v and v != "-":
+                                img_obj = get_img(global_img_map.get(v))
+                                if img_obj: cols[col_idx].image(img_obj, width=80); col_idx += 1
+
+                c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
+                if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
+                    st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
+                if c2.button("Salva Deck", key=f"s_{user_sel}_{d_idx}"): save_cloud()
+                if c3.button("Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
+                    user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
+                if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
+                    n_name = st.text_input("Nuovo nome:", deck['name'], key=f"i_{d_idx}")
+                    if st.button("OK", key=f"o_{d_idx}"):
+                        deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
+
+        if st.button("Nuovo Deck"):
+            user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
             save_cloud(); st.rerun()
 
 elif menu_scelta == "Match!":
@@ -490,17 +401,25 @@ elif menu_scelta == "Match!":
                 with st.expander(f"⚙️ Configura Bey Esterni ({suffix})"):
                     return [st.text_input(f"Bey {i+1} ({suffix})", f"Esterno {i+1}", key=f"ext_{suffix}_{i}") for i in range(3)]
             else:
-                p_decks = st.session_state.users[player_name]["decks"]["deck_list"]
-                p_beys = st.session_state.users[player_name]["decks"]["beys"]
+                p_decks = st.session_state.users[player_name]["decks"]
                 names = []
                 for d in p_decks:
                     for s_idx in range(3):
-                        b_id = d["slots"].get(str(s_idx), "-")
-                        if b_id != "-":
-                            bey = next((x for x in p_beys if x["id"] == b_id), None)
-                            if bey:
-                                n, _, _ = get_bey_name_and_comps(bey)
-                                if n and n != "Vuoto": names.append(f"{d['name']} - {n}")
+                        curr = d["slots"].get(str(s_idx), {})
+                        tipo = curr.get("tipo", "BX/UX")
+                        
+                        keys = ["b", "r", "bi"]
+                        if "CX Infinity" in tipo: keys = ["lc", "ob", "meb", "ab", "r", "bi"]
+                        elif "CX" in tipo: keys = ["lc", "mb", "ab", "r", "bi"]
+                        elif "R-I-Blade" in tipo: keys = ["ribl", "bi"]
+                        
+                        if "+R-I-Bit" in tipo:
+                            if "CX Infinity" in tipo: keys = ["lc", "ob", "meb", "ab", "rib"]
+                            elif "CX" in tipo: keys = ["lc", "mb", "ab", "rib"]
+                            else: keys = ["b", "rib"]
+                            
+                        n = " ".join([curr.get(k) for k in keys if curr.get(k) and curr.get(k) != "-"]).strip()
+                        if n: names.append(f"{d['name']} - {n}")
                 return sorted(list(set(names))) if names else ["-"]
 
         beys_g1 = get_bey_names(g1, "G1")
@@ -800,13 +719,10 @@ Procedi con l'analisi tecnica rigorosa.
                             oggi_str = datetime.now().strftime('%d/%m/%Y')
                             nome_deck = f"{tipo_deck_ai}_{oggi_str}"
                             nuovo_deck = {"name": nome_deck, "slots": extracted_json["slots"]}
-                            
-                            # Questo garantisce che l'import AI funzioni ancora col nuovo sistema (crea un deck fittizio per retrocompatibilità)
-                            user_data["decks"]["deck_list"].append(nuovo_deck)
-                            
+                            user_data["decks"].append(nuovo_deck)
                             save_cloud()
-                            st.success(f"Deck '{nome_deck}' importato! Modificalo per associargli i nuovi ID Beyblade.")
-                            time.sleep(2)
+                            st.success(f"Deck '{nome_deck}' importato!")
+                            time.sleep(1)
                             st.rerun()
                     else:
                         st.info("⚠️ L'AI non ha fornito un JSON compatibile in questa run.")
