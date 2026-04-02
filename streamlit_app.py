@@ -253,7 +253,7 @@ with tab2:
                         if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
                         save_cloud(); st.rerun()
 
-# --- TAB 3: DECK BUILDER (INTOCCABILE) ---
+# --- TAB 3: DECK BUILDER ---
 with tab3:
     inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
     tipologie = ["BX/UX", "BX/UX+R-I-Bit", "CX", "CX+R-I-Bit", "CX Infinity", "CX Infinity+R-I-Bit", "R-I-Blade+Bit", "BX/UX Theory", "BX/UX+R-I-Bit Theory", "CX Theory", "CX+R-I-Bit Theory", "CX Infinity Theory", "CX Infinity+R-I-Bit Theory", "R-I-Blade+Bit Theory"]
@@ -269,7 +269,7 @@ with tab3:
                 tipo_sys = curr.get("tipo", "BX/UX")
                 
                 if "CX Infinity" in tipo_sys:
-                    keys_order = ["lc", "ob", "meb", "rib"] if "+R-I-Bit" in tipo_sys else ["lc", "ob", "meb", "r", "bi"]
+                    keys_order = ["lc", "ob", "meb", "ab", "rib"] if "+R-I-Bit" in tipo_sys else ["lc", "ob", "meb", "ab", "r", "bi"]
                 elif "CX" in tipo_sys:
                     keys_order = ["lc", "mb", "ab", "rib"] if "+R-I-Bit" in tipo_sys else ["lc", "mb", "ab", "r", "bi"]
                 elif "R-I-Blade" in tipo_sys:
@@ -313,8 +313,8 @@ with tab3:
                         update_comp("Blade", "blade", "b"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
                         k_img_order = ["b", "r", "bi"]
                     elif "CX Infinity" in tipo and "+R-I-Bit" not in tipo:
-                        update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Over Blade", "over_blade", "ob"); update_comp("Metal Blade", "metal_blade", "meb"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
-                        k_img_order = ["lc", "ob", "meb", "r", "bi"]
+                        update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Over Blade", "over_blade", "ob"); update_comp("Metal Blade", "metal_blade", "meb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                        k_img_order = ["lc", "ob", "meb", "ab", "r", "bi"]
                     elif "CX" in tipo and "+R-I-Bit" not in tipo:
                         update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
                         k_img_order = ["lc", "mb", "ab", "r", "bi"]
@@ -323,8 +323,8 @@ with tab3:
                         k_img_order = ["ribl", "bi"]
                     elif "+R-I-Bit" in tipo:
                         if "CX Infinity" in tipo:
-                            update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Over Blade", "over_blade", "ob"); update_comp("Metal Blade", "metal_blade", "meb")
-                            k_img_order = ["lc", "ob", "meb", "rib"]
+                            update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Over Blade", "over_blade", "ob"); update_comp("Metal Blade", "metal_blade", "meb"); update_comp("Assist Blade", "assist_blade", "ab")
+                            k_img_order = ["lc", "ob", "meb", "ab", "rib"]
                         elif "CX" in tipo:
                             update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab")
                             k_img_order = ["lc", "mb", "ab", "rib"]
@@ -334,7 +334,7 @@ with tab3:
                         update_comp("R-I-Bit", "r_i_bit", "rib")
 
                     st.write("") 
-                    cols = st.columns(5)
+                    cols = st.columns(len(k_img_order) if len(k_img_order) > 0 else 1)
                     col_idx = 0
                     for k in k_img_order:
                         v = curr.get(k)
