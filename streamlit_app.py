@@ -62,7 +62,6 @@ inject_css()
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
-# AGGIUNTO SOLO IL FILE STATS
 FILES = {"inv": "inventario.json", "decks": "decks.json", "stats": "match_stats.json"}
 
 def github_action(file_key, data=None, method="GET"):
@@ -93,9 +92,29 @@ def force_load():
     inv_c = github_action("inv", method="GET")
     deck_c = github_action("decks", method="GET")
     new_users = {}
+    
+    # Lista delle chiavi necessarie per il nuovo sistema
+    req_keys = ["lock_chip", "blade", "over_blade", "metal_blade", "main_blade", "assist_blade", "r_i_blade", "ratchet", "bit", "r_i_bit"]
+    
     for u in ["Antonio", "Andrea", "Fabio"]:
+        # Prende i dati salvati dal cloud, se esistono
+        user_inv = inv_c.get(u, {}) if inv_c else {}
+        
+        # Retrocompatibilità: Assicuriamoci che tutte le chiavi esistano, per evitare KeyError
+        for k in req_keys:
+            if k not in user_inv:
+                user_inv[k] = {}
+                
+        # Migrazione vecchi nomi (trasferisce gli oggetti dai vecchi nomi ai nuovi)
+        if "lock_bit" in user_inv:
+            user_inv["lock_chip"].update(user_inv.pop("lock_bit"))
+        if "ratchet_integrated_bit" in user_inv:
+            user_inv["r_i_bit"].update(user_inv.pop("ratchet_integrated_bit"))
+        if "ratchet_integrated_blade" in user_inv:
+            user_inv["r_i_blade"].update(user_inv.pop("ratchet_integrated_blade"))
+            
         new_users[u] = {
-            "inv": inv_c.get(u, {k: {} for k in ["lock_chip", "blade", "over_blade", "metal_blade", "main_blade", "assist_blade", "r_i_blade", "ratchet", "bit", "r_i_bit"]}) if inv_c else {k: {} for k in ["lock_chip", "blade", "over_blade", "metal_blade", "main_blade", "assist_blade", "r_i_blade", "ratchet", "bit", "r_i_bit"]},
+            "inv": user_inv,
             "decks": deck_c.get(u, [{"name": "DECK 1", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}}]) if deck_c else [{"name": "DECK 1", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}}]
         }
     st.session_state.users = new_users
