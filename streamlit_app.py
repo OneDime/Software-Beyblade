@@ -62,6 +62,7 @@ inject_css()
 # =========================
 GITHUB_TOKEN = st.secrets["github_token"]
 REPO = st.secrets["github_repo"]
+# AGGIUNTO SOLO IL FILE STATS
 FILES = {"inv": "inventario.json", "decks": "decks.json", "stats": "match_stats.json"}
 
 def github_action(file_key, data=None, method="GET"):
@@ -94,7 +95,7 @@ def force_load():
     new_users = {}
     for u in ["Antonio", "Andrea", "Fabio"]:
         new_users[u] = {
-            "inv": inv_c.get(u, {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]}) if inv_c else {k: {} for k in ["lock_bit", "blade", "main_blade", "assist_blade", "ratchet", "bit", "ratchet_integrated_bit"]},
+            "inv": inv_c.get(u, {k: {} for k in ["lock_chip", "blade", "over_blade", "metal_blade", "main_blade", "assist_blade", "r_i_blade", "ratchet", "bit", "r_i_bit"]}) if inv_c else {k: {} for k in ["lock_chip", "blade", "over_blade", "metal_blade", "main_blade", "assist_blade", "r_i_blade", "ratchet", "bit", "r_i_bit"]},
             "decks": deck_c.get(u, [{"name": "DECK 1", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}}]) if deck_c else [{"name": "DECK 1", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}}]
         }
     st.session_state.users = new_users
@@ -139,10 +140,16 @@ def load_db():
     df = pd.read_csv("beyblade_x.csv").fillna("")
     img_map = {}
     theory_opts = {}
-    mapping = [('lock_chip', 'lock_chip_image', 'lock_bit'), ('blade', 'blade_image', 'blade'), 
-               ('main_blade', 'main_blade_image', 'main_blade'), ('assist_blade', 'assist_blade_image', 'assist_blade'), 
-               ('ratchet', 'ratchet_image', 'ratchet'), ('bit', 'bit_image', 'bit'), 
-               ('ratchet_integrated_bit', 'ratchet_integrated_bit_image', 'ratchet_integrated_bit')]
+    mapping = [('lock_chip', 'lock_chip_image', 'lock_chip'), 
+               ('blade', 'blade_image', 'blade'), 
+               ('over_blade', 'over_blade_image', 'over_blade'), 
+               ('metal_blade', 'metal_blade_image', 'metal_blade'), 
+               ('main_blade', 'main_blade_image', 'main_blade'), 
+               ('assist_blade', 'assist_blade_image', 'assist_blade'), 
+               ('ratchet_integrated_blade', 'ratchet_integrated_blade_image', 'r_i_blade'),
+               ('ratchet', 'ratchet_image', 'ratchet'), 
+               ('bit', 'bit_image', 'bit'), 
+               ('ratchet_integrated_bit', 'ratchet_integrated_bit_image', 'r_i_bit')]
     for csv_col, img_col, state_key in mapping:
         if csv_col in df.columns:
             theory_opts[state_key] = ["-"] + sorted([x for x in df[csv_col].unique().tolist() if x and x != "n/a"])
@@ -187,9 +194,12 @@ with tab1:
             with st.container(border=True):
                 img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
                 if img: st.image(img)
-                comps = [("lock_chip", "lock_bit"), ("blade", "blade"), ("main_blade", "main_blade"),
-                         ("assist_blade", "assist_blade"), ("ratchet", "ratchet"), ("bit", "bit"),
-                         ("ratchet_integrated_bit", "ratchet_integrated_bit")]
+                comps = [("lock_chip", "lock_chip"), ("blade", "blade"), 
+                         ("over_blade", "over_blade"), ("metal_blade", "metal_blade"), 
+                         ("main_blade", "main_blade"), ("assist_blade", "assist_blade"), 
+                         ("ratchet_integrated_blade", "r_i_blade"), 
+                         ("ratchet", "ratchet"), ("bit", "bit"), 
+                         ("ratchet_integrated_bit", "r_i_bit")]
                 if st.button("Aggiungi tutto", key=f"all_{i}"):
                     for ck, ik in comps:
                         val = row[ck]
@@ -208,9 +218,16 @@ with tab1:
 with tab2:
     modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
     op = 1 if "Aggiungi" in modo else -1
-    for cat, items in user_data["inv"].items():
+    order = ["lock_chip", "blade", "over_blade", "metal_blade", "main_blade", "assist_blade", "r_i_blade", "ratchet", "bit", "r_i_bit"]
+    display_names = {
+        "lock_chip": "LOCK CHIP", "blade": "BLADE", "over_blade": "OVER BLADE", 
+        "metal_blade": "METAL BLADE", "main_blade": "MAIN BLADE", "assist_blade": "ASSIST BLADE", 
+        "r_i_blade": "RATCHET-INTEGRATED-BLADE", "ratchet": "RATCHET", "bit": "BIT", "r_i_bit": "RATCHET-INTEGRATED-BIT"
+    }
+    for cat in order:
+        items = user_data["inv"].get(cat, {})
         if items:
-            with st.expander(cat.replace('_', ' ').upper()):
+            with st.expander(display_names[cat]):
                 for n in sorted(list(items.keys())):
                     if st.button(f"{n} x{items[n]}", key=f"inv_{user_sel}_{cat}_{n}"):
                         user_data["inv"][cat][n] += op
@@ -220,7 +237,7 @@ with tab2:
 # --- TAB 3: DECK BUILDER (INTOCCABILE) ---
 with tab3:
     inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
-    tipologie = ["BX/UX", "CX", "BX/UX+RIB", "CX+RIB", "BX/UX Theory", "CX Theory", "BX/UX+RIB Theory", "CX+RIB Theory"]
+    tipologie = ["BX/UX", "BX/UX+R-I-Bit", "CX", "CX+R-I-Bit", "CX Infinity", "CX Infinity+R-I-Bit", "R-I-Blade+Bit", "BX/UX Theory", "BX/UX+R-I-Bit Theory", "CX Theory", "CX+R-I-Bit Theory", "CX Infinity Theory", "CX Infinity+R-I-Bit Theory", "R-I-Blade+Bit Theory"]
     
     for d_idx, deck in enumerate(user_data["decks"]):
         all_selected = []
@@ -232,10 +249,14 @@ with tab3:
                 curr = deck["slots"].get(str(s_idx), {})
                 tipo_sys = curr.get("tipo", "BX/UX")
                 
-                if "CX" in tipo_sys:
-                    keys_order = ["lb", "mb", "ab", "rib"] if "+RIB" in tipo_sys else ["lb", "mb", "ab", "r", "bi"]
+                if "CX Infinity" in tipo_sys:
+                    keys_order = ["lc", "ob", "meb", "rib"] if "+R-I-Bit" in tipo_sys else ["lc", "ob", "meb", "r", "bi"]
+                elif "CX" in tipo_sys:
+                    keys_order = ["lc", "mb", "ab", "rib"] if "+R-I-Bit" in tipo_sys else ["lc", "mb", "ab", "r", "bi"]
+                elif "R-I-Blade" in tipo_sys:
+                    keys_order = ["ribl", "bi"]
                 else:
-                    keys_order = ["b", "rib"] if "+RIB" in tipo_sys else ["b", "r", "bi"]
+                    keys_order = ["b", "rib"] if "+R-I-Bit" in tipo_sys else ["b", "r", "bi"]
                 
                 titolo_base = [curr.get(k) for k in keys_order if curr.get(k) and curr.get(k) != "-"]
                 nome_bey = " ".join(titolo_base).strip() or f"Slot {s_idx+1} Vuoto"
@@ -252,6 +273,9 @@ with tab3:
                 
                 with st.expander(f"SLOT {s_idx+1}"):
                     old_tipo = curr.get("tipo", "BX/UX")
+                    old_tipo = old_tipo.replace("+RIB", "+R-I-Bit")
+                    if old_tipo not in tipologie: old_tipo = "BX/UX"
+                    
                     tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(old_tipo), key=f"t_{user_sel}_{d_idx}_{s_idx}")
                     if tipo != old_tipo:
                         curr["tipo"] = tipo; st.rerun()
@@ -266,20 +290,29 @@ with tab3:
                         if curr.get(k_comp) != res:
                             curr[k_comp] = res; st.rerun()
 
-                    if "BX/UX" in tipo and "+RIB" not in tipo:
+                    if "BX/UX" in tipo and "+R-I-Bit" not in tipo:
                         update_comp("Blade", "blade", "b"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
                         k_img_order = ["b", "r", "bi"]
-                    elif "CX" in tipo and "+RIB" not in tipo:
-                        update_comp("Lock Bit", "lock_bit", "lb"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
-                        k_img_order = ["lb", "mb", "ab", "r", "bi"]
-                    elif "+RIB" in tipo:
-                        if "CX" in tipo:
-                            update_comp("Lock Bit", "lock_bit", "lb"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab")
-                            k_img_order = ["lb", "mb", "ab", "rib"]
+                    elif "CX Infinity" in tipo and "+R-I-Bit" not in tipo:
+                        update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Over Blade", "over_blade", "ob"); update_comp("Metal Blade", "metal_blade", "meb"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                        k_img_order = ["lc", "ob", "meb", "r", "bi"]
+                    elif "CX" in tipo and "+R-I-Bit" not in tipo:
+                        update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                        k_img_order = ["lc", "mb", "ab", "r", "bi"]
+                    elif "R-I-Blade" in tipo:
+                        update_comp("R-I-Blade", "r_i_blade", "ribl"); update_comp("Bit", "bit", "bi")
+                        k_img_order = ["ribl", "bi"]
+                    elif "+R-I-Bit" in tipo:
+                        if "CX Infinity" in tipo:
+                            update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Over Blade", "over_blade", "ob"); update_comp("Metal Blade", "metal_blade", "meb")
+                            k_img_order = ["lc", "ob", "meb", "rib"]
+                        elif "CX" in tipo:
+                            update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab")
+                            k_img_order = ["lc", "mb", "ab", "rib"]
                         else: 
                             update_comp("Blade", "blade", "b")
                             k_img_order = ["b", "rib"]
-                        update_comp("RIB", "ratchet_integrated_bit", "rib")
+                        update_comp("R-I-Bit", "r_i_bit", "rib")
 
                     st.write("") 
                     cols = st.columns(5)
@@ -438,8 +471,17 @@ with tab5:
                 for s_idx in range(3):
                     curr = d["slots"].get(str(s_idx), {})
                     tipo = curr.get("tipo", "BX/UX")
-                    keys = ["lb", "mb", "ab", "r", "bi"] if "CX" in tipo else ["b", "r", "bi"]
-                    if "+RIB" in tipo: keys = ["lb", "mb", "ab", "rib"] if "CX" in tipo else ["b", "rib"]
+                    
+                    keys = ["b", "r", "bi"]
+                    if "CX Infinity" in tipo: keys = ["lc", "ob", "meb", "r", "bi"]
+                    elif "CX" in tipo: keys = ["lc", "mb", "ab", "r", "bi"]
+                    elif "R-I-Blade" in tipo: keys = ["ribl", "bi"]
+                    
+                    if "+R-I-Bit" in tipo:
+                        if "CX Infinity" in tipo: keys = ["lc", "ob", "meb", "rib"]
+                        elif "CX" in tipo: keys = ["lc", "mb", "ab", "rib"]
+                        else: keys = ["b", "rib"]
+                        
                     n = " ".join([curr.get(k) for k in keys if curr.get(k) and curr.get(k) != "-"]).strip()
                     if n: names.append(f"{d['name']} - {n}")
             return sorted(list(set(names))) if names else ["-"]
@@ -575,7 +617,7 @@ with tab5:
             type="primary"
         )
 
-# --- TAB 6: CLASSIFICA BEYBLADE (NUOVO) ---
+# --- TAB 6: CLASSIFICA BEYBLADE (INTOCCABILE) ---
 with tab6:
     st.markdown("### 🏆 Classifica Globale Beyblade")
     
