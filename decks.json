@@ -5,9 +5,9 @@
             "slots": {
                 "0": {
                     "tipo": "BX/UX",
-                    "b": "CobaltDragoon",
-                    "r": "9-60",
-                    "bi": "Elevate"
+                    "b": "SilverWolf",
+                    "r": "9-70",
+                    "bi": "Free Ball"
                 },
                 "1": {
                     "tipo": "BX/UX",
@@ -17,9 +17,9 @@
                 },
                 "2": {
                     "tipo": "BX/UX",
-                    "b": "SilverWolf",
-                    "r": "9-70",
-                    "bi": "Free Ball"
+                    "b": "CobaltDragoon",
+                    "r": "9-60",
+                    "bi": "Elevate"
                 }
             }
         },
