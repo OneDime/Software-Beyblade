@@ -45,6 +45,20 @@
                     "bi": "Elevate"
                 }
             }
+        },
+        {
+            "name": "DECK 3",
+            "slots": {
+                "0": {
+                    "tipo": "BX/UX"
+                },
+                "1": {
+                    "tipo": "BX/UX"
+                },
+                "2": {
+                    "tipo": "BX/UX"
+                }
+            }
         }
     ],
     "Andrea": [
