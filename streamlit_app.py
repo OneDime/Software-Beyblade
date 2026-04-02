@@ -169,12 +169,26 @@ def load_db():
                ('ratchet', 'ratchet_image', 'ratchet'), 
                ('bit', 'bit_image', 'bit'), 
                ('ratchet_integrated_bit', 'ratchet_integrated_bit_image', 'r_i_bit')]
+    
+    # Inizializza tutte le chiavi per evitare KeyError nei sistemi Theory
+    for _, _, state_key in mapping:
+        theory_opts[state_key] = ["-"]
+
     for csv_col, img_col, state_key in mapping:
         if csv_col in df.columns:
             theory_opts[state_key] = ["-"] + sorted([x for x in df[csv_col].unique().tolist() if x and x != "n/a"])
             if img_col in df.columns:
                 for _, r in df.iterrows():
                     if r[csv_col] and r[csv_col] != "n/a": img_map[r[csv_col]] = r[img_col]
+    
+    # Mappatura immagini universale
+    for _, r in df.iterrows():
+        for c_col, i_col, _ in mapping:
+            if c_col in df.columns and i_col in df.columns:
+                val, img = str(r[c_col]), str(r[i_col])
+                if val and val != "n/a" and img and img != "n/a":
+                    img_map[val] = img
+
     df['_search'] = df.astype(str).apply(lambda x: ' '.join(x).lower(), axis=1)
     return df, img_map, theory_opts
 
@@ -202,216 +216,462 @@ if st.sidebar.button("🔄 Forza Sync Cloud"):
 
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["🔍 Aggiungi", "📦 Inventario", "🧩 Deck Builder", "🤖 AI Advisor", "📊 Registro Match", "🏆 Classifica Beyblade"])
 
-# --- TAB 1: AGGIUNGI (INTOCCABILE) ---
-with tab1:
-    search_q = st.text_input("Cerca Beyblade...", "").lower()
-    filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(10)
-    for i, (_, row) in enumerate(filtered.iterrows()):
-        with st.expander(f"**{row['name'].upper()}**"):
-            with st.container(border=True):
-                img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
-                if img: st.image(img)
-                comps = [("lock_chip", "lock_chip"), ("blade", "blade"), 
-                         ("over_blade", "over_blade"), ("metal_blade", "metal_blade"), 
-                         ("main_blade", "main_blade"), ("assist_blade", "assist_blade"), 
-                         ("ratchet_integrated_blade", "r_i_blade"), 
-                         ("ratchet", "ratchet"), ("bit", "bit"), 
-                         ("ratchet_integrated_bit", "r_i_bit")]
-                if st.button("Aggiungi tutto", key=f"all_{i}"):
+# =========================
+# MENU DI NAVIGAZIONE
+# =========================
+menu_scelta = st.selectbox("🧭 Menu di Navigazione", ["Inventario", "Deck Builder", "Match!", "AI Advisor"])
+
+if menu_scelta == "Inventario":
+    tab1, tab2 = st.tabs(["🔍 Aggiungi", "📦 Inventario"])
+
+    # --- TAB 1: AGGIUNGI ---
+    with tab1:
+        search_q = st.text_input("Cerca Beyblade...", "").lower()
+        filtered = df_db[df_db['_search'].str.contains(search_q)] if search_q else df_db.head(10)
+        for i, (_, row) in enumerate(filtered.iterrows()):
+            with st.expander(f"**{row['name'].upper()}**"):
+                with st.container(border=True):
+                    img = get_img(row['blade_image'] or row['beyblade_page_image'], size=(150, 150))
+                    if img: st.image(img)
+                    comps = [("lock_chip", "lock_chip"), ("blade", "blade"), 
+                             ("over_blade", "over_blade"), ("metal_blade", "metal_blade"), 
+                             ("main_blade", "main_blade"), ("assist_blade", "assist_blade"), 
+                             ("ratchet_integrated_blade", "r_i_blade"), 
+                             ("ratchet", "ratchet"), ("bit", "bit"), 
+                             ("ratchet_integrated_bit", "r_i_bit")]
+                    if st.button("Aggiungi tutto", key=f"all_{i}"):
+                        for ck, ik in comps:
+                            val = row[ck]
+                            if val and val != "n/a": user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
+                        save_cloud()
+                    st.markdown("<hr>", unsafe_allow_html=True)
                     for ck, ik in comps:
                         val = row[ck]
-                        if val and val != "n/a": user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
-                    save_cloud()
-                st.markdown("<hr>", unsafe_allow_html=True)
-                for ck, ik in comps:
-                    val = row[ck]
-                    if val and val != "n/a":
-                        st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
-                        if st.button("＋", key=f"btn_{i}_{ck}"):
-                            user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
-                            save_cloud()
+                        if val and val != "n/a":
+                            st.markdown(f"<div class='comp-name-centered'>{val}</div>", unsafe_allow_html=True)
+                            if st.button("＋", key=f"btn_{i}_{ck}"):
+                                user_data["inv"][ik][val] = user_data["inv"][ik].get(val, 0) + 1
+                                save_cloud()
 
-# --- TAB 2: INVENTARIO (INTOCCABILE) ---
-with tab2:
-    modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
-    op = 1 if "Aggiungi" in modo else -1
-    order = ["lock_chip", "blade", "over_blade", "metal_blade", "main_blade", "assist_blade", "r_i_blade", "ratchet", "bit", "r_i_bit"]
-    display_names = {
-        "lock_chip": "LOCK CHIP", "blade": "BLADE", "over_blade": "OVER BLADE", 
-        "metal_blade": "METAL BLADE", "main_blade": "MAIN BLADE", "assist_blade": "ASSIST BLADE", 
-        "r_i_blade": "RATCHET-INTEGRATED-BLADE", "ratchet": "RATCHET", "bit": "BIT", "r_i_bit": "RATCHET-INTEGRATED-BIT"
-    }
-    for cat in order:
-        items = user_data["inv"].get(cat, {})
-        if items:
-            with st.expander(display_names[cat]):
-                for n in sorted(list(items.keys())):
-                    if st.button(f"{n} x{items[n]}", key=f"inv_{user_sel}_{cat}_{n}"):
-                        user_data["inv"][cat][n] += op
-                        if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
-                        save_cloud(); st.rerun()
+    # --- TAB 2: INVENTARIO ---
+    with tab2:
+        modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
+        op = 1 if "Aggiungi" in modo else -1
+        order = ["lock_chip", "blade", "over_blade", "metal_blade", "main_blade", "assist_blade", "r_i_blade", "ratchet", "bit", "r_i_bit"]
+        display_names = {
+            "lock_chip": "LOCK CHIP", "blade": "BLADE", "over_blade": "OVER BLADE", 
+            "metal_blade": "METAL BLADE", "main_blade": "MAIN BLADE", "assist_blade": "ASSIST BLADE", 
+            "r_i_blade": "RATCHET-INTEGRATED-BLADE", "ratchet": "RATCHET", "bit": "BIT", "r_i_bit": "RATCHET-INTEGRATED-BIT"
+        }
+        for cat in order:
+            items = user_data["inv"].get(cat, {})
+            if items:
+                with st.expander(display_names[cat]):
+                    for n in sorted(list(items.keys())):
+                        if st.button(f"{n} x{items[n]}", key=f"inv_{user_sel}_{cat}_{n}"):
+                            user_data["inv"][cat][n] += op
+                            if user_data["inv"][cat][n] <= 0: del user_data["inv"][cat][n]
+                            save_cloud(); st.rerun()
 
-# --- TAB 3: DECK BUILDER ---
-with tab3:
-    inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
-    tipologie = ["BX/UX", "BX/UX+R-I-Bit", "CX", "CX+R-I-Bit", "CX Infinity", "CX Infinity+R-I-Bit", "R-I-Blade+Bit", "BX/UX Theory", "BX/UX+R-I-Bit Theory", "CX Theory", "CX+R-I-Bit Theory", "CX Infinity Theory", "CX Infinity+R-I-Bit Theory", "R-I-Blade+Bit Theory"]
-    
-    for d_idx, deck in enumerate(user_data["decks"]):
-        all_selected = []
-        for s in deck["slots"].values():
-            all_selected.extend([v for k, v in s.items() if v and v != "-" and k != "tipo"])
+elif menu_scelta == "Deck Builder":
+    tab3, = st.tabs(["🧩 Deck Builder"])
 
-        with st.expander(deck['name'].upper(), expanded=False):
-            for s_idx in range(3):
-                curr = deck["slots"].get(str(s_idx), {})
-                tipo_sys = curr.get("tipo", "BX/UX")
-                
-                if "CX Infinity" in tipo_sys:
-                    keys_order = ["lc", "ob", "meb", "ab", "rib"] if "+R-I-Bit" in tipo_sys else ["lc", "ob", "meb", "ab", "r", "bi"]
-                elif "CX" in tipo_sys:
-                    keys_order = ["lc", "mb", "ab", "rib"] if "+R-I-Bit" in tipo_sys else ["lc", "mb", "ab", "r", "bi"]
-                elif "R-I-Blade" in tipo_sys:
-                    keys_order = ["ribl", "bi"]
-                else:
-                    keys_order = ["b", "rib"] if "+R-I-Bit" in tipo_sys else ["b", "r", "bi"]
-                
-                titolo_base = [curr.get(k) for k in keys_order if curr.get(k) and curr.get(k) != "-"]
-                nome_bey = " ".join(titolo_base).strip() or f"Slot {s_idx+1} Vuoto"
-                ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
-                alert_html = f"<span class='slot-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
-                st.markdown(f"<div class='slot-summary-box'><span class='slot-summary-name'>{nome_bey}</span>{alert_html}</div>", unsafe_allow_html=True)
-            
-            st.markdown("<hr>", unsafe_allow_html=True)
+    # --- TAB 3: DECK BUILDER ---
+    with tab3:
+        inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
+        tipologie = ["BX/UX", "BX/UX+R-I-Bit", "CX", "CX+R-I-Bit", "CX Infinity", "CX Infinity+R-I-Bit", "R-I-Blade+Bit", "BX/UX Theory", "BX/UX+R-I-Bit Theory", "CX Theory", "CX+R-I-Bit Theory", "CX Infinity Theory", "CX Infinity+R-I-Bit Theory", "R-I-Blade+Bit Theory"]
+        
+        for d_idx, deck in enumerate(user_data["decks"]):
+            all_selected = []
+            for s in deck["slots"].values():
+                all_selected.extend([v for k, v in s.items() if v and v != "-" and k != "tipo"])
 
-            for s_idx in range(3):
-                s_key = str(s_idx)
-                if s_key not in deck["slots"]: deck["slots"][s_key] = {"tipo": "BX/UX"}
-                curr = deck["slots"][s_key]
-                
-                with st.expander(f"SLOT {s_idx+1}"):
-                    old_tipo = curr.get("tipo", "BX/UX")
-                    old_tipo = old_tipo.replace("+RIB", "+R-I-Bit")
-                    if old_tipo not in tipologie: old_tipo = "BX/UX"
+            with st.expander(deck['name'].upper(), expanded=False):
+                for s_idx in range(3):
+                    curr = deck["slots"].get(str(s_idx), {})
+                    tipo_sys = curr.get("tipo", "BX/UX")
                     
-                    tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(old_tipo), key=f"t_{user_sel}_{d_idx}_{s_idx}")
-                    if tipo != old_tipo:
-                        curr["tipo"] = tipo; st.rerun()
+                    if "CX Infinity" in tipo_sys:
+                        keys_order = ["lc", "ob", "meb", "ab", "rib"] if "+R-I-Bit" in tipo_sys else ["lc", "ob", "meb", "ab", "r", "bi"]
+                    elif "CX" in tipo_sys:
+                        keys_order = ["lc", "mb", "ab", "rib"] if "+R-I-Bit" in tipo_sys else ["lc", "mb", "ab", "r", "bi"]
+                    elif "R-I-Blade" in tipo_sys:
+                        keys_order = ["ribl", "bi"]
+                    else:
+                        keys_order = ["b", "rib"] if "+R-I-Bit" in tipo_sys else ["b", "r", "bi"]
+                    
+                    titolo_base = [curr.get(k) for k in keys_order if curr.get(k) and curr.get(k) != "-"]
+                    nome_bey = " ".join(titolo_base).strip() or f"Slot {s_idx+1} Vuoto"
+                    ha_duplicati = any(all_selected.count(p) > 1 for p in titolo_base)
+                    alert_html = f"<span class='slot-summary-alert'>⚠️ DUPLICATO</span>" if ha_duplicati else ""
+                    st.markdown(f"<div class='slot-summary-box'><span class='slot-summary-name'>{nome_bey}</span>{alert_html}</div>", unsafe_allow_html=True)
+                
+                st.markdown("<hr>", unsafe_allow_html=True)
 
-                    is_th = "Theory" in tipo
-                    def update_comp(label, cat, k_comp):
-                        opts = theory_opts[cat] if is_th else inv_opts[cat]
-                        current_val = curr.get(k_comp, "-")
-                        if current_val not in opts: current_val = "-"
-                        display_label = f"{label} ⚠️" if current_val != "-" and all_selected.count(current_val) > 1 else label
-                        res = st.selectbox(display_label, opts, index=opts.index(current_val), key=f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}")
-                        if curr.get(k_comp) != res:
-                            curr[k_comp] = res; st.rerun()
-
-                    if "BX/UX" in tipo and "+R-I-Bit" not in tipo:
-                        update_comp("Blade", "blade", "b"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
-                        k_img_order = ["b", "r", "bi"]
-                    elif "CX Infinity" in tipo and "+R-I-Bit" not in tipo:
-                        update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Over Blade", "over_blade", "ob"); update_comp("Metal Blade", "metal_blade", "meb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
-                        k_img_order = ["lc", "ob", "meb", "ab", "r", "bi"]
-                    elif "CX" in tipo and "+R-I-Bit" not in tipo:
-                        update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
-                        k_img_order = ["lc", "mb", "ab", "r", "bi"]
-                    elif "R-I-Blade" in tipo:
-                        update_comp("R-I-Blade", "r_i_blade", "ribl"); update_comp("Bit", "bit", "bi")
-                        k_img_order = ["ribl", "bi"]
-                    elif "+R-I-Bit" in tipo:
-                        if "CX Infinity" in tipo:
-                            update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Over Blade", "over_blade", "ob"); update_comp("Metal Blade", "metal_blade", "meb"); update_comp("Assist Blade", "assist_blade", "ab")
-                            k_img_order = ["lc", "ob", "meb", "ab", "rib"]
-                        elif "CX" in tipo:
-                            update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab")
-                            k_img_order = ["lc", "mb", "ab", "rib"]
-                        else: 
-                            update_comp("Blade", "blade", "b")
-                            k_img_order = ["b", "rib"]
-                        update_comp("R-I-Bit", "r_i_bit", "rib")
-
-                    st.write("") 
-                    cols = st.columns(len(k_img_order) if len(k_img_order) > 0 else 1)
-                    col_idx = 0
-                    for k in k_img_order:
-                        v = curr.get(k)
-                        if v and v != "-":
-                            img_obj = get_img(global_img_map.get(v))
-                            if img_obj: cols[col_idx].image(img_obj, width=80); col_idx += 1
-
-            c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
-            if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
-                st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
-            if c2.button("Salva Deck", key=f"s_{user_sel}_{d_idx}"): save_cloud()
-            if c3.button("Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
-                user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
-            if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
-                n_name = st.text_input("Nuovo nome:", deck['name'], key=f"i_{d_idx}")
-                if st.button("OK", key=f"o_{d_idx}"):
-                    deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
-
-    if st.button("Nuovo Deck"):
-        user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
-        save_cloud(); st.rerun()
-
-# --- TAB 4: AI ADVISOR (INTOCCABILE) ---
-with tab4:
-    st.markdown("### 🤖 Strategia Meta-Analitica WBO")
-    
-    API_KEY = st.secrets.get("gemini_api_key")
-    if not API_KEY:
-        st.error("⚠️ Chiave API mancante.")
-    else:
-        with st.container(border=True):
-            tutti_pezzi = []
-            for cat in user_data["inv"]:
-                tutti_pezzi.extend(sorted(user_data["inv"][cat].keys()))
-            tutti_pezzi = sorted(list(set(tutti_pezzi)))
-
-            col_a, col_b = st.columns(2)
-            with col_a:
-                approcci = ["Aggro puro", "Anti-meta", "Stamina dominante", "Difensivo/Counter", "Top Meta ottimizzato", "Equilibrato", "High-risk High-reward", "Tech specialist"]
-                tipo_deck_ai = st.selectbox("🎯 Approccio", approcci)
-                lancio_ai = st.select_slider("🎯 Capacità di lancio (1-10)", options=list(range(1, 11)), value=5)
-                torneo_ai = st.selectbox("🎯 Tipo di Torneo", ["Locale / Amichevole", "Regionale", "Nazionale", "WBO Competitivo"])
-            
-            with col_b:
-                comp_obbl = st.multiselect("✅ Componenti Obbligatorie", tutti_pezzi)
-                comp_escl = st.multiselect("❌ Componenti da evitare", tutti_pezzi)
-            
-            if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
-                with st.spinner("Ricerca modello e generazione analisi..."):
-                    try:
-                        genai.configure(api_key=API_KEY)
+                for s_idx in range(3):
+                    s_key = str(s_idx)
+                    if s_key not in deck["slots"]: deck["slots"][s_key] = {"tipo": "BX/UX"}
+                    curr = deck["slots"][s_key]
+                    
+                    with st.expander(f"SLOT {s_idx+1}"):
+                        old_tipo = curr.get("tipo", "BX/UX")
+                        old_tipo = old_tipo.replace("+RIB", "+R-I-Bit")
+                        if old_tipo not in tipologie: old_tipo = "BX/UX"
                         
+                        tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(old_tipo), key=f"t_{user_sel}_{d_idx}_{s_idx}")
+                        if tipo != old_tipo:
+                            curr["tipo"] = tipo; st.rerun()
+
+                        is_th = "Theory" in tipo
+                        def update_comp(label, cat, k_comp):
+                            opts = theory_opts.get(cat, ["-"]) if is_th else inv_opts.get(cat, ["-"])
+                            current_val = curr.get(k_comp, "-")
+                            if current_val not in opts: current_val = "-"
+                            display_label = f"{label} ⚠️" if current_val != "-" and all_selected.count(current_val) > 1 else label
+                            res = st.selectbox(display_label, opts, index=opts.index(current_val), key=f"sel_{k_comp}_{user_sel}_{d_idx}_{s_idx}")
+                            if curr.get(k_comp) != res:
+                                curr[k_comp] = res; st.rerun()
+
+                        if "BX/UX" in tipo and "+R-I-Bit" not in tipo:
+                            update_comp("Blade", "blade", "b"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                            k_img_order = ["b", "r", "bi"]
+                        elif "CX Infinity" in tipo and "+R-I-Bit" not in tipo:
+                            update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Over Blade", "over_blade", "ob"); update_comp("Metal Blade", "metal_blade", "meb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                            k_img_order = ["lc", "ob", "meb", "ab", "r", "bi"]
+                        elif "CX" in tipo and "+R-I-Bit" not in tipo:
+                            update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab"); update_comp("Ratchet", "ratchet", "r"); update_comp("Bit", "bit", "bi")
+                            k_img_order = ["lc", "mb", "ab", "r", "bi"]
+                        elif "R-I-Blade" in tipo:
+                            update_comp("R-I-Blade", "r_i_blade", "ribl"); update_comp("Bit", "bit", "bi")
+                            k_img_order = ["ribl", "bi"]
+                        elif "+R-I-Bit" in tipo:
+                            if "CX Infinity" in tipo:
+                                update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Over Blade", "over_blade", "ob"); update_comp("Metal Blade", "metal_blade", "meb"); update_comp("Assist Blade", "assist_blade", "ab")
+                                k_img_order = ["lc", "ob", "meb", "ab", "rib"]
+                            elif "CX" in tipo:
+                                update_comp("Lock Chip", "lock_chip", "lc"); update_comp("Main Blade", "main_blade", "mb"); update_comp("Assist Blade", "assist_blade", "ab")
+                                k_img_order = ["lc", "mb", "ab", "rib"]
+                            else: 
+                                update_comp("Blade", "blade", "b")
+                                k_img_order = ["b", "rib"]
+                            update_comp("R-I-Bit", "r_i_bit", "rib")
+
+                        st.write("") 
+                        cols = st.columns(len(k_img_order) if len(k_img_order) > 0 else 1)
+                        col_idx = 0
+                        for k in k_img_order:
+                            v = curr.get(k)
+                            if v and v != "-":
+                                img_obj = get_img(global_img_map.get(v))
+                                if img_obj: cols[col_idx].image(img_obj, width=80); col_idx += 1
+
+                c1, c2, c3, _ = st.columns([0.2, 0.2, 0.2, 0.4])
+                if c1.button("Rinomina", key=f"r_{user_sel}_{d_idx}"):
+                    st.session_state.edit_name_idx = f"{user_sel}_{d_idx}"; st.rerun()
+                if c2.button("Salva Deck", key=f"s_{user_sel}_{d_idx}"): save_cloud()
+                if c3.button("Elimina", key=f"e_{user_sel}_{d_idx}", type="primary"):
+                    user_data["decks"].pop(d_idx); save_cloud(); st.rerun()
+                if st.session_state.edit_name_idx == f"{user_sel}_{d_idx}":
+                    n_name = st.text_input("Nuovo nome:", deck['name'], key=f"i_{d_idx}")
+                    if st.button("OK", key=f"o_{d_idx}"):
+                        deck['name'] = n_name; st.session_state.edit_name_idx = None; save_cloud(); st.rerun()
+
+        if st.button("Nuovo Deck"):
+            user_data["decks"].append({"name": f"DECK {len(user_data['decks'])+1}", "slots": {"0":{"tipo":"BX/UX"}, "1":{"tipo":"BX/UX"}, "2":{"tipo":"BX/UX"}}})
+            save_cloud(); st.rerun()
+
+elif menu_scelta == "Match!":
+    tab5, tab6 = st.tabs(["📊 Registro Match", "🏆 Classifica Beyblade"])
+
+    # --- TAB 5: REGISTRO MATCH ---
+    with tab5:
+        st.markdown("### 📊 Registro Rapido Scontri")
+        
+        if 'match_counter' not in st.session_state:
+            st.session_state.match_counter = 0
+        
+        col_p1, col_p2 = st.columns(2)
+        p_options = ["Antonio", "Andrea", "Fabio", "Esterno"]
+        with col_p1: g1 = st.selectbox("Giocatore 1", p_options, index=p_options.index(user_sel) if user_sel in p_options else 0)
+        with col_p2: g2 = st.selectbox("Giocatore 2", p_options, index=1 if user_sel != "Andrea" else 0)
+
+        def get_bey_names(player_name, suffix):
+            if player_name == "Esterno":
+                with st.expander(f"⚙️ Configura Bey Esterni ({suffix})"):
+                    return [st.text_input(f"Bey {i+1} ({suffix})", f"Esterno {i+1}", key=f"ext_{suffix}_{i}") for i in range(3)]
+            else:
+                p_decks = st.session_state.users[player_name]["decks"]
+                names = []
+                for d in p_decks:
+                    for s_idx in range(3):
+                        curr = d["slots"].get(str(s_idx), {})
+                        tipo = curr.get("tipo", "BX/UX")
+                        
+                        keys = ["b", "r", "bi"]
+                        if "CX Infinity" in tipo: keys = ["lc", "ob", "meb", "ab", "r", "bi"]
+                        elif "CX" in tipo: keys = ["lc", "mb", "ab", "r", "bi"]
+                        elif "R-I-Blade" in tipo: keys = ["ribl", "bi"]
+                        
+                        if "+R-I-Bit" in tipo:
+                            if "CX Infinity" in tipo: keys = ["lc", "ob", "meb", "ab", "rib"]
+                            elif "CX" in tipo: keys = ["lc", "mb", "ab", "rib"]
+                            else: keys = ["b", "rib"]
+                            
+                        n = " ".join([curr.get(k) for k in keys if curr.get(k) and curr.get(k) != "-"]).strip()
+                        if n: names.append(f"{d['name']} - {n}")
+                return sorted(list(set(names))) if names else ["-"]
+
+        beys_g1 = get_bey_names(g1, "G1")
+        beys_g2 = get_bey_names(g2, "G2")
+        punteggi = ["-", "1-0", "2-0", "3-0", "0-1", "0-2", "0-3"]
+
+        df_init = pd.DataFrame(
+            [{"Bey G1": "-", "Bey G2": "-", "Punti": "-"} for _ in range(7)],
+            index=range(1, 8)
+        )
+        
+        edited_df = st.data_editor(
+            df_init,
+            column_config={
+                "Bey G1": st.column_config.SelectboxColumn("Bey G1", options=beys_g1, width="medium"),
+                "Bey G2": st.column_config.SelectboxColumn("Bey G2", options=beys_g2, width="medium"),
+                "Punti": st.column_config.SelectboxColumn("Punti", options=punteggi, width="small"),
+            },
+            use_container_width=True,
+            key=f"match_editor_vFINAL_{st.session_state.match_counter}"
+        )
+
+        if st.button("🚀 SALVA MATCH NEL CLOUD", use_container_width=True, type="primary"):
+            valid_rows = edited_df[edited_df["Punti"] != "-"]
+            
+            if valid_rows.empty:
+                st.warning("Compila almeno un round.")
+            else:
+                now_str = datetime.now().strftime("%d/%m/%Y")
+                new_records = []
+                
+                for _, row in valid_rows.iterrows():
+                    p1_raw, p2_raw = map(int, row["Punti"].split("-"))
+                    
+                    if p1_raw > p2_raw:
+                        val_g1, val_g2 = p1_raw, -p1_raw
+                    else:
+                        val_g1, val_g2 = -p2_raw, p2_raw
+                    
+                    b1_clean = row["Bey G1"].split(" - ", 1)[-1] if " - " in row["Bey G1"] else row["Bey G1"]
+                    b2_clean = row["Bey G2"].split(" - ", 1)[-1] if " - " in row["Bey G2"] else row["Bey G2"]
+                    
+                    new_records.append({
+                        "Data": now_str,
+                        "NomeGiocatore1": g1,
+                        "BeyG1": b1_clean,
+                        "NomeGiocatore2": g2,
+                        "BeyG2": b2_clean,
+                        "PunteggioBeyG1": val_g1,
+                        "PunteggioBeyG2": val_g2
+                    })
+                
+                with st.spinner("Aggiornamento archivio..."):
+                    full_archive = github_action("stats", method="GET") or []
+                    full_archive.extend(new_records)
+                    
+                    if github_action("stats", full_archive, "PUT"):
+                        st.success("Scontri archiviati con successo!")
+                        st.session_state.match_counter += 1
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.error("Errore salvataggio statistiche.")
+
+        st.markdown("---")
+        st.markdown("### 📥 Esporta Statistiche in Excel")
+        
+        start_date = st.date_input("Esporta dati a partire da:", value=datetime.today().date())
+        
+        if st.button("⚙️ Prepara File Excel", use_container_width=True):
+            with st.spinner("Recupero dati e generazione Excel..."):
+                stats_data = github_action("stats", method="GET") or []
+                if not stats_data:
+                    st.warning("Nessun dato presente nel registro.")
+                else:
+                    filtered_data = []
+                    for row in stats_data:
+                        d_str = row.get("Data", "")
                         try:
-                            valid_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-                            if any("gemini-1.5-flash" in m for m in valid_models):
-                                target = next(m for m in valid_models if "gemini-1.5-flash" in m)
-                            elif any("gemini-1.5-pro" in m for m in valid_models):
-                                target = next(m for m in valid_models if "gemini-1.5-pro" in m)
+                            row_date = datetime.strptime(d_str, "%d/%m/%Y").date()
+                        except ValueError:
+                            try:
+                                row_date = datetime.strptime(d_str, "%Y-%m-%d %H:%M:%S").date()
+                            except ValueError:
+                                row_date = datetime.min.date()
+                                
+                        if row_date >= start_date:
+                            filtered_data.append(row)
+                            
+                    if not filtered_data:
+                        st.warning("Nessun dato trovato a partire da questa data.")
+                    else:
+                        df_history = pd.DataFrame(filtered_data)
+                        
+                        df1 = df_history[['BeyG1', 'PunteggioBeyG1']].rename(columns={'BeyG1': 'Bey', 'PunteggioBeyG1': 'Score'})
+                        df2 = df_history[['BeyG2', 'PunteggioBeyG2']].rename(columns={'BeyG2': 'Bey', 'PunteggioBeyG2': 'Score'})
+                        
+                        df_concat = pd.concat([df1, df2])
+                        df_concat['Score'] = pd.to_numeric(df_concat['Score'], errors='coerce').fillna(0)
+                        df_scores = df_concat.groupby('Bey')['Score'].sum().reset_index().sort_values(by='Score', ascending=False)
+                        
+                        output = io.BytesIO()
+                        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                            df_history.to_excel(writer, sheet_name='match history', index=False)
+                            worksheet_history = writer.sheets['match history']
+                            worksheet_history.autofilter(0, 0, len(df_history), len(df_history.columns) - 1)
+                            
+                            df_scores.to_excel(writer, sheet_name='Punteggi Beyblade', index=False)
+                            
+                            for u in ["Antonio", "Andrea", "Fabio"]:
+                                if 'NomeGiocatore1' in df_history.columns and 'NomeGiocatore2' in df_history.columns:
+                                    df_u = df_history[(df_history['NomeGiocatore1'] == u) | (df_history['NomeGiocatore2'] == u)]
+                                else:
+                                    df_u = pd.DataFrame() 
+                                    
+                                df_u.to_excel(writer, sheet_name=u, index=False)
+                                worksheet_u = writer.sheets[u]
+                                if not df_u.empty:
+                                    worksheet_u.autofilter(0, 0, len(df_u), len(df_u.columns) - 1)
+                                    
+                        st.session_state.excel_bytes = output.getvalue()
+                        st.success("✅ File Excel pronto!")
+
+        if 'excel_bytes' in st.session_state:
+            st.download_button(
+                label="📥 SCARICA EXCEL (.xlsx)",
+                data=st.session_state.excel_bytes,
+                file_name=f"Beyblade_Match_History_{datetime.now().strftime('%d_%m_%Y')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+                type="primary"
+            )
+
+    # --- TAB 6: CLASSIFICA BEYBLADE ---
+    with tab6:
+        st.markdown("### 🏆 Classifica Globale Beyblade")
+        
+        stats_data = github_action("stats", method="GET") or []
+        
+        if not stats_data:
+            st.info("Nessun match registrato finora nel cloud.")
+        else:
+            col_f1, col_f2 = st.columns(2)
+            with col_f1:
+                oggi = datetime.today().date()
+                inizio_default = oggi - timedelta(days=30)
+                date_range = st.date_input("📅 Range temporale", value=(inizio_default, oggi))
+            
+            with col_f2:
+                opzioni_filtro = ["Tutti", "Antonio", "Andrea", "Fabio"]
+                idx_default = opzioni_filtro.index(user_sel) if user_sel in opzioni_filtro else 0
+                filtro_utente = st.selectbox("👤 Filtra per Utente", opzioni_filtro, index=idx_default)
+
+            if isinstance(date_range, tuple) and len(date_range) == 2:
+                start_d, end_d = date_range
+            elif isinstance(date_range, tuple) and len(date_range) == 1:
+                start_d = end_d = date_range[0]
+            else:
+                start_d = end_d = date_range
+
+            filtered_data = []
+            for row in stats_data:
+                d_str = row.get("Data", "")
+                try:
+                    row_date = datetime.strptime(d_str, "%d/%m/%Y").date()
+                except ValueError:
+                    try:
+                        row_date = datetime.strptime(d_str, "%Y-%m-%d %H:%M:%S").date()
+                    except ValueError:
+                        row_date = datetime.min.date()
+                
+                if start_d <= row_date <= end_d:
+                    filtered_data.append(row)
+
+            if not filtered_data:
+                st.warning("Nessun dato trovato per il periodo selezionato.")
+            else:
+                df_storico = pd.DataFrame(filtered_data)
+                
+                df_g1 = df_storico[['NomeGiocatore1', 'BeyG1', 'PunteggioBeyG1']].rename(columns={'NomeGiocatore1': 'Giocatore', 'BeyG1': 'Bey', 'PunteggioBeyG1': 'Punteggio'})
+                df_g2 = df_storico[['NomeGiocatore2', 'BeyG2', 'PunteggioBeyG2']].rename(columns={'NomeGiocatore2': 'Giocatore', 'BeyG2': 'Bey', 'PunteggioBeyG2': 'Punteggio'})
+                
+                df_totale = pd.concat([df_g1, df_g2])
+                
+                if filtro_utente != "Tutti":
+                    df_totale = df_totale[df_totale['Giocatore'] == filtro_utente]
+                
+                df_totale['Punteggio'] = pd.to_numeric(df_totale['Punteggio'], errors='coerce').fillna(0)
+                
+                df_classifica = df_totale.groupby('Bey')['Punteggio'].sum().reset_index().sort_values(by='Punteggio', ascending=False)
+                df_classifica.index = range(1, len(df_classifica) + 1)
+                
+                st.dataframe(df_classifica, use_container_width=True)
+
+elif menu_scelta == "AI Advisor":
+    tab4, = st.tabs(["🤖 AI Advisor"])
+
+    # --- TAB 4: AI ADVISOR ---
+    with tab4:
+        st.markdown("### 🤖 Strategia Meta-Analitica WBO")
+        
+        API_KEY = st.secrets.get("gemini_api_key")
+        if not API_KEY:
+            st.error("⚠️ Chiave API mancante.")
+        else:
+            with st.container(border=True):
+                tutti_pezzi = []
+                for cat in user_data["inv"]:
+                    tutti_pezzi.extend(sorted(user_data["inv"][cat].keys()))
+                tutti_pezzi = sorted(list(set(tutti_pezzi)))
+
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    approcci = ["Aggro puro", "Anti-meta", "Stamina dominante", "Difensivo/Counter", "Top Meta ottimizzato", "Equilibrato", "High-risk High-reward", "Tech specialist"]
+                    tipo_deck_ai = st.selectbox("🎯 Approccio", approcci)
+                    lancio_ai = st.select_slider("🎯 Capacità di lancio (1-10)", options=list(range(1, 11)), value=5)
+                    torneo_ai = st.selectbox("🎯 Tipo di Torneo", ["Locale / Amichevole", "Regionale", "Nazionale", "WBO Competitivo"])
+                
+                with col_b:
+                    comp_obbl = st.multiselect("✅ Componenti Obbligatorie", tutti_pezzi)
+                    comp_escl = st.multiselect("❌ Componenti da evitare", tutti_pezzi)
+                
+                if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
+                    with st.spinner("Ricerca modello e generazione analisi..."):
+                        try:
+                            genai.configure(api_key=API_KEY)
+                            
+                            try:
+                                valid_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+                                if any("gemini-1.5-flash" in m for m in valid_models):
+                                    target = next(m for m in valid_models if "gemini-1.5-flash" in m)
+                                elif any("gemini-1.5-pro" in m for m in valid_models):
+                                    target = next(m for m in valid_models if "gemini-1.5-pro" in m)
+                                else:
+                                    target = valid_models[0]
+                                model = genai.GenerativeModel(target)
+                            except Exception as e_mod:
+                                st.error(f"Errore inizializzazione modelli: {e_mod}")
+                                st.stop()
+
+                            if os.path.exists("promptIA.txt"):
+                                with open("promptIA.txt", "r", encoding="utf-8") as f:
+                                    base_prompt = f.read()
                             else:
-                                target = valid_models[0]
-                            model = genai.GenerativeModel(target)
-                        except Exception as e_mod:
-                            st.error(f"Errore inizializzazione modelli: {e_mod}")
-                            st.stop()
+                                st.error("File promptIA.txt non trovato.")
+                                st.stop()
 
-                        if os.path.exists("promptIA.txt"):
-                            with open("promptIA.txt", "r", encoding="utf-8") as f:
-                                base_prompt = f.read()
-                        else:
-                            st.error("File promptIA.txt non trovato.")
-                            st.stop()
+                            inv_json = json.dumps(user_data["inv"], indent=2, ensure_ascii=False)
+                            obbl_str = ", ".join(comp_obbl) if comp_obbl else "nessuna"
+                            escl_str = ", ".join(comp_escl) if comp_escl else "nessuna"
 
-                        inv_json = json.dumps(user_data["inv"], indent=2, ensure_ascii=False)
-                        obbl_str = ", ".join(comp_obbl) if comp_obbl else "nessuna"
-                        escl_str = ", ".join(comp_escl) if comp_escl else "nessuna"
-
-                        prompt_completo = f"""
+                            prompt_completo = f"""
 {base_prompt}
 
 ### DATI GIOCATORE CORRENTI:
@@ -424,275 +684,45 @@ with tab4:
 
 Procedi con l'analisi tecnica rigorosa.
 """
-                        response = model.generate_content(prompt_completo)
-                        st.session_state.ai_report = response.text
-                        
-                    except Exception as e:
-                        st.error(f"Errore critico: {str(e)}")
-
-        if 'ai_report' in st.session_state:
-            st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
-            
-            extracted_json = None
-            match = re.search(r'\{[\s\n]*"slots"[\s\n]*:[\s\S]*\}', st.session_state.ai_report, re.DOTALL)
-            if match:
-                raw_json = match.group(0)
-                raw_json = raw_json[:raw_json.rfind('}')+1]
-                try:
-                    extracted_json = json.loads(raw_json)
-                except Exception as e:
-                    pass
-            
-            col_dl, col_imp = st.columns(2)
-            with col_dl:
-                st.download_button(
-                    label="📥 Scarica Report (.txt)",
-                    data=st.session_state.ai_report,
-                    file_name=f"Report_WBO_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
-                    mime="text/plain",
-                    use_container_width=True
-                )
-            
-            with col_imp:
-                if extracted_json and "slots" in extracted_json:
-                    if st.button("🚀 Importa Deck nel Builder", type="primary", use_container_width=True):
-                        oggi_str = datetime.now().strftime('%d/%m/%Y')
-                        nome_deck = f"{tipo_deck_ai}_{oggi_str}"
-                        nuovo_deck = {"name": nome_deck, "slots": extracted_json["slots"]}
-                        user_data["decks"].append(nuovo_deck)
-                        save_cloud()
-                        st.success(f"Deck '{nome_deck}' importato!")
-                        time.sleep(1)
-                        st.rerun()
-                else:
-                    st.info("⚠️ L'AI non ha fornito un JSON compatibile in questa run.")
-
-# --- TAB 5: REGISTRO MATCH (INTOCCABILE) ---
-with tab5:
-    st.markdown("### 📊 Registro Rapido Scontri")
-    
-    if 'match_counter' not in st.session_state:
-        st.session_state.match_counter = 0
-    
-    col_p1, col_p2 = st.columns(2)
-    p_options = ["Antonio", "Andrea", "Fabio", "Esterno"]
-    with col_p1: g1 = st.selectbox("Giocatore 1", p_options, index=p_options.index(user_sel) if user_sel in p_options else 0)
-    with col_p2: g2 = st.selectbox("Giocatore 2", p_options, index=1 if user_sel != "Andrea" else 0)
-
-    def get_bey_names(player_name, suffix):
-        if player_name == "Esterno":
-            with st.expander(f"⚙️ Configura Bey Esterni ({suffix})"):
-                return [st.text_input(f"Bey {i+1} ({suffix})", f"Esterno {i+1}", key=f"ext_{suffix}_{i}") for i in range(3)]
-        else:
-            p_decks = st.session_state.users[player_name]["decks"]
-            names = []
-            for d in p_decks:
-                for s_idx in range(3):
-                    curr = d["slots"].get(str(s_idx), {})
-                    tipo = curr.get("tipo", "BX/UX")
-                    
-                    keys = ["b", "r", "bi"]
-                    if "CX Infinity" in tipo: keys = ["lc", "ob", "meb", "r", "bi"]
-                    elif "CX" in tipo: keys = ["lc", "mb", "ab", "r", "bi"]
-                    elif "R-I-Blade" in tipo: keys = ["ribl", "bi"]
-                    
-                    if "+R-I-Bit" in tipo:
-                        if "CX Infinity" in tipo: keys = ["lc", "ob", "meb", "rib"]
-                        elif "CX" in tipo: keys = ["lc", "mb", "ab", "rib"]
-                        else: keys = ["b", "rib"]
-                        
-                    n = " ".join([curr.get(k) for k in keys if curr.get(k) and curr.get(k) != "-"]).strip()
-                    if n: names.append(f"{d['name']} - {n}")
-            return sorted(list(set(names))) if names else ["-"]
-
-    beys_g1 = get_bey_names(g1, "G1")
-    beys_g2 = get_bey_names(g2, "G2")
-    punteggi = ["-", "1-0", "2-0", "3-0", "0-1", "0-2", "0-3"]
-
-    df_init = pd.DataFrame(
-        [{"Bey G1": "-", "Bey G2": "-", "Punti": "-"} for _ in range(7)],
-        index=range(1, 8)
-    )
-    
-    edited_df = st.data_editor(
-        df_init,
-        column_config={
-            "Bey G1": st.column_config.SelectboxColumn("Bey G1", options=beys_g1, width="medium"),
-            "Bey G2": st.column_config.SelectboxColumn("Bey G2", options=beys_g2, width="medium"),
-            "Punti": st.column_config.SelectboxColumn("Punti", options=punteggi, width="small"),
-        },
-        use_container_width=True,
-        key=f"match_editor_vFINAL_{st.session_state.match_counter}"
-    )
-
-    if st.button("🚀 SALVA MATCH NEL CLOUD", use_container_width=True, type="primary"):
-        valid_rows = edited_df[edited_df["Punti"] != "-"]
-        
-        if valid_rows.empty:
-            st.warning("Compila almeno un round.")
-        else:
-            now_str = datetime.now().strftime("%d/%m/%Y")
-            new_records = []
-            
-            for _, row in valid_rows.iterrows():
-                p1_raw, p2_raw = map(int, row["Punti"].split("-"))
-                
-                if p1_raw > p2_raw:
-                    val_g1, val_g2 = p1_raw, -p1_raw
-                else:
-                    val_g1, val_g2 = -p2_raw, p2_raw
-                
-                b1_clean = row["Bey G1"].split(" - ", 1)[-1] if " - " in row["Bey G1"] else row["Bey G1"]
-                b2_clean = row["Bey G2"].split(" - ", 1)[-1] if " - " in row["Bey G2"] else row["Bey G2"]
-                
-                new_records.append({
-                    "Data": now_str,
-                    "NomeGiocatore1": g1,
-                    "BeyG1": b1_clean,
-                    "NomeGiocatore2": g2,
-                    "BeyG2": b2_clean,
-                    "PunteggioBeyG1": val_g1,
-                    "PunteggioBeyG2": val_g2
-                })
-            
-            with st.spinner("Aggiornamento archivio..."):
-                full_archive = github_action("stats", method="GET") or []
-                full_archive.extend(new_records)
-                
-                if github_action("stats", full_archive, "PUT"):
-                    st.success("Scontri archiviati con successo!")
-                    st.session_state.match_counter += 1
-                    time.sleep(1)
-                    st.rerun()
-                else:
-                    st.error("Errore salvataggio statistiche.")
-
-    st.markdown("---")
-    st.markdown("### 📥 Esporta Statistiche in Excel")
-    
-    start_date = st.date_input("Esporta dati a partire da:", value=datetime.today().date())
-    
-    if st.button("⚙️ Prepara File Excel", use_container_width=True):
-        with st.spinner("Recupero dati e generazione Excel..."):
-            stats_data = github_action("stats", method="GET") or []
-            if not stats_data:
-                st.warning("Nessun dato presente nel registro.")
-            else:
-                filtered_data = []
-                for row in stats_data:
-                    d_str = row.get("Data", "")
-                    try:
-                        row_date = datetime.strptime(d_str, "%d/%m/%Y").date()
-                    except ValueError:
-                        try:
-                            row_date = datetime.strptime(d_str, "%Y-%m-%d %H:%M:%S").date()
-                        except ValueError:
-                            row_date = datetime.min.date()
+                            response = model.generate_content(prompt_completo)
+                            st.session_state.ai_report = response.text
                             
-                    if row_date >= start_date:
-                        filtered_data.append(row)
-                        
-                if not filtered_data:
-                    st.warning("Nessun dato trovato a partire da questa data.")
-                else:
-                    df_history = pd.DataFrame(filtered_data)
-                    
-                    df1 = df_history[['BeyG1', 'PunteggioBeyG1']].rename(columns={'BeyG1': 'Bey', 'PunteggioBeyG1': 'Score'})
-                    df2 = df_history[['BeyG2', 'PunteggioBeyG2']].rename(columns={'BeyG2': 'Bey', 'PunteggioBeyG2': 'Score'})
-                    
-                    df_concat = pd.concat([df1, df2])
-                    df_concat['Score'] = pd.to_numeric(df_concat['Score'], errors='coerce').fillna(0)
-                    df_scores = df_concat.groupby('Bey')['Score'].sum().reset_index().sort_values(by='Score', ascending=False)
-                    
-                    output = io.BytesIO()
-                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                        df_history.to_excel(writer, sheet_name='match history', index=False)
-                        worksheet_history = writer.sheets['match history']
-                        worksheet_history.autofilter(0, 0, len(df_history), len(df_history.columns) - 1)
-                        
-                        df_scores.to_excel(writer, sheet_name='Punteggi Beyblade', index=False)
-                        
-                        for u in ["Antonio", "Andrea", "Fabio"]:
-                            if 'NomeGiocatore1' in df_history.columns and 'NomeGiocatore2' in df_history.columns:
-                                df_u = df_history[(df_history['NomeGiocatore1'] == u) | (df_history['NomeGiocatore2'] == u)]
-                            else:
-                                df_u = pd.DataFrame() 
-                                
-                            df_u.to_excel(writer, sheet_name=u, index=False)
-                            worksheet_u = writer.sheets[u]
-                            if not df_u.empty:
-                                worksheet_u.autofilter(0, 0, len(df_u), len(df_u.columns) - 1)
-                                
-                    st.session_state.excel_bytes = output.getvalue()
-                    st.success("✅ File Excel pronto!")
+                        except Exception as e:
+                            st.error(f"Errore critico: {str(e)}")
 
-    if 'excel_bytes' in st.session_state:
-        st.download_button(
-            label="📥 SCARICA EXCEL (.xlsx)",
-            data=st.session_state.excel_bytes,
-            file_name=f"Beyblade_Match_History_{datetime.now().strftime('%d_%m_%Y')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True,
-            type="primary"
-        )
-
-# --- TAB 6: CLASSIFICA BEYBLADE (INTOCCABILE) ---
-with tab6:
-    st.markdown("### 🏆 Classifica Globale Beyblade")
-    
-    stats_data = github_action("stats", method="GET") or []
-    
-    if not stats_data:
-        st.info("Nessun match registrato finora nel cloud.")
-    else:
-        col_f1, col_f2 = st.columns(2)
-        with col_f1:
-            oggi = datetime.today().date()
-            inizio_default = oggi - timedelta(days=30)
-            date_range = st.date_input("📅 Range temporale", value=(inizio_default, oggi))
-        
-        with col_f2:
-            opzioni_filtro = ["Tutti", "Antonio", "Andrea", "Fabio"]
-            idx_default = opzioni_filtro.index(user_sel) if user_sel in opzioni_filtro else 0
-            filtro_utente = st.selectbox("👤 Filtra per Utente", opzioni_filtro, index=idx_default)
-
-        if isinstance(date_range, tuple) and len(date_range) == 2:
-            start_d, end_d = date_range
-        elif isinstance(date_range, tuple) and len(date_range) == 1:
-            start_d = end_d = date_range[0]
-        else:
-            start_d = end_d = date_range
-
-        filtered_data = []
-        for row in stats_data:
-            d_str = row.get("Data", "")
-            try:
-                row_date = datetime.strptime(d_str, "%d/%m/%Y").date()
-            except ValueError:
-                try:
-                    row_date = datetime.strptime(d_str, "%Y-%m-%d %H:%M:%S").date()
-                except ValueError:
-                    row_date = datetime.min.date()
-            
-            if start_d <= row_date <= end_d:
-                filtered_data.append(row)
-
-        if not filtered_data:
-            st.warning("Nessun dato trovato per il periodo selezionato.")
-        else:
-            df_storico = pd.DataFrame(filtered_data)
-            
-            df_g1 = df_storico[['NomeGiocatore1', 'BeyG1', 'PunteggioBeyG1']].rename(columns={'NomeGiocatore1': 'Giocatore', 'BeyG1': 'Bey', 'PunteggioBeyG1': 'Punteggio'})
-            df_g2 = df_storico[['NomeGiocatore2', 'BeyG2', 'PunteggioBeyG2']].rename(columns={'NomeGiocatore2': 'Giocatore', 'BeyG2': 'Bey', 'PunteggioBeyG2': 'Punteggio'})
-            
-            df_totale = pd.concat([df_g1, df_g2])
-            
-            if filtro_utente != "Tutti":
-                df_totale = df_totale[df_totale['Giocatore'] == filtro_utente]
-            
-            df_totale['Punteggio'] = pd.to_numeric(df_totale['Punteggio'], errors='coerce').fillna(0)
-            
-            df_classifica = df_totale.groupby('Bey')['Punteggio'].sum().reset_index().sort_values(by='Punteggio', ascending=False)
-            df_classifica.index = range(1, len(df_classifica) + 1)
-            
-            st.dataframe(df_classifica, use_container_width=True)
+            if 'ai_report' in st.session_state:
+                st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
+                
+                extracted_json = None
+                match = re.search(r'\{[\s\n]*"slots"[\s\n]*:[\s\S]*\}', st.session_state.ai_report, re.DOTALL)
+                if match:
+                    raw_json = match.group(0)
+                    raw_json = raw_json[:raw_json.rfind('}')+1]
+                    try:
+                        extracted_json = json.loads(raw_json)
+                    except Exception as e:
+                        pass
+                
+                col_dl, col_imp = st.columns(2)
+                with col_dl:
+                    st.download_button(
+                        label="📥 Scarica Report (.txt)",
+                        data=st.session_state.ai_report,
+                        file_name=f"Report_WBO_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
+                        mime="text/plain",
+                        use_container_width=True
+                    )
+                
+                with col_imp:
+                    if extracted_json and "slots" in extracted_json:
+                        if st.button("🚀 Importa Deck nel Builder", type="primary", use_container_width=True):
+                            oggi_str = datetime.now().strftime('%d/%m/%Y')
+                            nome_deck = f"{tipo_deck_ai}_{oggi_str}"
+                            nuovo_deck = {"name": nome_deck, "slots": extracted_json["slots"]}
+                            user_data["decks"].append(nuovo_deck)
+                            save_cloud()
+                            st.success(f"Deck '{nome_deck}' importato!")
+                            time.sleep(1)
+                            st.rerun()
+                    else:
+                        st.info("⚠️ L'AI non ha fornito un JSON compatibile in questa run.")
