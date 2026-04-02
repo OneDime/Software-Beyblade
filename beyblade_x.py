@@ -196,8 +196,10 @@ def download_and_optimize_images():
 # =========================
 def create_csv():
     titles = get_beyblade_infobox_pages()
-    fields = ["name", "beyblade_page_image", "blade", "blade_image", "main_blade", "main_blade_image",
+    fields = ["name", "beyblade_page_image", "blade", "blade_image", "over_blade", "over_blade_image", 
+              "metal_blade", "metal_blade_image", "main_blade", "main_blade_image",
               "assist_blade", "assist_blade_image", "lock_chip", "lock_chip_image", "ratchet", "ratchet_image",
+              "ratchet_integrated_blade", "ratchet_integrated_blade_image",
               "ratchet_integrated_bit", "ratchet_integrated_bit_image", "bit", "bit_image"]
 
     with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
@@ -221,8 +223,10 @@ def create_csv():
                 row["beyblade_page_image"] = get_pageimage(title)
                 components = {
                     "blade": ["BladeX", "Blade"], "main_blade": ["MainBlade"],
+                    "over_blade": ["OverBlade"], "metal_blade": ["MetalBlade"],
                     "assist_blade": ["AssistBlade"], "lock_chip": ["LockChip", "Lock Bit"],
-                    "ratchet": ["Ratchet"], "ratchet_integrated_bit": ["RatchetBit"],
+                    "ratchet": ["Ratchet"], "ratchet_integrated_blade": ["RatchetBlade"],
+                    "ratchet_integrated_bit": ["RatchetBit"],
                     "bit": ["Bit", "PerformanceTip"]
                 }
                 for comp, keys in components.items():
@@ -231,7 +235,14 @@ def create_csv():
                         if val != "n/a":
                             row[comp] = val
                             break
-                    page = resolve_component_page(row[comp], [f"{comp.replace('_', ' ').title()} - "])
+                    
+                    prefix = f"{comp.replace('_', ' ').title()} - "
+                    if comp == "ratchet_integrated_blade":
+                        prefix = "Ratchet-Integrated Blade - "
+                    elif comp == "ratchet_integrated_bit":
+                        prefix = "Ratchet-Integrated Bit - "
+                        
+                    page = resolve_component_page(row[comp], [prefix])
                     img = get_infobox_image(page)
                     if img == "n/a": img = get_pageimage(page)
                     row[f"{comp}_image"] = img
