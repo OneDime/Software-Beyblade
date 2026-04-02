@@ -1,11 +1,5 @@
 {
     "Antonio": {
-        "lock_bit": {
-            "Wizard": 1,
-            "Kraken": 1,
-            "Hells": 2,
-            "Fox": 1
-        },
         "blade": {
             "WizardRod": 2,
             "WhaleWave": 1,
@@ -73,13 +67,18 @@
             "Gear Rush": 1,
             "Under Flat": 1
         },
-        "ratchet_integrated_bit": {}
+        "lock_chip": {
+            "Wizard": 1,
+            "Kraken": 1,
+            "Hells": 2,
+            "Fox": 1
+        },
+        "over_blade": {},
+        "metal_blade": {},
+        "r_i_blade": {},
+        "r_i_bit": {}
     },
     "Andrea": {
-        "lock_bit": {
-            "Hells": 1,
-            "Hornet": 1
-        },
         "blade": {
             "Buster Dran": 1,
             "TyrannoBeat": 1,
@@ -129,18 +128,16 @@
             "Hexa": 1,
             "Level": 1
         },
-        "ratchet_integrated_bit": {}
-    },
-    "Fabio": {
-        "lock_bit": {
+        "lock_chip": {
             "Hells": 1,
-            "Dran": 1,
-            "Fox": 1,
-            "Pegasus": 1,
-            "Perseus": 1,
-            "Emperor": 1,
             "Hornet": 1
         },
+        "over_blade": {},
+        "metal_blade": {},
+        "r_i_blade": {},
+        "r_i_bit": {}
+    },
+    "Fabio": {
         "blade": {
             "PhoenixWing": 1,
             "TyrannoBeat": 1,
@@ -223,7 +220,19 @@
             "Low Flat": 1,
             "Jolt": 1
         },
-        "ratchet_integrated_bit": {
+        "lock_chip": {
+            "Hells": 1,
+            "Dran": 1,
+            "Fox": 1,
+            "Pegasus": 1,
+            "Perseus": 1,
+            "Emperor": 1,
+            "Hornet": 1
+        },
+        "over_blade": {},
+        "metal_blade": {},
+        "r_i_blade": {},
+        "r_i_bit": {
             "Turbo": 1,
             "Operate": 1
         }
