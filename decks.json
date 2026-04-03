@@ -2,11 +2,18 @@
     "Antonio": {
         "beys": [
             {
-                "id": "ant_0001",
+                "id": "8a00f957",
                 "tipo": "BX/UX",
-                "b": "SilverWolf",
-                "r": "9-70",
-                "bi": "Free Ball"
+                "b": "DranBuster",
+                "r": "1-70",
+                "bi": "Accel"
+            },
+            {
+                "id": "ant_0003",
+                "tipo": "BX/UX",
+                "b": "CobaltDragoon",
+                "r": "9-60",
+                "bi": "Elevate"
             },
             {
                 "id": "ant_0002",
@@ -16,11 +23,11 @@
                 "bi": "Low Rush"
             },
             {
-                "id": "ant_0003",
+                "id": "ant_0001",
                 "tipo": "BX/UX",
-                "b": "CobaltDragoon",
-                "r": "9-60",
-                "bi": "Elevate"
+                "b": "SilverWolf",
+                "r": "9-70",
+                "bi": "Free Ball"
             },
             {
                 "id": "ant_0004",
