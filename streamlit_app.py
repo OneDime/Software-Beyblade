@@ -79,21 +79,30 @@ st.set_page_config(
 )
 
 def inject_apple_icon():
-    import streamlit.components.v1 as components
     try:
-        # Assicurati che l'immagine si chiami esattamente così
         with open("icona.png", "rb") as f:
             b64_icon = base64.b64encode(f.read()).decode()
         components.html(f"""
             <script>
                 const parentHead = window.parent.document.head;
-                let link = parentHead.querySelector("link[rel~='apple-touch-icon']");
-                if (!link) {{
-                    link = window.parent.document.createElement('link');
-                    link.rel = 'apple-touch-icon';
-                    parentHead.appendChild(link);
-                }}
+                
+                // 1. Rimuove ogni icona Apple preesistente per evitare conflitti
+                const existingIcons = parentHead.querySelectorAll("link[rel='apple-touch-icon']");
+                existingIcons.forEach(icon => parentHead.removeChild(icon));
+                
+                // 2. Inserisce la nuova icona personalizzata
+                const link = window.parent.document.createElement('link');
+                link.rel = 'apple-touch-icon';
                 link.href = "data:image/png;base64,{b64_icon}";
+                parentHead.appendChild(link);
+
+                // 3. Aggiunge il meta tag per forzare la modalità Web App (aiuta Safari a leggere l'icona)
+                if (!parentHead.querySelector("meta[name='apple-mobile-web-app-capable']")) {{
+                    const meta = window.parent.document.createElement('meta');
+                    meta.name = 'apple-mobile-web-app-capable';
+                    meta.content = 'yes';
+                    parentHead.appendChild(meta);
+                }}
             </script>
         """, height=0, width=0)
     except Exception:
