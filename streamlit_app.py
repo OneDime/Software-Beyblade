@@ -11,6 +11,7 @@ import io
 from datetime import datetime, timedelta
 from PIL import Image
 import google.generativeai as genai
+import streamlit.components.v1 as components
 
 # =========================
 # CONFIGURAZIONE & STILE
@@ -69,13 +70,36 @@ def inject_css():
         </style>
         """, unsafe_allow_html=True)
 
-# Impostazione Icona (Sostituito '🤖' con 'icona.png')
+# Impostazione Icona
 st.set_page_config(
     page_title="Officina Beyblade X", 
     page_icon="icona.png", 
     layout="wide", 
     initial_sidebar_state="expanded"
 )
+
+def inject_apple_icon():
+    import streamlit.components.v1 as components
+    try:
+        # Assicurati che l'immagine si chiami esattamente così
+        with open("icona.png", "rb") as f:
+            b64_icon = base64.b64encode(f.read()).decode()
+        components.html(f"""
+            <script>
+                const parentHead = window.parent.document.head;
+                let link = parentHead.querySelector("link[rel~='apple-touch-icon']");
+                if (!link) {{
+                    link = window.parent.document.createElement('link');
+                    link.rel = 'apple-touch-icon';
+                    parentHead.appendChild(link);
+                }}
+                link.href = "data:image/png;base64,{b64_icon}";
+            </script>
+        """, height=0, width=0)
+    except Exception:
+        pass
+
+inject_apple_icon()
 inject_css()
 
 # =========================
@@ -264,8 +288,6 @@ if st.sidebar.button("Esci / Cambia Utente"):
     st.query_params.clear()
     for key in list(st.session_state.keys()): del st.session_state[key]
     st.rerun()
-if st.sidebar.button("🔄 Forza Sync Cloud"):
-    force_load(); st.rerun()
 
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
