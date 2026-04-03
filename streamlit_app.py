@@ -82,26 +82,36 @@ def inject_apple_icon():
     try:
         with open("icona.png", "rb") as f:
             b64_icon = base64.b64encode(f.read()).decode()
+        
         components.html(f"""
             <script>
                 const parentHead = window.parent.document.head;
                 
-                // 1. Rimuove ogni icona Apple preesistente per evitare conflitti
-                const existingIcons = parentHead.querySelectorAll("link[rel='apple-touch-icon']");
-                existingIcons.forEach(icon => parentHead.removeChild(icon));
+                // 1. Rimuove TUTTI i link che contengono "icon" nel rel (favicon, apple-touch-icon, ecc)
+                const oldIcons = parentHead.querySelectorAll("link[rel*='icon']");
+                oldIcons.forEach(icon => parentHead.removeChild(icon));
                 
-                // 2. Inserisce la nuova icona personalizzata
-                const link = window.parent.document.createElement('link');
-                link.rel = 'apple-touch-icon';
-                link.href = "data:image/png;base64,{b64_icon}";
-                parentHead.appendChild(link);
+                // 2. Crea l'icona specifica per Apple
+                const appleIcon = window.parent.document.createElement('link');
+                appleIcon.rel = 'apple-touch-icon';
+                appleIcon.sizes = '180x180';
+                appleIcon.href = "data:image/png;base64,{b64_icon}";
+                parentHead.appendChild(appleIcon);
 
-                // 3. Aggiunge il meta tag per forzare la modalità Web App (aiuta Safari a leggere l'icona)
+                // 3. Forza il titolo della Web App (spesso aiuta iOS a ricaricare i meta-dati)
+                if (!parentHead.querySelector("meta[name='apple-mobile-web-app-title']")) {{
+                    const metaTitle = window.parent.document.createElement('meta');
+                    metaTitle.name = 'apple-mobile-web-app-title';
+                    metaTitle.content = 'Officina BX';
+                    parentHead.appendChild(metaTitle);
+                }}
+
+                // 4. Modalità Web App Fullscreen
                 if (!parentHead.querySelector("meta[name='apple-mobile-web-app-capable']")) {{
-                    const meta = window.parent.document.createElement('meta');
-                    meta.name = 'apple-mobile-web-app-capable';
-                    meta.content = 'yes';
-                    parentHead.appendChild(meta);
+                    const metaCapable = window.parent.document.createElement('meta');
+                    metaCapable.name = 'apple-mobile-web-app-capable';
+                    metaCapable.content = 'yes';
+                    parentHead.appendChild(metaCapable);
                 }}
             </script>
         """, height=0, width=0)
