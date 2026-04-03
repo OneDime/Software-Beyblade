@@ -235,15 +235,6 @@ df_db, global_img_map, theory_opts = load_db()
 user_sel = st.session_state.user_sel
 user_data = st.session_state.users[user_sel]
 
-# Sidebar
-st.sidebar.title(f"👤 {user_sel}")
-if st.sidebar.button("Esci / Cambia Utente"):
-    st.query_params.clear()
-    for key in list(st.session_state.keys()): del st.session_state[key]
-    st.rerun()
-if st.sidebar.button("🔄 Forza Sync Cloud"):
-    force_load(); st.rerun()
-
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
 
@@ -336,7 +327,7 @@ elif menu_scelta == "Builder":
             is_expanded = (st.session_state.get("last_edited_bey") == bey["id"])
             
             with st.expander(nome_bey.upper(), expanded=is_expanded):
-                tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(bey.get("tipo", "BX/UX")), key=f"tb_sys_{b_idx}")
+                tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(bey.get("tipo", "BX/UX")), key=f"tb_sys_{bey['id']}")
                 if tipo != bey.get("tipo"):
                     bey["tipo"] = tipo
                     st.session_state.last_edited_bey = bey["id"]
@@ -347,7 +338,7 @@ elif menu_scelta == "Builder":
                     opts = theory_opts.get(cat, ["-"]) if is_th else inv_opts.get(cat, ["-"])
                     val = bey.get(k_comp, "-")
                     if val not in opts: val = "-"
-                    res = st.selectbox(label, opts, index=opts.index(val), key=f"sel_{k_comp}_{b_idx}")
+                    res = st.selectbox(label, opts, index=opts.index(val), key=f"sel_{k_comp}_{bey['id']}")
                     if bey.get(k_comp) != res:
                         bey[k_comp] = res
                         st.session_state.last_edited_bey = bey["id"]
@@ -403,13 +394,13 @@ elif menu_scelta == "Builder":
                         
                 st.markdown("<hr>", unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
-                if c1.button("Salva", key=f"sv_bey_{b_idx}"):
+                if c1.button("Salva", key=f"sv_bey_{bey['id']}"):
                     if "is_new" in bey:
                         del bey["is_new"]
                     st.session_state.last_edited_bey = None
                     save_cloud(); st.success("Salvato!")
                     st.rerun()
-                if c2.button("Elimina", key=f"rm_bey_{b_idx}", type="primary"):
+                if c2.button("Elimina", key=f"rm_bey_{bey['id']}", type="primary"):
                     b_id_to_rem = bey["id"]
                     user_data["decks"]["beys"].pop(b_idx)
                     for d in user_data["decks"]["deck_list"]:
@@ -509,17 +500,12 @@ elif menu_scelta == "Match!":
                 with st.expander(f"⚙️ Configura Bey Esterni ({suffix})"):
                     return [st.text_input(f"Bey {i+1} ({suffix})", f"Esterno {i+1}", key=f"ext_{suffix}_{i}") for i in range(3)]
             else:
-                p_decks = st.session_state.users[player_name]["decks"]["deck_list"]
                 p_beys = st.session_state.users[player_name]["decks"]["beys"]
                 names = []
-                for d in p_decks:
-                    for s_idx in range(3):
-                        b_id = d["slots"].get(str(s_idx), "-")
-                        if b_id != "-":
-                            bey = next((x for x in p_beys if x["id"] == b_id), None)
-                            if bey:
-                                n, _, _ = get_bey_name_and_comps(bey)
-                                if n and n != "Vuoto": names.append(f"{d['name']} - {n}")
+                for bey in p_beys:
+                    n, _, _ = get_bey_name_and_comps(bey)
+                    if n and n != "Nuovo Beyblade":
+                        names.append(n)
                 return sorted(list(set(names))) if names else ["-"]
 
         beys_g1 = get_bey_names(g1, "G1")
@@ -559,15 +545,12 @@ elif menu_scelta == "Match!":
                     else:
                         val_g1, val_g2 = -p2_raw, p2_raw
                     
-                    b1_clean = row["Bey G1"].split(" - ", 1)[-1] if " - " in row["Bey G1"] else row["Bey G1"]
-                    b2_clean = row["Bey G2"].split(" - ", 1)[-1] if " - " in row["Bey G2"] else row["Bey G2"]
-                    
                     new_records.append({
                         "Data": now_str,
                         "NomeGiocatore1": g1,
-                        "BeyG1": b1_clean,
+                        "BeyG1": row["Bey G1"],
                         "NomeGiocatore2": g2,
-                        "BeyG2": b2_clean,
+                        "BeyG2": row["Bey G2"],
                         "PunteggioBeyG1": val_g1,
                         "PunteggioBeyG2": val_g2
                     })
