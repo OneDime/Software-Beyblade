@@ -237,6 +237,16 @@ user_data = st.session_state.users[user_sel]
 
 if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
+# Sidebar
+st.sidebar.title(f"👤 {user_sel}")
+if st.sidebar.button("Esci / Cambia Utente"):
+    st.query_params.clear()
+    for key in list(st.session_state.keys()): del st.session_state[key]
+    st.rerun()
+if st.sidebar.button("🔄 Forza Sync Cloud"):
+    force_load(); st.rerun()
+
+if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
 # =========================
 # MENU DI NAVIGAZIONE
