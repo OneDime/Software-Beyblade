@@ -109,7 +109,6 @@ def force_load():
         if "ratchet_integrated_blade" in user_inv:
             user_inv["r_i_blade"].update(user_inv.pop("ratchet_integrated_blade"))
             
-        # Nuova struttura per i Deck e migrazione automatica dei vecchi salvataggi
         raw_decks = deck_c.get(u, [])
         if isinstance(raw_decks, list):
             beys_list = []
@@ -312,19 +311,36 @@ elif menu_scelta == "Builder":
     with tab_bey:
         if st.button("➕ Crea Beyblade", type="primary"):
             new_id = hashlib.md5(str(time.time()).encode()).hexdigest()[:8]
-            user_data["decks"]["beys"].append({"id": new_id, "tipo": "BX/UX"})
+            user_data["decks"]["beys"].append({"id": new_id, "tipo": "BX/UX", "is_new": True})
+            st.session_state.last_edited_bey = new_id
             save_cloud(); st.rerun()
+            
+        search_bey = st.text_input("Cerca Beyblade...", "").lower()
             
         inv_opts = {cat: (["-"] + sorted(list(items.keys()))) for cat, items in user_data["inv"].items()}
         tipologie = ["BX/UX", "BX/UX+R-I-Bit", "CX", "CX+R-I-Bit", "CX Infinity", "CX Infinity+R-I-Bit", "R-I-Blade+Bit", "BX/UX Theory", "BX/UX+R-I-Bit Theory", "CX Theory", "CX+R-I-Bit Theory", "CX Infinity Theory", "CX Infinity+R-I-Bit Theory", "R-I-Blade+Bit Theory"]
         
+        def bey_sort_key(b):
+            nome, _, _ = get_bey_name_and_comps(b)
+            is_new = 0 if b.get("is_new") else 1
+            return (is_new, nome.lower())
+            
+        user_data["decks"]["beys"].sort(key=bey_sort_key)
+        
         for b_idx, bey in enumerate(user_data["decks"]["beys"]):
             nome_bey, _, _ = get_bey_name_and_comps(bey)
             
-            with st.expander(nome_bey.upper(), expanded=False):
+            if search_bey and search_bey not in nome_bey.lower():
+                continue
+                
+            is_expanded = (st.session_state.get("last_edited_bey") == bey["id"])
+            
+            with st.expander(nome_bey.upper(), expanded=is_expanded):
                 tipo = st.selectbox("Sistema", tipologie, index=tipologie.index(bey.get("tipo", "BX/UX")), key=f"tb_sys_{b_idx}")
                 if tipo != bey.get("tipo"):
-                    bey["tipo"] = tipo; st.rerun()
+                    bey["tipo"] = tipo
+                    st.session_state.last_edited_bey = bey["id"]
+                    st.rerun()
 
                 is_th = "Theory" in tipo
                 def update_comp_bey(label, cat, k_comp):
@@ -333,7 +349,9 @@ elif menu_scelta == "Builder":
                     if val not in opts: val = "-"
                     res = st.selectbox(label, opts, index=opts.index(val), key=f"sel_{k_comp}_{b_idx}")
                     if bey.get(k_comp) != res:
-                        bey[k_comp] = res; st.rerun()
+                        bey[k_comp] = res
+                        st.session_state.last_edited_bey = bey["id"]
+                        st.rerun()
 
                 if "CX Infinity" in tipo:
                     update_comp_bey("Lock Chip", "lock_chip", "lc")
@@ -386,7 +404,11 @@ elif menu_scelta == "Builder":
                 st.markdown("<hr>", unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
                 if c1.button("Salva", key=f"sv_bey_{b_idx}"):
+                    if "is_new" in bey:
+                        del bey["is_new"]
+                    st.session_state.last_edited_bey = None
                     save_cloud(); st.success("Salvato!")
+                    st.rerun()
                 if c2.button("Elimina", key=f"rm_bey_{b_idx}", type="primary"):
                     b_id_to_rem = bey["id"]
                     user_data["decks"]["beys"].pop(b_idx)
@@ -411,7 +433,6 @@ elif menu_scelta == "Builder":
             all_deck_comps = []
             slot_names = []
             
-            # Raccoglie i componenti di tutti e 3 gli slot per trovare eventuali duplicati
             for s_idx in range(3):
                 b_id = deck["slots"].get(str(s_idx), "-")
                 if b_id != "-" and b_id in bey_options:
@@ -426,7 +447,6 @@ elif menu_scelta == "Builder":
                     slot_names.append(f"Slot {s_idx+1} Vuoto")
 
             with st.expander(deck['name'].upper(), expanded=False):
-                # Box di riepilogo con segnalazione duplicati
                 for s_idx in range(3):
                     b_id = deck["slots"].get(str(s_idx), "-")
                     ha_duplicati = False
@@ -442,13 +462,12 @@ elif menu_scelta == "Builder":
                 
                 st.markdown("<hr>", unsafe_allow_html=True)
                 
-                # Selettori per inserire i beyblade nei 3 slot
                 for s_idx in range(3):
                     s_key = str(s_idx)
                     curr_val = deck["slots"].get(s_key, "-")
                     if curr_val not in bey_list_display: curr_val = "-"
                     
-                    new_val = st.selectbox(f"Seleziona Beyblade per Slot {s_idx+1}", bey_list_display, format_func=format_bey_opt, index=bey_list_display.index(curr_val), key=f"sel_dkbey_{d_idx}_{s_idx}")
+                    new_val = st.selectbox(f"Slot {s_idx+1}", bey_list_display, format_func=format_bey_opt, index=bey_list_display.index(curr_val), key=f"sel_dkbey_{d_idx}_{s_idx}")
                     if new_val != curr_val:
                         deck["slots"][s_key] = new_val; st.rerun()
                 
@@ -801,7 +820,6 @@ Procedi con l'analisi tecnica rigorosa.
                             nome_deck = f"{tipo_deck_ai}_{oggi_str}"
                             nuovo_deck = {"name": nome_deck, "slots": extracted_json["slots"]}
                             
-                            # Questo garantisce che l'import AI funzioni ancora col nuovo sistema (crea un deck fittizio per retrocompatibilità)
                             user_data["decks"]["deck_list"].append(nuovo_deck)
                             
                             save_cloud()
