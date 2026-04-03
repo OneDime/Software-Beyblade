@@ -1,201 +1,76 @@
 {
-    "Antonio": [
-        {
-            "name": "Anti wizard",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "SilverWolf",
-                    "r": "9-70",
-                    "bi": "Free Ball"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "SharkScale",
-                    "r": "4-50",
-                    "bi": "Low Rush"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "CobaltDragoon",
-                    "r": "9-60",
-                    "bi": "Elevate"
-                }
+    "Antonio": {
+        "beys": [
+            {"id": "ant_0001", "tipo": "BX/UX", "b": "SilverWolf", "r": "9-70", "bi": "Free Ball"},
+            {"id": "ant_0002", "tipo": "BX/UX", "b": "SharkScale", "r": "4-50", "bi": "Low Rush"},
+            {"id": "ant_0003", "tipo": "BX/UX", "b": "CobaltDragoon", "r": "9-60", "bi": "Elevate"},
+            {"id": "ant_0004", "tipo": "BX/UX", "b": "WizardRod", "r": "1-60", "bi": "Hexa"},
+            {"id": "ant_0005", "tipo": "BX/UX", "b": "SharkScale", "r": "4-50", "bi": "Low Rush"},
+            {"id": "ant_0006", "tipo": "BX/UX", "b": "CobaltDragoon", "r": "9-60", "bi": "Elevate"}
+        ],
+        "deck_list": [
+            {
+                "name": "Anti wizard",
+                "slots": {"0": "ant_0001", "1": "ant_0002", "2": "ant_0003"}
+            },
+            {
+                "name": "top meta",
+                "slots": {"0": "ant_0004", "1": "ant_0005", "2": "ant_0006"}
             }
-        },
-        {
-            "name": "top meta",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "WizardRod",
-                    "r": "1-60",
-                    "bi": "Hexa"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "SharkScale",
-                    "r": "4-50",
-                    "bi": "Low Rush"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "CobaltDragoon",
-                    "r": "9-60",
-                    "bi": "Elevate"
-                }
+        ]
+    },
+    "Andrea": {
+        "beys": [
+            {"id": "and_0001", "tipo": "BX/UX", "b": "WizardRod", "r": "9-60", "bi": "Ball"},
+            {"id": "and_0002", "tipo": "BX/UX", "b": "TyrannoBeat", "r": "5-60", "bi": "Point"},
+            {"id": "and_0003", "tipo": "BX/UX", "b": "PhoenixWing", "r": "3-60", "bi": "Rush"}
+        ],
+        "deck_list": [
+            {
+                "name": "DECK 1",
+                "slots": {"0": "and_0001", "1": "and_0002", "2": "and_0003"}
             }
-        }
-    ],
-    "Andrea": [
-        {
-            "name": "DECK 1",
-            "slots": {
-                "0": {
-                    "b": "WizardRod",
-                    "r": "9-60",
-                    "bi": "Ball"
-                },
-                "1": {
-                    "b": "TyrannoBeat",
-                    "r": "5-60",
-                    "bi": "Point"
-                },
-                "2": {
-                    "b": "PhoenixWing",
-                    "r": "3-60",
-                    "bi": "Rush"
-                }
+        ]
+    },
+    "Fabio": {
+        "beys": [
+            {"id": "fab_0001", "tipo": "CX", "b": "-", "r": "7-60", "bi": "Taper", "rib": "-", "lb": "Emperor", "mb": "Blast", "ab": "Heavy"},
+            {"id": "fab_0002", "tipo": "BX/UX", "b": "TyrannoBeat", "r": "1-60", "bi": "Low Rush"},
+            {"id": "fab_0003", "tipo": "BX/UX", "b": "SamuraiSaber", "r": "9-60", "bi": "Hexa"},
+            {"id": "fab_0004", "tipo": "BX/UX", "b": "MeteorDragoon", "r": "5-60", "bi": "Level"},
+            {"id": "fab_0005", "tipo": "BX/UX", "b": "Hover Wyvern", "r": "3-70", "bi": "Jolt"},
+            {"id": "fab_0006", "tipo": "BX/UX", "b": "WizardRod", "r": "9-60", "bi": "Ball"},
+            {"id": "fab_0007", "tipo": "BX/UX", "b": "PhoenixWing", "r": "1-60", "bi": "Kick"},
+            {"id": "fab_0008", "tipo": "BX/UX", "b": "GolemRock", "r": "6-60", "bi": "Rush"},
+            {"id": "fab_0009", "tipo": "BX/UX", "b": "WizardRod", "r": "9-60", "bi": "Free Ball"},
+            {"id": "fab_0010", "tipo": "BX/UX", "b": "ImpactDrake", "r": "2-70", "bi": "Accel"},
+            {"id": "fab_0011", "tipo": "BX/UX", "b": "DranBuster", "r": "1-60", "bi": "Low Flat"},
+            {"id": "fab_0012", "tipo": "BX/UX", "b": "DranSword", "r": "3-60", "bi": "Rush"},
+            {"id": "fab_0013", "tipo": "BX/UX", "b": "Roar Tyranno", "r": "3-60", "bi": "Rush", "lb": "-", "mb": "-", "ab": "-", "rib": "Operate"},
+            {"id": "fab_0014", "tipo": "BX/UX", "b": "DranDagger", "r": "6-80", "bi": "Point"},
+            {"id": "fab_0015", "tipo": "CX", "b": "-", "r": "9-70", "bi": "Ball", "rib": "-", "lb": "Perseus", "mb": "Might", "ab": "Jaggy"}
+        ],
+        "deck_list": [
+            {
+                "name": "LoseRate100%",
+                "slots": {"0": "fab_0001", "1": "fab_0002", "2": "fab_0003"}
+            },
+            {
+                "name": "Meta",
+                "slots": {"0": "fab_0004", "1": "fab_0005", "2": "fab_0006"}
+            },
+            {
+                "name": "ALTERNATIVI",
+                "slots": {"0": "fab_0007", "1": "fab_0008", "2": "fab_0009"}
+            },
+            {
+                "name": "PAXERELLI",
+                "slots": {"0": "fab_0010", "1": "fab_0011", "2": "fab_0012"}
+            },
+            {
+                "name": "UNDERRATED",
+                "slots": {"0": "fab_0013", "1": "fab_0014", "2": "fab_0015"}
             }
-        }
-    ],
-    "Fabio": [
-        {
-            "name": "LoseRate100%",
-            "slots": {
-                "0": {
-                    "tipo": "CX",
-                    "b": "-",
-                    "r": "7-60",
-                    "bi": "Taper",
-                    "rib": "-",
-                    "lb": "Emperor",
-                    "mb": "Blast",
-                    "ab": "Heavy"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "TyrannoBeat",
-                    "r": "1-60",
-                    "bi": "Low Rush"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "SamuraiSaber",
-                    "r": "9-60",
-                    "bi": "Hexa"
-                }
-            }
-        },
-        {
-            "name": "Meta",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "MeteorDragoon",
-                    "r": "5-60",
-                    "bi": "Level"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "Hover Wyvern",
-                    "r": "3-70",
-                    "bi": "Jolt"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "WizardRod",
-                    "r": "9-60",
-                    "bi": "Ball"
-                }
-            }
-        },
-        {
-            "name": "ALTERNATIVI",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "PhoenixWing",
-                    "r": "1-60",
-                    "bi": "Kick"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "GolemRock",
-                    "r": "6-60",
-                    "bi": "Rush"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "WizardRod",
-                    "r": "9-60",
-                    "bi": "Free Ball"
-                }
-            }
-        },
-        {
-            "name": "PAXERELLI",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "ImpactDrake",
-                    "r": "2-70",
-                    "bi": "Accel"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "DranBuster",
-                    "r": "1-60",
-                    "bi": "Low Flat"
-                },
-                "2": {
-                    "tipo": "BX/UX",
-                    "b": "DranSword",
-                    "r": "3-60",
-                    "bi": "Rush"
-                }
-            }
-        },
-        {
-            "name": "UNDERRATED",
-            "slots": {
-                "0": {
-                    "tipo": "BX/UX",
-                    "b": "Roar Tyranno",
-                    "r": "3-60",
-                    "bi": "Rush",
-                    "lb": "-",
-                    "mb": "-",
-                    "ab": "-",
-                    "rib": "Operate"
-                },
-                "1": {
-                    "tipo": "BX/UX",
-                    "b": "DranDagger",
-                    "r": "6-80",
-                    "bi": "Point"
-                },
-                "2": {
-                    "tipo": "CX",
-                    "b": "-",
-                    "r": "9-70",
-                    "bi": "Ball",
-                    "rib": "-",
-                    "lb": "Perseus",
-                    "mb": "Might",
-                    "ab": "Jaggy"
-                }
-            }
-        }
-    ]
+        ]
+    }
 }
