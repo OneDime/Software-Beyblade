@@ -11,7 +11,6 @@ import io
 from datetime import datetime, timedelta
 from PIL import Image
 import google.generativeai as genai
-import streamlit.components.v1 as components
 
 # =========================
 # CONFIGURAZIONE & STILE
@@ -216,9 +215,6 @@ def load_db():
     for csv_col, img_col, state_key in mapping:
         if csv_col in df.columns:
             theory_opts[state_key] = ["-"] + sorted([x for x in df[csv_col].unique().tolist() if x and x != "n/a"])
-            if img_col in df.columns:
-                for _, r in df.iterrows():
-                    if r[csv_col] and r[csv_col] != "n/a": img_map[r[csv_col]] = r[img_col]
     
     for _, r in df.iterrows():
         for c_col, i_col, _ in mapping:
@@ -264,10 +260,9 @@ if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = Non
 st.sidebar.title(f"👤 {user_sel}")
 if st.sidebar.button("Esci / Cambia Utente"):
     st.query_params.clear()
-    for key in list(st.session_state.keys()): del st.session_state[key]
+    for key in list(st.session_state.keys()): 
+        del st.session_state[key]
     st.rerun()
-
-if 'edit_name_idx' not in st.session_state: st.session_state.edit_name_idx = None
 
 # =========================
 # MENU DI NAVIGAZIONE
