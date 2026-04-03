@@ -539,7 +539,7 @@ elif menu_scelta == "Match!":
         punteggi = ["-", "1-0", "2-0", "3-0", "0-1", "0-2", "0-3"]
 
         df_init = pd.DataFrame(
-            [{"Bey G1": "-", "Bey G2": "-", "Punti": "-"} for _ in range(14)],
+            [{"Bey G1": "-", "Bey G2": "-", "Punti": "-"} for _ in range(12)],
             index=range(1, 13)
         )
         
