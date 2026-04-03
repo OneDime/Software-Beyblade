@@ -2,11 +2,25 @@
     "Antonio": {
         "beys": [
             {
+                "id": "fdde1f53",
+                "tipo": "BX/UX",
+                "b": "WyvernHover",
+                "r": "9-60",
+                "bi": "Kick"
+            },
+            {
                 "id": "ant_0003",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
                 "r": "9-60",
                 "bi": "Elevate"
+            },
+            {
+                "id": "a9b1ff38",
+                "tipo": "BX/UX",
+                "b": "PhoenixWing",
+                "r": "3-60",
+                "bi": "Rush"
             },
             {
                 "id": "ant_0002",
