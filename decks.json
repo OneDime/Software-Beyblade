@@ -2,6 +2,13 @@
     "Antonio": {
         "beys": [
             {
+                "id": "fdde1f53",
+                "tipo": "BX/UX",
+                "b": "WyvernHover",
+                "r": "9-60",
+                "bi": "Kick"
+            },
+            {
                 "id": "ant_0003",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -35,11 +42,6 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
-            },
-            {
-                "id": "fdde1f53",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
