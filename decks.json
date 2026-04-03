@@ -28,6 +28,10 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
+            },
+            {
+                "id": "f9eeb563",
+                "tipo": "BX/UX"
             }
         ],
         "deck_list": [
@@ -43,8 +47,8 @@
                 "name": "top meta",
                 "slots": {
                     "0": "ant_0004",
-                    "1": "-",
-                    "2": "-"
+                    "1": "ant_0002",
+                    "2": "ant_0003"
                 }
             }
         ]
