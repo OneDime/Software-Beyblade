@@ -28,13 +28,6 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
-            },
-            {
-                "id": "ant_0006",
-                "tipo": "BX/UX",
-                "b": "CobaltDragoon",
-                "r": "9-60",
-                "bi": "Elevate"
             }
         ],
         "deck_list": [
@@ -51,7 +44,7 @@
                 "slots": {
                     "0": "ant_0004",
                     "1": "-",
-                    "2": "ant_0006"
+                    "2": "-"
                 }
             }
         ]
