@@ -20,6 +20,21 @@ def inject_css():
         <style>
         :root { color-scheme: dark; }
         .stApp { background-color: #0f172a; color: #f1f5f9; }
+        
+        /* Forza grigio scuro su barre di ricerca e input (fisso anche su mobile) */
+        .stTextInput input, .stSelectbox div[data-baseweb="select"] {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+            border: 1px solid #334155 !important;
+        }
+
+        /* Forza stile scuro sulla Tabella / Data Editor */
+        [data-testid="stDataEditor"], [data-testid="stDataFrame"], .stTable {
+            background-color: #1e293b !important;
+            border: 1px solid #334155 !important;
+            border-radius: 8px !important;
+        }
+
         .user-title { font-size: 28px !important; font-weight: bold; margin-bottom: 20px; color: #f1f5f9; text-align: center; width: 100%; }
         [data-testid="stVerticalBlock"] { gap: 0.5rem !important; text-align: center; align-items: center; }
         div[data-testid="stVerticalBlockBorderWrapper"] {
@@ -54,7 +69,13 @@ def inject_css():
         </style>
         """, unsafe_allow_html=True)
 
-st.set_page_config(page_title="Officina Beyblade X", layout="wide", initial_sidebar_state="expanded")
+# Impostazione Icona (Sostituito '🤖' con 'icona.png')
+st.set_page_config(
+    page_title="Officina Beyblade X", 
+    page_icon="icona.png", 
+    layout="wide", 
+    initial_sidebar_state="expanded"
+)
 inject_css()
 
 # =========================
