@@ -78,47 +78,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-def inject_apple_icon():
-    try:
-        with open("icona.png", "rb") as f:
-            b64_icon = base64.b64encode(f.read()).decode()
-        
-        components.html(f"""
-            <script>
-                const parentHead = window.parent.document.head;
-                
-                // 1. Rimuove TUTTI i link che contengono "icon" nel rel (favicon, apple-touch-icon, ecc)
-                const oldIcons = parentHead.querySelectorAll("link[rel*='icon']");
-                oldIcons.forEach(icon => parentHead.removeChild(icon));
-                
-                // 2. Crea l'icona specifica per Apple
-                const appleIcon = window.parent.document.createElement('link');
-                appleIcon.rel = 'apple-touch-icon';
-                appleIcon.sizes = '180x180';
-                appleIcon.href = "data:image/png;base64,{b64_icon}";
-                parentHead.appendChild(appleIcon);
-
-                // 3. Forza il titolo della Web App (spesso aiuta iOS a ricaricare i meta-dati)
-                if (!parentHead.querySelector("meta[name='apple-mobile-web-app-title']")) {{
-                    const metaTitle = window.parent.document.createElement('meta');
-                    metaTitle.name = 'apple-mobile-web-app-title';
-                    metaTitle.content = 'Officina BX';
-                    parentHead.appendChild(metaTitle);
-                }}
-
-                // 4. Modalità Web App Fullscreen
-                if (!parentHead.querySelector("meta[name='apple-mobile-web-app-capable']")) {{
-                    const metaCapable = window.parent.document.createElement('meta');
-                    metaCapable.name = 'apple-mobile-web-app-capable';
-                    metaCapable.content = 'yes';
-                    parentHead.appendChild(metaCapable);
-                }}
-            </script>
-        """, height=0, width=0)
-    except Exception:
-        pass
-
-inject_apple_icon()
 inject_css()
 
 # =========================
