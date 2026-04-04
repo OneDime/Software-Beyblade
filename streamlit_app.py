@@ -726,7 +726,7 @@ elif menu_scelta == "Match!":
 elif menu_scelta == "AI Advisor":
     tab4, = st.tabs(["🤖 AI Advisor"])
 
-    # --- TAB 4: AI ADVISOR ---
+# --- TAB 4: AI ADVISOR ---
     with tab4:
         st.markdown("### 🤖 Strategia Meta-Analitica WBO")
         
@@ -752,8 +752,9 @@ elif menu_scelta == "AI Advisor":
                     comp_escl = st.multiselect("❌ Componenti da evitare", tutti_pezzi)
                 
                 if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
-                    with st.spinner("Ricerca modello e generazione analisi..."):
+                    with st.spinner("Lettura documenti, ricerca modello e generazione analisi..."):
                         try:
+                            # 1. Configurazione API e Modello
                             genai.configure(api_key=API_KEY)
                             
                             try:
@@ -769,36 +770,68 @@ elif menu_scelta == "AI Advisor":
                                 st.error(f"Errore inizializzazione modelli: {e_mod}")
                                 st.stop()
 
-                            if os.path.exists("promptIA.txt"):
-                                with open("promptIA.txt", "r", encoding="utf-8") as f:
-                                    base_prompt = f.read()
-                            else:
-                                st.error("File promptIA.txt non trovato.")
+                            # 2. Funzione per la lettura sicura e dinamica dei file
+                            def read_local_file(filename):
+                                if os.path.exists(filename):
+                                    with open(filename, "r", encoding="utf-8") as f:
+                                        return f.read()
+                                return f"[ATTENZIONE: File {filename} non trovato]"
+
+                            # 3. Estrazione dati in tempo reale dai file
+                            base_prompt = read_local_file("promptIA.txt")
+                            regolamento = read_local_file("Regolamenti IBNA.txt")
+                            wbo_guide = read_local_file("WBO Winning Combinations.txt")
+                            meta_csv = read_local_file("meta.csv")
+
+                            # Se manca il prompt base, blocca l'esecuzione
+                            if "[ATTENZIONE" in base_prompt:
+                                st.error("Errore: File 'promptIA.txt' fondamentale non trovato nella directory.")
                                 st.stop()
 
+                            # 4. Estrazione dati utente
                             inv_json = json.dumps(user_data["inv"], indent=2, ensure_ascii=False)
-                            obbl_str = ", ".join(comp_obbl) if comp_obbl else "nessuna"
-                            escl_str = ", ".join(comp_escl) if comp_escl else "nessuna"
+                            obbl_str = ", ".join(comp_obbl) if comp_obbl else "Nessuna"
+                            escl_str = ", ".join(comp_escl) if comp_escl else "Nessuna"
 
+                            # 5. Composizione del Prompt Dinamico Compartimentato
                             prompt_completo = f"""
 {base_prompt}
 
-### DATI GIOCATORE CORRENTI:
-- INVENTARIO: {inv_json}
+Devi analizzare la richiesta dell'utente rispettando RIGOROSAMENTE i documenti forniti qui sotto.
+
+<REGOLAMENTO_IBNA>
+{regolamento}
+</REGOLAMENTO_IBNA>
+
+<GUIDA_LETTURA_META_WBO>
+{wbo_guide}
+</GUIDA_LETTURA_META_WBO>
+
+<DATI_META_STATISTICI_CSV>
+{meta_csv}
+</DATI_META_STATISTICI_CSV>
+
+<INVENTARIO_UTENTE>
+{inv_json}
+</INVENTARIO_UTENTE>
+
+### DATI GIOCATORE CORRENTI E PARAMETRI RICHIESTI:
 - APPROCCIO: {tipo_deck_ai}
 - SKILL LANCIO: {lancio_ai}/10
 - TIPO TORNEO: {torneo_ai}
 - COMPONENTI OBBLIGATORIE: {obbl_str}
 - COMPONENTI VIETATE: {escl_str}
 
-Procedi con l'analisi tecnica rigorosa.
+Procedi con l'analisi tecnica rigorosa tenendo conto delle skill del giocatore, dei suoi vincoli sui pezzi (obbligatori/vietati) e basandoti esclusivamente sull'inventario fornito, validando la legalità col regolamento IBNA e la competitività con i dati WBO.
 """
+                            # 6. Generazione della risposta
                             response = model.generate_content(prompt_completo)
                             st.session_state.ai_report = response.text
                             
                         except Exception as e:
                             st.error(f"Errore critico: {str(e)}")
 
+            # Rendering del risultato e gestione esportazioni
             if 'ai_report' in st.session_state:
                 st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
                 
