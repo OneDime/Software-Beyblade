@@ -752,39 +752,60 @@ elif menu_scelta == "AI Advisor":
                     comp_escl = st.multiselect("❌ Componenti da evitare", tutti_pezzi)
                 
                 if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
-                    with st.spinner("Lettura documenti e generazione analisi..."):
+                    with st.spinner("Inizializzazione AI e lettura file..."):
                         try:
                             # 1. Configurazione API
                             genai.configure(api_key=API_KEY)
                             
-                            # Selezione automatica del modello migliore disponibile
+                            # Logica di selezione modello ultra-robusta
                             valid_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-                            target = "gemini-1.5-flash" # Default
-                            if any("gemini-1.5-flash" in m for m in valid_models):
-                                target = next(m for m in valid_models if "gemini-1.5-flash" in m)
-                            elif any("gemini-1.5-pro" in m for m in valid_models):
-                                target = next(m for m in valid_models if "gemini-1.5-pro" in m)
-                            model = genai.GenerativeModel(target)
+                            
+                            target_model = None
+                            # Priorità 1: Flash (più veloce ed economico)
+                            for m in valid_models:
+                                if "gemini-1.5-flash" in m:
+                                    target_model = m
+                                    break
+                            
+                            # Priorità 2: Pro (se Flash non esiste)
+                            if not target_model:
+                                for m in valid_models:
+                                    if "gemini-1.5-pro" in m:
+                                        target_model = m
+                                        break
+                            
+                            # Fallback estremo: il primo modello valido della lista
+                            if not target_model and valid_models:
+                                target_model = valid_models[0]
+                            
+                            if not target_model:
+                                st.error("Nessun modello compatibile trovato per questa API Key.")
+                                st.stop()
 
-                            # 2. Funzione di lettura robusta (UTF-8 con fallback)
+                            model = genai.GenerativeModel(target_model)
+
+                            # 2. Funzione di lettura robusta
                             def read_local_file(filename):
                                 if os.path.exists(filename):
                                     try:
                                         with open(filename, "r", encoding="utf-8") as f:
                                             return f.read()
-                                    except UnicodeDecodeError:
-                                        with open(filename, "r", encoding="latin-1") as f:
-                                            return f.read()
+                                    except Exception:
+                                        try:
+                                            with open(filename, "r", encoding="latin-1") as f:
+                                                return f.read()
+                                        except:
+                                            return f"[ERRORE CRITICO: Impossibile leggere {filename}]"
                                 return f"[ATTENZIONE: File {filename} non trovato]"
 
-                            # 3. Caricamento dinamico dei file (incluso meta.txt)
+                            # 3. Caricamento file (meta.txt aggiornato)
                             base_prompt = read_local_file("promptIA.txt")
                             regolamento = read_local_file("Regolamenti IBNA.txt")
                             wbo_guide = read_local_file("WBO Winning Combinations.txt")
-                            meta_data = read_local_file("meta.txt") # Caricamento file TXT
+                            meta_data = read_local_file("meta.txt") 
 
-                            if "[ATTENZIONE" in base_prompt:
-                                st.error("File 'promptIA.txt' non trovato.")
+                            if "[ERRORE" in base_prompt or "[ATTENZIONE" in base_prompt:
+                                st.error("File 'promptIA.txt' mancante o illeggibile.")
                                 st.stop()
 
                             # 4. Preparazione dati utente
@@ -792,49 +813,47 @@ elif menu_scelta == "AI Advisor":
                             obbl_str = ", ".join(comp_obbl) if comp_obbl else "Nessuna"
                             escl_str = ", ".join(comp_escl) if comp_escl else "Nessuna"
 
-                            # 5. Composizione Finale del Prompt
+                            # 5. Costruzione del Prompt
                             prompt_completo = f"""
 {base_prompt}
 
-Rispetta rigorosamente i parametri e i documenti tecnici forniti qui sotto per l'analisi.
-
+### DOCUMENTAZIONE TECNICA DI RIFERIMENTO:
 <REGOLAMENTO_IBNA>
 {regolamento}
 </REGOLAMENTO_IBNA>
 
-<GUIDA_LETTURA_STATISTICHE>
+<GUIDA_METAGAME_WBO>
 {wbo_guide}
-</GUIDA_LETTURA_STATISTICHE>
+</GUIDA_METAGAME_WBO>
 
-<DATI_META_AGGIORNATI>
+<DATI_STATISTICI_META>
 {meta_data}
-</DATI_META_AGGIORNATI>
+</DATI_STATISTICI_META>
 
-<INVENTARIO_DISPONIBILE>
+<INVENTARIO_GIOCATORE>
 {inv_json}
-</INVENTARIO_DISPONIBILE>
+</INVENTARIO_GIOCATORE>
 
-### PARAMETRI DI INPUT UTENTE:
-- APPROCCIO RICHIESTO: {tipo_deck_ai}
-- ABILITÀ DI LANCIO: {lancio_ai}/10
-- LIVELLO TORNEO: {torneo_ai}
-- COMPONENTI DA INCLUDERE: {obbl_str}
-- COMPONENTI DA ESCLUDERE: {escl_str}
+### INPUT SPECIFICI UTENTE:
+- STRATEGIA DESIDERATA: {tipo_deck_ai}
+- LIVELLO DI LANCIO: {lancio_ai}/10
+- CONTESTO TORNEO: {torneo_ai}
+- PEZZI RICHIESTI: {obbl_str}
+- PEZZI BANDITI: {escl_str}
 
-Genera un'analisi tecnica basata sui dati WBO sopra riportati, assicurandoti che i Beyblade suggeriti siano legali secondo il regolamento IBNA e costruibili con l'inventario fornito.
+Esegui l'analisi e proponi la combinazione migliore basandoti sui dati statistici del file meta.txt e la disponibilità dei pezzi.
 """
-                            # 6. Invio all'IA
+                            # 6. Generazione
                             response = model.generate_content(prompt_completo)
                             st.session_state.ai_report = response.text
                             
                         except Exception as e:
-                            st.error(f"Errore durante la generazione: {str(e)}")
+                            st.error(f"Errore tecnico: {str(e)}")
 
-            # Area Risultati
+            # --- Visualizzazione Risultati ---
             if 'ai_report' in st.session_state:
                 st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
                 
-                # Estrazione JSON per l'importazione
                 extracted_json = None
                 match = re.search(r'\{[\s\n]*"slots"[\s\n]*:[\s\S]*\}', st.session_state.ai_report, re.DOTALL)
                 if match:
@@ -861,8 +880,8 @@ Genera un'analisi tecnica basata sui dati WBO sopra riportati, assicurandoti che
                             nuovo_deck = {"name": nome_deck, "slots": extracted_json["slots"]}
                             user_data["decks"]["deck_list"].append(nuovo_deck)
                             save_cloud()
-                            st.success(f"Deck '{nome_deck}' importato correttamente!")
+                            st.success(f"Deck '{nome_deck}' importato!")
                             time.sleep(1.5)
                             st.rerun()
                     else:
-                        st.info("ℹ️ Nessun deck importabile trovato nel report.")
+                        st.info("ℹ️ Nessun deck pronto per l'importazione automatica.")
