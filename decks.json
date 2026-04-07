@@ -2,6 +2,17 @@
     "Antonio": {
         "beys": [
             {
+                "id": "d5afd8c9",
+                "tipo": "CX Infinity Theory",
+                "b": "-",
+                "r": "9-60",
+                "bi": "Kick",
+                "lc": "Emperor",
+                "ob": "Break",
+                "meb": "Blitz",
+                "ab": "Heavy"
+            },
+            {
                 "id": "ant_0003",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -49,11 +60,6 @@
                 "b": "WyvernHover",
                 "r": "9-60",
                 "bi": "Kick"
-            },
-            {
-                "id": "d5afd8c9",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
