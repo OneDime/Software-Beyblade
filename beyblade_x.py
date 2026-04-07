@@ -173,7 +173,8 @@ def download_and_optimize_images():
         filename = hashlib.md5(url.encode()).hexdigest() + ".png"
         filepath = os.path.join("images", filename)
         if os.path.exists(filepath):
-            skipped += 1; continue
+            skipped += 1
+            continue
         try:
             resp = session.get(url, timeout=20)
             resp.raise_for_status()
@@ -256,21 +257,15 @@ def create_csv():
         print(f"\n[OK] CSV generato con {kept} Beyblades.")
 
 if __name__ == "__main__":
-    print("=== OFFICINA BEYBLADE X - STRUMENTO LOCALE ===")
-    print("1 - Crea nuovo CSV (Analisi API completa)")
-    print("2 - Scarica/Ottimizza immagini da CSV esistente")
-    scelta = input("\nScegli un'opzione (1 o 2): ")
-
-    if scelta == "1":
-        create_csv()
-        procedi = input("\nVuoi procedere al download delle immagini? (s/n): ")
-        if procedi.lower() == 's':
-            download_and_optimize_images()
-    elif scelta == "2":
-        if os.path.exists(CSV_FILE):
-            download_and_optimize_images()
-        else:
-            print(f"Errore: {CSV_FILE} non trovato!")
+    print("=== OFFICINA BEYBLADE X - AGGIORNAMENTO AUTOMATICO ===")
     
-    print("\nLavoro terminato.")
-    input("Premi INVIO per chiudere questa finestra...") # Impedisce la chiusura automatica
+    # 1. Crea/Aggiorna il file CSV
+    create_csv()
+    
+    # 2. Scarica le nuove immagini mancanti
+    if os.path.exists(CSV_FILE):
+        download_and_optimize_images()
+    else:
+        print(f"Errore critico: {CSV_FILE} non è stato generato!")
+    
+    print("\n[✔] Lavoro notturno terminato con successo.")
