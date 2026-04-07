@@ -42,6 +42,11 @@
                 "b": "WyvernHover",
                 "r": "9-60",
                 "bi": "Kick"
+            },
+            {
+                "id": "08b3e3cc",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": [
