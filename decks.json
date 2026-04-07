@@ -2,6 +2,13 @@
     "Antonio": {
         "beys": [
             {
+                "id": "08b3e3cc",
+                "tipo": "BX/UX",
+                "b": "ImpactDrake",
+                "r": "1-60",
+                "bi": "Under Flat"
+            },
+            {
                 "id": "ant_0003",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -42,11 +49,6 @@
                 "b": "WyvernHover",
                 "r": "9-60",
                 "bi": "Kick"
-            },
-            {
-                "id": "08b3e3cc",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
