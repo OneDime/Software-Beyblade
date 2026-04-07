@@ -324,7 +324,7 @@ if menu_scelta == "Inventario":
 elif menu_scelta == "Builder":
     tab_bey, tab_deck = st.tabs(["🧩 Beyblade Builder", "🃏 Deck Builder"])
 
-    # --- BEYBLADE BUILDER ---
+# --- BEYBLADE BUILDER ---
     with tab_bey:
         if st.button("➕ Crea Beyblade", type="primary"):
             new_id = hashlib.md5(str(time.time()).encode()).hexdigest()[:8]
@@ -339,6 +339,8 @@ elif menu_scelta == "Builder":
         
         def bey_sort_key(b):
             nome, _, _ = get_bey_name_and_comps(b)
+            if "Theory" in b.get("tipo", ""):
+                nome += " (Theory)"
             is_new = 0 if b.get("is_new") else 1
             return (is_new, nome.lower())
             
@@ -346,6 +348,9 @@ elif menu_scelta == "Builder":
         
         for b_idx, bey in enumerate(user_data["decks"]["beys"]):
             nome_bey, _, _ = get_bey_name_and_comps(bey)
+            
+            if "Theory" in bey.get("tipo", ""):
+                nome_bey += " (Theory)"
             
             if search_bey and search_bey not in nome_bey.lower():
                 continue
@@ -433,6 +438,7 @@ elif menu_scelta == "Builder":
                         for s_k, s_v in d["slots"].items():
                             if s_v == b_id_to_rem: d["slots"][s_k] = "-"
                     save_cloud(); st.rerun()
+
 
     # --- DECK BUILDER ---
     with tab_deck:
