@@ -2,6 +2,13 @@
     "Antonio": {
         "beys": [
             {
+                "id": "df59e95b",
+                "tipo": "BX/UX Theory",
+                "b": "GolemRock",
+                "r": "3-60",
+                "bi": "Rush"
+            },
+            {
                 "id": "ant_0003",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -60,11 +67,6 @@
                 "b": "WyvernHover",
                 "r": "9-60",
                 "bi": "Kick"
-            },
-            {
-                "id": "df59e95b",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
