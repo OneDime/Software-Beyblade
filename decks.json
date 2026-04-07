@@ -2,18 +2,36 @@
     "Antonio": {
         "beys": [
             {
-                "id": "fdde1f53",
-                "tipo": "BX/UX",
-                "b": "WyvernHover",
-                "r": "9-60",
-                "bi": "Kick"
-            },
-            {
                 "id": "ant_0003",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
                 "r": "9-60",
                 "bi": "Elevate"
+            },
+            {
+                "id": "d5afd8c9",
+                "tipo": "CX Infinity Theory",
+                "b": "-",
+                "r": "9-60",
+                "bi": "Kick",
+                "lc": "Emperor",
+                "ob": "Break",
+                "meb": "Blitz",
+                "ab": "Heavy"
+            },
+            {
+                "id": "df59e95b",
+                "tipo": "BX/UX Theory",
+                "b": "GolemRock",
+                "r": "3-60",
+                "bi": "Rush"
+            },
+            {
+                "id": "08b3e3cc",
+                "tipo": "BX/UX",
+                "b": "ImpactDrake",
+                "r": "1-60",
+                "bi": "Under Flat"
             },
             {
                 "id": "a9b1ff38",
@@ -42,6 +60,13 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
+            },
+            {
+                "id": "fdde1f53",
+                "tipo": "BX/UX",
+                "b": "WyvernHover",
+                "r": "9-60",
+                "bi": "Kick"
             }
         ],
         "deck_list": [
@@ -59,6 +84,14 @@
                     "0": "ant_0004",
                     "1": "ant_0002",
                     "2": "ant_0003"
+                }
+            },
+            {
+                "name": "I Paxissimi",
+                "slots": {
+                    "0": "08b3e3cc",
+                    "1": "d5afd8c9",
+                    "2": "df59e95b"
                 }
             }
         ]
