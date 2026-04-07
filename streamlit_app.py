@@ -339,6 +339,7 @@ elif menu_scelta == "Builder":
         
         def bey_sort_key(b):
             nome, _, _ = get_bey_name_and_comps(b)
+            # Aggiunta (Theory) alla chiave di ordinamento se il sistema lo prevede
             if "Theory" in b.get("tipo", ""):
                 nome += " (Theory)"
             is_new = 0 if b.get("is_new") else 1
@@ -349,6 +350,7 @@ elif menu_scelta == "Builder":
         for b_idx, bey in enumerate(user_data["decks"]["beys"]):
             nome_bey, _, _ = get_bey_name_and_comps(bey)
             
+            # Aggiunta automatica (Theory) al nome visualizzato se il sistema contiene "Theory"
             if "Theory" in bey.get("tipo", ""):
                 nome_bey += " (Theory)"
             
@@ -420,7 +422,8 @@ elif menu_scelta == "Builder":
                 for k in k_imgs:
                     v = bey.get(k)
                     if v and v != "-":
-                        img_obj = get_img(global_img_map.get(v))
+                        img_map_val = global_img_map.get(v)
+                        img_obj = get_img(img_map_val)
                         if img_obj: cols[col_idx].image(img_obj, width=80); col_idx += 1
                         
                 st.markdown("<hr>", unsafe_allow_html=True)
