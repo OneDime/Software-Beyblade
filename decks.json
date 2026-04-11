@@ -141,6 +141,13 @@
     "Fabio": {
         "beys": [
             {
+                "id": "2cdf3de7",
+                "tipo": "BX/UX",
+                "b": "SamuraiSaber",
+                "r": "9-60",
+                "bi": "Ball"
+            },
+            {
                 "id": "5d8bde8e",
                 "tipo": "CX",
                 "b": "-",
@@ -191,11 +198,6 @@
                 "b": "WizardArrow",
                 "r": "1-60",
                 "bi": "Hexa"
-            },
-            {
-                "id": "2cdf3de7",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
