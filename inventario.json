@@ -104,11 +104,13 @@
         },
         "main_blade": {
             "Reaper": 1,
-            "Fort": 1
+            "Fort": 1,
+            "Might": 1
         },
         "assist_blade": {
             "Turn": 1,
-            "Round": 1
+            "Round": 1,
+            "Heavy": 1
         },
         "ratchet": {
             "5-70": 1,
@@ -139,12 +141,15 @@
         },
         "lock_chip": {
             "Hells": 1,
-            "Hornet": 1
+            "Hornet": 1,
+            "Emperor": 1
         },
         "over_blade": {},
         "metal_blade": {},
         "r_i_blade": {},
-        "r_i_bit": {}
+        "r_i_bit": {
+            "Operate": 1
+        }
     },
     "Fabio": {
         "blade": {
