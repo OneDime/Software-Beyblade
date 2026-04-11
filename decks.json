@@ -98,11 +98,11 @@
     "Andrea": {
         "beys": [
             {
-                "id": "and_0001",
+                "id": "and_0003",
                 "tipo": "BX/UX",
-                "b": "WizardRod",
-                "r": "9-60",
-                "bi": "Ball"
+                "b": "PhoenixWing",
+                "r": "3-60",
+                "bi": "Rush"
             },
             {
                 "id": "and_0002",
@@ -112,11 +112,16 @@
                 "bi": "Point"
             },
             {
-                "id": "and_0003",
+                "id": "and_0001",
                 "tipo": "BX/UX",
-                "b": "PhoenixWing",
-                "r": "3-60",
-                "bi": "Rush"
+                "b": "WizardRod",
+                "r": "9-60",
+                "bi": "Ball"
+            },
+            {
+                "id": "06281e18",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": [
