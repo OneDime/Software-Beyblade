@@ -538,5 +538,23 @@
         "BeyG2": "SharkScale 4-50 Low Rush",
         "PunteggioBeyG1": 2,
         "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Emperor Blast Heavy 9-60 Taper",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SilverWolf 9-70 Free Ball",
+        "PunteggioBeyG1": 3,
+        "PunteggioBeyG2": -3
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "WizardRod 1-60 Hexa",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SharkScale 4-50 Low Rush",
+        "PunteggioBeyG1": 3,
+        "PunteggioBeyG2": -3
     }
 ]
