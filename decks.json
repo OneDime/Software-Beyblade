@@ -142,8 +142,13 @@
         "beys": [
             {
                 "id": "5d8bde8e",
-                "tipo": "BX/UX",
-                "is_new": true
+                "tipo": "CX",
+                "b": "-",
+                "r": "9-60",
+                "bi": "Taper",
+                "lc": "Emperor",
+                "mb": "Blast",
+                "ab": "Heavy"
             }
         ],
         "deck_list": [
