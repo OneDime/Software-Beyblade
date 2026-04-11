@@ -160,13 +160,6 @@
                 "b": "WizardRod",
                 "r": "9-60",
                 "bi": "Ball"
-            },
-            {
-                "id": "fab_0009",
-                "tipo": "BX/UX",
-                "b": "WizardRod",
-                "r": "9-60",
-                "bi": "Free Ball"
             }
         ],
         "deck_list": [
@@ -191,7 +184,7 @@
                 "slots": {
                     "0": "-",
                     "1": "-",
-                    "2": "fab_0009"
+                    "2": "-"
                 }
             },
             {
