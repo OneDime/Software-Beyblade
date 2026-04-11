@@ -139,15 +139,7 @@
         ]
     },
     "Fabio": {
-        "beys": [
-            {
-                "id": "fab_0014",
-                "tipo": "BX/UX",
-                "b": "DranDagger",
-                "r": "6-80",
-                "bi": "Point"
-            }
-        ],
+        "beys": [],
         "deck_list": [
             {
                 "name": "LoseRate100%",
@@ -185,7 +177,7 @@
                 "name": "UNDERRATED",
                 "slots": {
                     "0": "-",
-                    "1": "fab_0014",
+                    "1": "-",
                     "2": "-"
                 }
             }
