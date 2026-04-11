@@ -139,7 +139,13 @@
         ]
     },
     "Fabio": {
-        "beys": [],
+        "beys": [
+            {
+                "id": "5d8bde8e",
+                "tipo": "BX/UX",
+                "is_new": true
+            }
+        ],
         "deck_list": [
             {
                 "name": "LoseRate100%",
