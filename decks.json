@@ -2,6 +2,16 @@
     "Antonio": {
         "beys": [
             {
+                "id": "e13264c8",
+                "tipo": "CX",
+                "b": "-",
+                "r": "4-50",
+                "bi": "Low Rush",
+                "lc": "Emperor",
+                "mb": "Reaper",
+                "ab": "Heavy"
+            },
+            {
                 "id": "ant_0003",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -9,19 +19,8 @@
                 "bi": "Elevate"
             },
             {
-                "id": "d5afd8c9",
-                "tipo": "CX Infinity Theory",
-                "b": "-",
-                "r": "9-60",
-                "bi": "Kick",
-                "lc": "Emperor",
-                "ob": "Break",
-                "meb": "Blitz",
-                "ab": "Heavy"
-            },
-            {
                 "id": "df59e95b",
-                "tipo": "BX/UX Theory",
+                "tipo": "BX/UX",
                 "b": "GolemRock",
                 "r": "3-60",
                 "bi": "Rush"
@@ -90,7 +89,7 @@
                 "name": "I Paxissimi",
                 "slots": {
                     "0": "08b3e3cc",
-                    "1": "d5afd8c9",
+                    "1": "-",
                     "2": "df59e95b"
                 }
             }
