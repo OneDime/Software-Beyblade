@@ -394,5 +394,32 @@
         "BeyG2": "MeteorDragoon 9-70 Level",
         "PunteggioBeyG1": 1,
         "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "GolemRock 1-60 Hexa",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "DranBuster 1-60 Low Flat",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "WizardRod 5-60 Free Ball",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "TyrannoBeat 7-60 Rush",
+        "PunteggioBeyG1": -3,
+        "PunteggioBeyG2": 3
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 9-60 Ball",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "Hover Wyvern 9-60 Kick",
+        "PunteggioBeyG1": -3,
+        "PunteggioBeyG2": 3
     }
 ]
