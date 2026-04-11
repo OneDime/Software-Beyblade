@@ -286,5 +286,59 @@
         "BeyG2": "TyrannoBeat 9-60 Ball",
         "PunteggioBeyG1": -3,
         "PunteggioBeyG2": 3
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Hover Wyvern 9-60 Kick",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "TyrannoBeat 9-60 Ball",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "GolemRock 6-60 Free Ball",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "WizardRod 5-60 Free Ball",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "TyrannoBeat 7-60 Rush",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "GolemRock 1-60 Hexa",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "GolemRock 6-60 Free Ball",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "WizardRod 5-60 Free Ball",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "TyrannoBeat 7-60 Rush",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "TyrannoBeat 9-60 Ball",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Hover Wyvern 9-60 Kick",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "GolemRock 1-60 Hexa",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
     }
 ]
