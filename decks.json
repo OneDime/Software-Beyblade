@@ -98,6 +98,13 @@
     "Andrea": {
         "beys": [
             {
+                "id": "a4e79d10",
+                "tipo": "BX/UX",
+                "b": "TyrannoBeat",
+                "r": "7-60",
+                "bi": "Rush"
+            },
+            {
                 "id": "06281e18",
                 "tipo": "BX/UX",
                 "b": "GolemRock",
@@ -125,11 +132,6 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
-            },
-            {
-                "id": "a4e79d10",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
