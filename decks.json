@@ -190,18 +190,6 @@
                 "bi": "Level"
             },
             {
-                "id": "fab_0015",
-                "tipo": "CX",
-                "b": "-",
-                "r": "9-70",
-                "bi": "Ball",
-                "rib": "-",
-                "lb": "Perseus",
-                "mb": "Might",
-                "ab": "Jaggy",
-                "lc": "-"
-            },
-            {
                 "id": "fab_0007",
                 "tipo": "BX/UX",
                 "b": "PhoenixWing",
@@ -286,7 +274,7 @@
                 "slots": {
                     "0": "fab_0013",
                     "1": "fab_0014",
-                    "2": "fab_0015"
+                    "2": "-"
                 }
             }
         ]
