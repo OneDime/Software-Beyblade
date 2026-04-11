@@ -141,13 +141,6 @@
     "Fabio": {
         "beys": [
             {
-                "id": "cea0b664",
-                "tipo": "BX/UX",
-                "b": "GolemRock",
-                "r": "6-60",
-                "bi": "Free Ball"
-            },
-            {
                 "id": "5d8bde8e",
                 "tipo": "CX",
                 "b": "-",
@@ -158,11 +151,23 @@
                 "ab": "Heavy"
             },
             {
+                "id": "cea0b664",
+                "tipo": "BX/UX",
+                "b": "GolemRock",
+                "r": "6-60",
+                "bi": "Free Ball"
+            },
+            {
                 "id": "bd0fd93b",
                 "tipo": "BX/UX",
                 "b": "WizardArrow",
                 "r": "1-60",
                 "bi": "Hexa"
+            },
+            {
+                "id": "ce1647d9",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": [
