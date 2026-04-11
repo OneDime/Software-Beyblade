@@ -155,13 +155,6 @@
                 "bi": "Point"
             },
             {
-                "id": "fab_0012",
-                "tipo": "BX/UX",
-                "b": "DranSword",
-                "r": "3-60",
-                "bi": "Rush"
-            },
-            {
                 "id": "fab_0005",
                 "tipo": "BX/UX",
                 "b": "Hover Wyvern",
@@ -220,7 +213,7 @@
                 "slots": {
                     "0": "fab_0010",
                     "1": "fab_0011",
-                    "2": "fab_0012"
+                    "2": "-"
                 }
             },
             {
