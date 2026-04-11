@@ -2,21 +2,21 @@
     "Antonio": {
         "beys": [
             {
+                "id": "ant_0003",
+                "tipo": "BX/UX",
+                "b": "CobaltDragoon",
+                "r": "9-60",
+                "bi": "Elevate"
+            },
+            {
                 "id": "e13264c8",
                 "tipo": "CX",
                 "b": "-",
                 "r": "4-50",
                 "bi": "Low Rush",
                 "lc": "Emperor",
-                "mb": "Reaper",
+                "mb": "Brave",
                 "ab": "Heavy"
-            },
-            {
-                "id": "ant_0003",
-                "tipo": "BX/UX",
-                "b": "CobaltDragoon",
-                "r": "9-60",
-                "bi": "Elevate"
             },
             {
                 "id": "df59e95b",
