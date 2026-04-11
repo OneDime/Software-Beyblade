@@ -9,17 +9,6 @@
                 "bi": "Elevate"
             },
             {
-                "id": "d5afd8c9",
-                "tipo": "CX Infinity Theory",
-                "b": "-",
-                "r": "9-60",
-                "bi": "Kick",
-                "lc": "Emperor",
-                "ob": "Break",
-                "meb": "Blitz",
-                "ab": "Heavy"
-            },
-            {
                 "id": "df59e95b",
                 "tipo": "BX/UX Theory",
                 "b": "GolemRock",
@@ -90,7 +79,7 @@
                 "name": "I Paxissimi",
                 "slots": {
                     "0": "08b3e3cc",
-                    "1": "d5afd8c9",
+                    "1": "-",
                     "2": "df59e95b"
                 }
             }
