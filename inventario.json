@@ -101,7 +101,8 @@
             "LeonClaw": 1,
             "HellsHammer": 1,
             "SamuraiSaber": 1,
-            "SharkGill": 1
+            "SharkGill": 1,
+            "GolemRock": 1
         },
         "main_blade": {
             "Reaper": 1,
@@ -125,7 +126,8 @@
             "7-60": 1,
             "5-60": 2,
             "3-70": 1,
-            "2-70": 1
+            "2-70": 1,
+            "M-85": 1
         },
         "bit": {
             "Disk Ball": 1,
@@ -134,7 +136,7 @@
             "Taper": 2,
             "Rush": 2,
             "Kick": 1,
-            "High Needle": 1,
+            "High Needle": 2,
             "Ball": 1,
             "Point": 1,
             "Hexa": 1,
