@@ -162,13 +162,6 @@
                 "bi": "Rush"
             },
             {
-                "id": "fab_0008",
-                "tipo": "BX/UX",
-                "b": "GolemRock",
-                "r": "6-60",
-                "bi": "Rush"
-            },
-            {
                 "id": "fab_0005",
                 "tipo": "BX/UX",
                 "b": "Hover Wyvern",
@@ -218,7 +211,7 @@
                 "name": "ALTERNATIVI",
                 "slots": {
                     "0": "-",
-                    "1": "fab_0008",
+                    "1": "-",
                     "2": "fab_0009"
                 }
             },
