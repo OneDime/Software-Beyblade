@@ -123,8 +123,8 @@
                 "id": "and_0001",
                 "tipo": "BX/UX",
                 "b": "WizardRod",
-                "r": "9-60",
-                "bi": "Ball"
+                "r": "1-60",
+                "bi": "Hexa"
             }
         ],
         "deck_list": [
