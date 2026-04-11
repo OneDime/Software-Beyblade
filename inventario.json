@@ -14,7 +14,8 @@
             "SamuraiSaber": 1,
             "HellsHammer": 1,
             "SharkScale": 1,
-            "TyrannoRoar": 1
+            "TyrannoRoar": 1,
+            "GolemRock": 1
         },
         "main_blade": {
             "Arc": 1,
@@ -45,7 +46,8 @@
             "3-70": 1,
             "9-70": 1,
             "4-50": 1,
-            "1-70": 1
+            "1-70": 1,
+            "M-85": 1
         },
         "bit": {
             "Low Orb": 1,
@@ -65,7 +67,8 @@
             "Gear Flat": 2,
             "Level": 2,
             "Gear Rush": 1,
-            "Under Flat": 1
+            "Under Flat": 1,
+            "High Needle": 1
         },
         "lock_chip": {
             "Wizard": 1,
