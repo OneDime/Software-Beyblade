@@ -197,17 +197,6 @@
                 "bi": "Kick"
             },
             {
-                "id": "fab_0013",
-                "tipo": "BX/UX",
-                "b": "Roar Tyranno",
-                "r": "3-60",
-                "bi": "Rush",
-                "lb": "-",
-                "mb": "-",
-                "ab": "-",
-                "rib": "Operate"
-            },
-            {
                 "id": "fab_0006",
                 "tipo": "BX/UX",
                 "b": "WizardRod",
@@ -258,7 +247,7 @@
             {
                 "name": "UNDERRATED",
                 "slots": {
-                    "0": "fab_0013",
+                    "0": "-",
                     "1": "fab_0014",
                     "2": "-"
                 }
