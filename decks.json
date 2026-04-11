@@ -2,18 +2,18 @@
     "Antonio": {
         "beys": [
             {
-                "id": "df59e95b",
-                "tipo": "BX/UX",
-                "b": "-",
-                "r": "3-60",
-                "bi": "Rush"
-            },
-            {
                 "id": "ant_0003",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
                 "r": "9-60",
                 "bi": "Elevate"
+            },
+            {
+                "id": "df59e95b",
+                "tipo": "BX/UX",
+                "b": "GolemRock",
+                "r": "3-60",
+                "bi": "Rush"
             },
             {
                 "id": "08b3e3cc",
