@@ -2,6 +2,16 @@
     "Antonio": {
         "beys": [
             {
+                "id": "e13264c8",
+                "tipo": "CX",
+                "b": "-",
+                "r": "4-50",
+                "bi": "Low Rush",
+                "lc": "Emperor",
+                "mb": "Reaper",
+                "ab": "Heavy"
+            },
+            {
                 "id": "ant_0003",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -56,11 +66,6 @@
                 "b": "WyvernHover",
                 "r": "9-60",
                 "bi": "Kick"
-            },
-            {
-                "id": "e13264c8",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
