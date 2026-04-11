@@ -98,6 +98,13 @@
     "Andrea": {
         "beys": [
             {
+                "id": "54a2b293",
+                "tipo": "BX/UX",
+                "b": "PhoenixWing",
+                "r": "1-60",
+                "bi": "Kick"
+            },
+            {
                 "id": "69ec8c43",
                 "tipo": "BX/UX",
                 "b": "GolemRock",
@@ -138,11 +145,6 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
-            },
-            {
-                "id": "54a2b293",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
