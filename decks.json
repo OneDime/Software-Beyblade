@@ -215,13 +215,6 @@
                 "bi": "Hexa"
             },
             {
-                "id": "fab_0002",
-                "tipo": "BX/UX",
-                "b": "TyrannoBeat",
-                "r": "1-60",
-                "bi": "Low Rush"
-            },
-            {
                 "id": "fab_0006",
                 "tipo": "BX/UX",
                 "b": "WizardRod",
@@ -241,7 +234,7 @@
                 "name": "LoseRate100%",
                 "slots": {
                     "0": "-",
-                    "1": "fab_0002",
+                    "1": "-",
                     "2": "fab_0003"
                 }
             },
