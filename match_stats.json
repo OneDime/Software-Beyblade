@@ -664,5 +664,32 @@
         "BeyG2": "SilverWolf 9-70 Free Ball",
         "PunteggioBeyG1": 3,
         "PunteggioBeyG2": -3
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "PhoenixWing 1-60 Kick",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "Emperor Blast Heavy 9-60 Taper",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "WizardRod 9-60 Hexa",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "WizardRod 1-60 Hexa",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "GolemRock 3-60 Taper",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "PhoenixWing 3-60 Rush",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
     }
 ]
