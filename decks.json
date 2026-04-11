@@ -146,13 +146,6 @@
                 "b": "DranDagger",
                 "r": "6-80",
                 "bi": "Point"
-            },
-            {
-                "id": "fab_0005",
-                "tipo": "BX/UX",
-                "b": "Hover Wyvern",
-                "r": "3-70",
-                "bi": "Jolt"
             }
         ],
         "deck_list": [
@@ -168,7 +161,7 @@
                 "name": "Meta",
                 "slots": {
                     "0": "-",
-                    "1": "fab_0005",
+                    "1": "-",
                     "2": "-"
                 }
             },
