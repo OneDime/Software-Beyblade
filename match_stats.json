@@ -421,5 +421,41 @@
         "BeyG2": "Hover Wyvern 9-60 Kick",
         "PunteggioBeyG1": -3,
         "PunteggioBeyG2": 3
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "GolemRock 1-60 Hexa",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SilverWolf 9-70 Free Ball",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "WizardRod 5-60 Free Ball",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SharkScale 4-50 Low Rush",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 9-60 Ball",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "CobaltDragoon 9-60 Elevate",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 9-60 Ball",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SharkScale 4-50 Low Rush",
+        "PunteggioBeyG1": -2,
+        "PunteggioBeyG2": 2
     }
 ]
