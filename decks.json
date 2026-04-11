@@ -141,13 +141,6 @@
     "Fabio": {
         "beys": [
             {
-                "id": "ce1647d9",
-                "tipo": "BX/UX",
-                "b": "Hover Wyvern",
-                "r": "9-60",
-                "bi": "Kick"
-            },
-            {
                 "id": "5d8bde8e",
                 "tipo": "CX",
                 "b": "-",
@@ -165,11 +158,23 @@
                 "bi": "Free Ball"
             },
             {
+                "id": "ce1647d9",
+                "tipo": "BX/UX",
+                "b": "Hover Wyvern",
+                "r": "9-60",
+                "bi": "Kick"
+            },
+            {
                 "id": "bd0fd93b",
                 "tipo": "BX/UX",
                 "b": "WizardArrow",
                 "r": "1-60",
                 "bi": "Hexa"
+            },
+            {
+                "id": "c6498490",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": [
