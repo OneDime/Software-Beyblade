@@ -208,13 +208,6 @@
                 "rib": "Operate"
             },
             {
-                "id": "fab_0003",
-                "tipo": "BX/UX",
-                "b": "SamuraiSaber",
-                "r": "9-60",
-                "bi": "Hexa"
-            },
-            {
                 "id": "fab_0006",
                 "tipo": "BX/UX",
                 "b": "WizardRod",
@@ -235,7 +228,7 @@
                 "slots": {
                     "0": "-",
                     "1": "-",
-                    "2": "fab_0003"
+                    "2": "-"
                 }
             },
             {
