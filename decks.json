@@ -99,10 +99,10 @@
         "beys": [
             {
                 "id": "06281e18",
-                "tipo": "BX/UX+R-I-Bit",
+                "tipo": "BX/UX",
                 "b": "GolemRock",
-                "r": "-",
-                "bi": "-",
+                "r": "1-60",
+                "bi": "Hexa",
                 "rib": "Operate"
             },
             {
