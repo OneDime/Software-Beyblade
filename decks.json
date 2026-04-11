@@ -98,18 +98,31 @@
     "Andrea": {
         "beys": [
             {
-                "id": "06281e18",
+                "id": "69ec8c43",
                 "tipo": "BX/UX",
                 "b": "GolemRock",
-                "r": "9-60",
-                "bi": "Free Ball",
-                "rib": "Operate"
+                "r": "3-60",
+                "bi": "Taper"
+            },
+            {
+                "id": "54a2b293",
+                "tipo": "BX/UX",
+                "b": "PhoenixWing",
+                "r": "3-60",
+                "bi": "Kick"
             },
             {
                 "id": "and_0003",
                 "tipo": "BX/UX",
                 "b": "PhoenixWing",
                 "r": "3-60",
+                "bi": "Rush"
+            },
+            {
+                "id": "a4e79d10",
+                "tipo": "BX/UX",
+                "b": "TyrannoBeat",
+                "r": "7-60",
                 "bi": "Rush"
             },
             {
@@ -124,6 +137,13 @@
                 "tipo": "BX/UX",
                 "b": "WizardRod",
                 "r": "1-60",
+                "bi": "Hexa"
+            },
+            {
+                "id": "f89448e3",
+                "tipo": "BX/UX",
+                "b": "WizardRod",
+                "r": "9-60",
                 "bi": "Hexa"
             }
         ],
@@ -202,7 +222,7 @@
             {
                 "id": "bd0fd93b",
                 "tipo": "BX/UX",
-                "b": "WizardArrow",
+                "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
             }
