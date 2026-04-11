@@ -149,6 +149,11 @@
                 "lc": "Emperor",
                 "mb": "Blast",
                 "ab": "Heavy"
+            },
+            {
+                "id": "bd0fd93b",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": [
