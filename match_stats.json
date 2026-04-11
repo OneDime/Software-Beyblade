@@ -1,0 +1,38 @@
+[
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Antonio",
+        "BeyG1": "Emperor Reaper Heavy 4-50 Low Rush",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "PhoenixWing 3-60 Rush",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Antonio",
+        "BeyG1": "ImpactDrake 1-60 Under Flat",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "GolemRock Operate",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Antonio",
+        "BeyG1": "GolemRock 3-60 Rush",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "TyrannoBeat 9-60 Ball",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "11/04/2026",
+        "NomeGiocatore1": "Antonio",
+        "BeyG1": "ImpactDrake 1-60 Under Flat",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "PhoenixWing 3-60 Rush",
+        "PunteggioBeyG1": 3,
+        "PunteggioBeyG2": -3
+    }
+]
