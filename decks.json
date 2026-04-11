@@ -141,57 +141,25 @@
     "Fabio": {
         "beys": [
             {
-                "id": "fab_0001",
-                "tipo": "CX",
-                "b": "-",
-                "r": "7-60",
-                "bi": "Taper",
-                "rib": "-",
-                "lb": "Emperor",
-                "mb": "Blast",
-                "ab": "Heavy"
-            },
-            {
-                "id": "fab_0002",
+                "id": "fab_0011",
                 "tipo": "BX/UX",
-                "b": "TyrannoBeat",
+                "b": "DranBuster",
                 "r": "1-60",
-                "bi": "Low Rush"
+                "bi": "Low Flat"
             },
             {
-                "id": "fab_0003",
+                "id": "fab_0014",
                 "tipo": "BX/UX",
-                "b": "SamuraiSaber",
-                "r": "9-60",
-                "bi": "Hexa"
+                "b": "DranDagger",
+                "r": "6-80",
+                "bi": "Point"
             },
             {
-                "id": "fab_0004",
+                "id": "fab_0012",
                 "tipo": "BX/UX",
-                "b": "MeteorDragoon",
-                "r": "5-60",
-                "bi": "Level"
-            },
-            {
-                "id": "fab_0005",
-                "tipo": "BX/UX",
-                "b": "Hover Wyvern",
-                "r": "3-70",
-                "bi": "Jolt"
-            },
-            {
-                "id": "fab_0006",
-                "tipo": "BX/UX",
-                "b": "WizardRod",
-                "r": "9-60",
-                "bi": "Ball"
-            },
-            {
-                "id": "fab_0007",
-                "tipo": "BX/UX",
-                "b": "PhoenixWing",
-                "r": "1-60",
-                "bi": "Kick"
+                "b": "DranSword",
+                "r": "3-60",
+                "bi": "Rush"
             },
             {
                 "id": "fab_0008",
@@ -201,11 +169,11 @@
                 "bi": "Rush"
             },
             {
-                "id": "fab_0009",
+                "id": "fab_0005",
                 "tipo": "BX/UX",
-                "b": "WizardRod",
-                "r": "9-60",
-                "bi": "Free Ball"
+                "b": "Hover Wyvern",
+                "r": "3-70",
+                "bi": "Jolt"
             },
             {
                 "id": "fab_0010",
@@ -215,18 +183,30 @@
                 "bi": "Accel"
             },
             {
-                "id": "fab_0011",
+                "id": "fab_0004",
                 "tipo": "BX/UX",
-                "b": "DranBuster",
-                "r": "1-60",
-                "bi": "Low Flat"
+                "b": "MeteorDragoon",
+                "r": "5-60",
+                "bi": "Level"
             },
             {
-                "id": "fab_0012",
+                "id": "fab_0015",
+                "tipo": "CX",
+                "b": "-",
+                "r": "9-70",
+                "bi": "Ball",
+                "rib": "-",
+                "lb": "Perseus",
+                "mb": "Might",
+                "ab": "Jaggy",
+                "lc": "-"
+            },
+            {
+                "id": "fab_0007",
                 "tipo": "BX/UX",
-                "b": "DranSword",
-                "r": "3-60",
-                "bi": "Rush"
+                "b": "PhoenixWing",
+                "r": "1-60",
+                "bi": "Kick"
             },
             {
                 "id": "fab_0013",
@@ -240,29 +220,39 @@
                 "rib": "Operate"
             },
             {
-                "id": "fab_0014",
+                "id": "fab_0003",
                 "tipo": "BX/UX",
-                "b": "DranDagger",
-                "r": "6-80",
-                "bi": "Point"
+                "b": "SamuraiSaber",
+                "r": "9-60",
+                "bi": "Hexa"
             },
             {
-                "id": "fab_0015",
-                "tipo": "CX",
-                "b": "-",
-                "r": "9-70",
-                "bi": "Ball",
-                "rib": "-",
-                "lb": "Perseus",
-                "mb": "Might",
-                "ab": "Jaggy"
+                "id": "fab_0002",
+                "tipo": "BX/UX",
+                "b": "TyrannoBeat",
+                "r": "1-60",
+                "bi": "Low Rush"
+            },
+            {
+                "id": "fab_0006",
+                "tipo": "BX/UX",
+                "b": "WizardRod",
+                "r": "9-60",
+                "bi": "Ball"
+            },
+            {
+                "id": "fab_0009",
+                "tipo": "BX/UX",
+                "b": "WizardRod",
+                "r": "9-60",
+                "bi": "Free Ball"
             }
         ],
         "deck_list": [
             {
                 "name": "LoseRate100%",
                 "slots": {
-                    "0": "fab_0001",
+                    "0": "-",
                     "1": "fab_0002",
                     "2": "fab_0003"
                 }
