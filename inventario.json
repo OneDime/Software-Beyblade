@@ -23,13 +23,15 @@
             "Wriggle": 1,
             "Reaper": 1,
             "Brush": 1,
-            "Brave": 1
+            "Brave": 1,
+            "Might": 1
         },
         "assist_blade": {
             "Round": 1,
             "Slash": 1,
             "Turn": 1,
-            "Jaggy": 2
+            "Jaggy": 2,
+            "Heavy": 1
         },
         "ratchet": {
             "4-55": 1,
@@ -75,12 +77,15 @@
             "Wizard": 1,
             "Kraken": 1,
             "Hells": 2,
-            "Fox": 1
+            "Fox": 1,
+            "Emperor": 1
         },
         "over_blade": {},
         "metal_blade": {},
         "r_i_blade": {},
-        "r_i_bit": {}
+        "r_i_bit": {
+            "Operate": 1
+        }
     },
     "Andrea": {
         "blade": {
