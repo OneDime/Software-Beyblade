@@ -518,7 +518,7 @@ elif menu_scelta == "Builder":
 elif menu_scelta == "Match!":
     tab5, tab6 = st.tabs(["📊 Registro Match", "🏆 Classifica Beyblade"])
 
-    # --- TAB 5: REGISTRO MATCH ---
+# --- TAB 5: REGISTRO MATCH ---
     with tab5:
         st.markdown("### 📊 Registro Rapido Scontri")
         
@@ -547,19 +547,23 @@ elif menu_scelta == "Match!":
         beys_g2 = get_bey_names(g2, "G2")
         punteggi = ["-", "1-0", "2-0", "3-0", "0-1", "0-2", "0-3"]
 
-        df_init = pd.DataFrame(
-            [{"Bey G1": "-", "Bey G2": "-", "Punti": "-"} for _ in range(13)],
-            index=range(1, 14)
-        )
+        # FIX: Salviamo il DataFrame in session_state per evitare bug di re-indicizzazione
+        df_key = f"df_init_match_{st.session_state.match_counter}"
+        if df_key not in st.session_state:
+            st.session_state[df_key] = pd.DataFrame(
+                [{"Bey G1": "-", "Bey G2": "-", "Punti": "-"} for _ in range(13)],
+                index=range(1, 14)
+            )
         
         edited_df = st.data_editor(
-            df_init,
+            st.session_state[df_key],
             column_config={
                 "Bey G1": st.column_config.SelectboxColumn("Bey G1", options=beys_g1, width="medium"),
                 "Bey G2": st.column_config.SelectboxColumn("Bey G2", options=beys_g2, width="medium"),
                 "Punti": st.column_config.SelectboxColumn("Punti", options=punteggi, width="small"),
             },
             use_container_width=True,
+            hide_index=True, # Nascondiamo l'indice per evitare click accidentali sull'ordinamento da mobile
             key=f"match_editor_vFINAL_{st.session_state.match_counter}"
         )
 
