@@ -183,13 +183,6 @@
                 "bi": "Accel"
             },
             {
-                "id": "fab_0004",
-                "tipo": "BX/UX",
-                "b": "MeteorDragoon",
-                "r": "5-60",
-                "bi": "Level"
-            },
-            {
                 "id": "fab_0006",
                 "tipo": "BX/UX",
                 "b": "WizardRod",
@@ -216,7 +209,7 @@
             {
                 "name": "Meta",
                 "slots": {
-                    "0": "fab_0004",
+                    "0": "-",
                     "1": "fab_0005",
                     "2": "fab_0006"
                 }
