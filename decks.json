@@ -141,13 +141,6 @@
     "Fabio": {
         "beys": [
             {
-                "id": "f2b64fdb",
-                "tipo": "BX/UX",
-                "b": "MeteorDragoon",
-                "r": "9-70",
-                "bi": "Level"
-            },
-            {
                 "id": "5d8bde8e",
                 "tipo": "CX",
                 "b": "-",
@@ -172,6 +165,13 @@
                 "bi": "Kick"
             },
             {
+                "id": "f2b64fdb",
+                "tipo": "BX/UX",
+                "b": "MeteorDragoon",
+                "r": "9-70",
+                "bi": "Level"
+            },
+            {
                 "id": "c6498490",
                 "tipo": "BX/UX",
                 "b": "PhoenixWing",
@@ -184,6 +184,11 @@
                 "b": "WizardArrow",
                 "r": "1-60",
                 "bi": "Hexa"
+            },
+            {
+                "id": "8ae92bd3",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": [
