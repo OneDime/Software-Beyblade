@@ -141,13 +141,6 @@
     "Fabio": {
         "beys": [
             {
-                "id": "fab_0011",
-                "tipo": "BX/UX",
-                "b": "DranBuster",
-                "r": "1-60",
-                "bi": "Low Flat"
-            },
-            {
                 "id": "fab_0014",
                 "tipo": "BX/UX",
                 "b": "DranDagger",
@@ -212,7 +205,7 @@
                 "name": "PAXERELLI",
                 "slots": {
                     "0": "fab_0010",
-                    "1": "fab_0011",
+                    "1": "-",
                     "2": "-"
                 }
             },
