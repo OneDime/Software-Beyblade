@@ -671,7 +671,7 @@ elif menu_scelta == "Match!":
                 type="primary"
             )
 
-    # --- TAB 6: CLASSIFICA BEYBLADE ---
+# --- TAB 6: CLASSIFICA BEYBLADE ---
     with tab6:
         st.markdown("### 🏆 Classifica Globale Beyblade")
         
@@ -727,10 +727,34 @@ elif menu_scelta == "Match!":
                 
                 df_totale['Punteggio'] = pd.to_numeric(df_totale['Punteggio'], errors='coerce').fillna(0)
                 
-                df_classifica = df_totale.groupby('Bey')['Punteggio'].sum().reset_index().sort_values(by='Punteggio', ascending=False)
+                # --- NUOVA LOGICA DI CALCOLO CLASSIFICA ---
+                # Raggruppiamo contando le partite e sommando i punti
+                df_classifica = df_totale.groupby('Bey').agg(
+                    Partite=('Punteggio', 'count'),
+                    Bilancio_Punti=('Punteggio', 'sum')
+                ).reset_index()
+                
+                # Calcoliamo la media arrotondata al primo decimale
+                df_classifica['Media_Punti'] = (df_classifica['Bilancio_Punti'] / df_classifica['Partite']).round(1)
+                
+                # Rinominiamo le colonne per chiarezza visiva
+                df_classifica = df_classifica.rename(columns={
+                    'Bilancio_Punti': 'Punti Totali',
+                    'Media_Punti': 'Media Punti'
+                })
+                
+                # Ordiniamo per Punti Totali (decrescente) e sistemiamo l'indice
+                df_classifica = df_classifica.sort_values(by='Punti Totali', ascending=False)
                 df_classifica.index = range(1, len(df_classifica) + 1)
                 
-                st.dataframe(df_classifica, use_container_width=True)
+                # Mostriamo la tabella forzando la formattazione a 1 decimale per la colonna media
+                st.dataframe(
+                    df_classifica, 
+                    use_container_width=True,
+                    column_config={
+                        "Media Punti": st.column_config.NumberColumn("Media Punti", format="%.1f")
+                    }
+                )
 
 elif menu_scelta == "AI Advisor":
     tab4, = st.tabs(["🤖 AI Advisor"])
