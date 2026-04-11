@@ -155,13 +155,6 @@
                 "bi": "Jolt"
             },
             {
-                "id": "fab_0010",
-                "tipo": "BX/UX",
-                "b": "ImpactDrake",
-                "r": "2-70",
-                "bi": "Accel"
-            },
-            {
                 "id": "fab_0006",
                 "tipo": "BX/UX",
                 "b": "WizardRod",
@@ -204,7 +197,7 @@
             {
                 "name": "PAXERELLI",
                 "slots": {
-                    "0": "fab_0010",
+                    "0": "-",
                     "1": "-",
                     "2": "-"
                 }
