@@ -574,7 +574,7 @@ elif menu_scelta == "Match!":
         beys_g2 = get_bey_names(g2, "G2")
         punteggi = ["-", "1-0", "2-0", "3-0", "0-1", "0-2", "0-3"]
 
-        # FIX: Salviamo il DataFrame in session_state per evitare bug di re-indicizzazione
+        # FIX: Salviamo il DataFrame in session_state per evitare bug di re-indicizzazione iniziale
         df_key = f"df_init_match_{st.session_state.match_counter}"
         if df_key not in st.session_state:
             st.session_state[df_key] = pd.DataFrame(
@@ -593,6 +593,12 @@ elif menu_scelta == "Match!":
             hide_index=True, # Nascondiamo l'indice per evitare click accidentali sull'ordinamento da mobile
             key=f"match_editor_vFINAL_{st.session_state.match_counter}"
         )
+        
+        # --- MODIFICA CRITICA ANTI-RESET ---
+        # Salviamo la tabella costantemente nel session_state. 
+        # In questo modo, se selezioni un nuovo beyblade esterno e la pagina si ricarica,
+        # la tabella ripartirà esattamente da come l'avevi lasciata e non si svuoterà.
+        st.session_state[df_key] = edited_df
 
         if st.button("🚀 SALVA MATCH NEL CLOUD", use_container_width=True, type="primary"):
             valid_rows = edited_df[edited_df["Punti"] != "-"]
@@ -701,7 +707,6 @@ elif menu_scelta == "Match!":
                 use_container_width=True,
                 type="primary"
             )
-
 
     # --- TAB 6: CLASSIFICA BEYBLADE ---
 
