@@ -530,14 +530,6 @@ elif menu_scelta == "Match!":
         with col_p1: g1 = st.selectbox("Giocatore 1", p_options, index=p_options.index(user_sel) if user_sel in p_options else 0)
         with col_p2: g2 = st.selectbox("Giocatore 2", p_options, index=1 if user_sel != "Andrea" else 0)
 
-        # Inizializzazione DataFrame nel session_state (se non esiste)
-        df_key = f"df_init_match_{st.session_state.match_counter}"
-        if df_key not in st.session_state:
-            st.session_state[df_key] = pd.DataFrame(
-                [{"Bey G1": "-", "Bey G2": "-", "Punti": "-"} for _ in range(13)],
-                index=range(1, 14)
-            )
-
         def get_meta_beys():
             beys = []
             if os.path.exists("meta.txt"):
@@ -548,45 +540,48 @@ elif menu_scelta == "Match!":
                         for line in lines[1:]:
                             parts = line.split(',')
                             if len(parts) >= 6:
+                                # Prende solo i primi 6 campi, ignora i vuoti e li unisce con uno spazio
                                 comps = [p.strip() for p in parts[:6] if p.strip()]
-                                if comps: beys.append(" ".join(comps))
-                except Exception: pass
+                                if comps:
+                                    beys.append(" ".join(comps))
+                except Exception:
+                    pass
             return sorted(list(set(beys)))
 
-        def get_bey_names(player_name, suffix, current_table_values):
-            # Creiamo un set per evitare duplicati e includiamo sempre il "-"
-            all_allowed = set(current_table_values)
-            all_allowed.add("-")
-            
+        def get_bey_names(player_name, suffix):
             if player_name == "Esterno":
                 with st.expander(f"⚙️ Configura Bey Esterni ({suffix})"):
                     meta_list = ["Inserisci manualmente"] + get_meta_beys()
+                    final_beys = []
                     for i in range(3):
                         sel = st.selectbox(f"Seleziona Bey {i+1} ({suffix})", meta_list, key=f"ext_sel_{suffix}_{i}")
                         if sel == "Inserisci manualmente":
                             manual_val = st.text_input(f"Nome manuale Bey {i+1} ({suffix})", f"Esterno {i+1}", key=f"ext_{suffix}_{i}")
-                            all_allowed.add(manual_val)
+                            final_beys.append(manual_val)
                         else:
-                            all_allowed.add(sel)
+                            final_beys.append(sel)
+                    return final_beys
             else:
                 p_beys = st.session_state.users[player_name]["decks"]["beys"]
+                names = []
                 for bey in p_beys:
                     n, _, _ = get_bey_name_and_comps(bey)
                     if n and n != "Nuovo Beyblade":
-                        all_allowed.add(n)
-            
-            return sorted(list(all_allowed))
+                        names.append(n)
+                return sorted(list(set(names))) if names else ["-"]
 
-        # Recuperiamo i valori attualmente presenti nella tabella per evitare il reset delle opzioni
-        current_g1_vals = st.session_state[df_key]["Bey G1"].tolist()
-        current_g2_vals = st.session_state[df_key]["Bey G2"].tolist()
-
-        # Generiamo le liste opzioni includendo i valori attuali
-        beys_g1 = get_bey_names(g1, "G1", current_g1_vals)
-        beys_g2 = get_bey_names(g2, "G2", current_g2_vals)
-        
+        beys_g1 = get_bey_names(g1, "G1")
+        beys_g2 = get_bey_names(g2, "G2")
         punteggi = ["-", "1-0", "2-0", "3-0", "0-1", "0-2", "0-3"]
 
+        # FIX: Salviamo il DataFrame in session_state per evitare bug di re-indicizzazione iniziale
+        df_key = f"df_init_match_{st.session_state.match_counter}"
+        if df_key not in st.session_state:
+            st.session_state[df_key] = pd.DataFrame(
+                [{"Bey G1": "-", "Bey G2": "-", "Punti": "-"} for _ in range(13)],
+                index=range(1, 14)
+            )
+        
         edited_df = st.data_editor(
             st.session_state[df_key],
             column_config={
@@ -595,32 +590,47 @@ elif menu_scelta == "Match!":
                 "Punti": st.column_config.SelectboxColumn("Punti", options=punteggi, width="small"),
             },
             use_container_width=True,
-            hide_index=True,
+            hide_index=True, # Nascondiamo l'indice per evitare click accidentali sull'ordinamento da mobile
             key=f"match_editor_vFINAL_{st.session_state.match_counter}"
         )
         
-        # Sincronizzazione immediata dello stato per preservare i dati durante i ricaricamenti dei widget esterni
+        # --- MODIFICA CRITICA ANTI-RESET ---
+        # Salviamo la tabella costantemente nel session_state. 
+        # In questo modo, se selezioni un nuovo beyblade esterno e la pagina si ricarica,
+        # la tabella ripartirà esattamente da come l'avevi lasciata e non si svuoterà.
         st.session_state[df_key] = edited_df
 
         if st.button("🚀 SALVA MATCH NEL CLOUD", use_container_width=True, type="primary"):
             valid_rows = edited_df[edited_df["Punti"] != "-"]
+            
             if valid_rows.empty:
                 st.warning("Compila almeno un round.")
             else:
                 now_str = datetime.now().strftime("%d/%m/%Y")
                 new_records = []
+                
                 for _, row in valid_rows.iterrows():
                     p1_raw, p2_raw = map(int, row["Punti"].split("-"))
-                    val_g1, val_g2 = (p1_raw, -p1_raw) if p1_raw > p2_raw else (-p2_raw, p2_raw)
+                    
+                    if p1_raw > p2_raw:
+                        val_g1, val_g2 = p1_raw, -p1_raw
+                    else:
+                        val_g1, val_g2 = -p2_raw, p2_raw
+                    
                     new_records.append({
-                        "Data": now_str, "NomeGiocatore1": g1, "BeyG1": row["Bey G1"],
-                        "NomeGiocatore2": g2, "BeyG2": row["Bey G2"],
-                        "PunteggioBeyG1": val_g1, "PunteggioBeyG2": val_g2
+                        "Data": now_str,
+                        "NomeGiocatore1": g1,
+                        "BeyG1": row["Bey G1"],
+                        "NomeGiocatore2": g2,
+                        "BeyG2": row["Bey G2"],
+                        "PunteggioBeyG1": val_g1,
+                        "PunteggioBeyG2": val_g2
                     })
                 
                 with st.spinner("Aggiornamento archivio..."):
                     full_archive = github_action("stats", method="GET") or []
                     full_archive.extend(new_records)
+                    
                     if github_action("stats", full_archive, "PUT"):
                         st.success("Scontri archiviati con successo!")
                         st.session_state.match_counter += 1
@@ -646,16 +656,22 @@ elif menu_scelta == "Match!":
                         try:
                             row_date = datetime.strptime(d_str, "%d/%m/%Y").date()
                         except ValueError:
-                            try: row_date = datetime.strptime(d_str, "%Y-%m-%d %H:%M:%S").date()
-                            except ValueError: row_date = datetime.min.date()
-                        if row_date >= start_date: filtered_data.append(row)
+                            try:
+                                row_date = datetime.strptime(d_str, "%Y-%m-%d %H:%M:%S").date()
+                            except ValueError:
+                                row_date = datetime.min.date()
+                                
+                        if row_date >= start_date:
+                            filtered_data.append(row)
                             
                     if not filtered_data:
                         st.warning("Nessun dato trovato a partire da questa data.")
                     else:
                         df_history = pd.DataFrame(filtered_data)
+                        
                         df1 = df_history[['BeyG1', 'PunteggioBeyG1']].rename(columns={'BeyG1': 'Bey', 'PunteggioBeyG1': 'Score'})
                         df2 = df_history[['BeyG2', 'PunteggioBeyG2']].rename(columns={'BeyG2': 'Bey', 'PunteggioBeyG2': 'Score'})
+                        
                         df_concat = pd.concat([df1, df2])
                         df_concat['Score'] = pd.to_numeric(df_concat['Score'], errors='coerce').fillna(0)
                         df_scores = df_concat.groupby('Bey')['Score'].sum().reset_index().sort_values(by='Score', ascending=False)
@@ -663,10 +679,22 @@ elif menu_scelta == "Match!":
                         output = io.BytesIO()
                         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                             df_history.to_excel(writer, sheet_name='match history', index=False)
+                            worksheet_history = writer.sheets['match history']
+                            worksheet_history.autofilter(0, 0, len(df_history), len(df_history.columns) - 1)
+                            
                             df_scores.to_excel(writer, sheet_name='Punteggi Beyblade', index=False)
+                            
                             for u in ["Antonio", "Andrea", "Fabio"]:
-                                df_u = df_history[(df_history['NomeGiocatore1'] == u) | (df_history['NomeGiocatore2'] == u)] if 'NomeGiocatore1' in df_history.columns else pd.DataFrame()
+                                if 'NomeGiocatore1' in df_history.columns and 'NomeGiocatore2' in df_history.columns:
+                                    df_u = df_history[(df_history['NomeGiocatore1'] == u) | (df_history['NomeGiocatore2'] == u)]
+                                else:
+                                    df_u = pd.DataFrame() 
+                                    
                                 df_u.to_excel(writer, sheet_name=u, index=False)
+                                worksheet_u = writer.sheets[u]
+                                if not df_u.empty:
+                                    worksheet_u.autofilter(0, 0, len(df_u), len(df_u.columns) - 1)
+                                    
                         st.session_state.excel_bytes = output.getvalue()
                         st.success("✅ File Excel pronto!")
 
@@ -676,7 +704,8 @@ elif menu_scelta == "Match!":
                 data=st.session_state.excel_bytes,
                 file_name=f"Beyblade_Match_History_{datetime.now().strftime('%d_%m_%Y')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True, type="primary"
+                use_container_width=True,
+                type="primary"
             )
 
     # --- TAB 6: CLASSIFICA BEYBLADE ---
