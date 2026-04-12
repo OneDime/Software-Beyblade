@@ -530,6 +530,14 @@ elif menu_scelta == "Match!":
         with col_p1: g1 = st.selectbox("Giocatore 1", p_options, index=p_options.index(user_sel) if user_sel in p_options else 0)
         with col_p2: g2 = st.selectbox("Giocatore 2", p_options, index=1 if user_sel != "Andrea" else 0)
 
+        # Inizializzazione DataFrame (RESTA UGUALE)
+        df_key = f"df_init_match_{st.session_state.match_counter}"
+        if df_key not in st.session_state:
+            st.session_state[df_key] = pd.DataFrame(
+                [{"Bey G1": "-", "Bey G2": "-", "Punti": "-"} for _ in range(13)],
+                index=range(1, 14)
+            )
+
         def get_meta_beys():
             beys = []
             if os.path.exists("meta.txt"):
@@ -540,48 +548,47 @@ elif menu_scelta == "Match!":
                         for line in lines[1:]:
                             parts = line.split(',')
                             if len(parts) >= 6:
-                                # Prende solo i primi 6 campi, ignora i vuoti e li unisce con uno spazio
                                 comps = [p.strip() for p in parts[:6] if p.strip()]
-                                if comps:
-                                    beys.append(" ".join(comps))
-                except Exception:
-                    pass
+                                if comps: beys.append(" ".join(comps))
+                except Exception: pass
             return sorted(list(set(beys)))
 
         def get_bey_names(player_name, suffix):
+            names = ["-"]
             if player_name == "Esterno":
                 with st.expander(f"⚙️ Configura Bey Esterni ({suffix})"):
                     meta_list = ["Inserisci manualmente"] + get_meta_beys()
-                    final_beys = []
                     for i in range(3):
                         sel = st.selectbox(f"Seleziona Bey {i+1} ({suffix})", meta_list, key=f"ext_sel_{suffix}_{i}")
                         if sel == "Inserisci manualmente":
                             manual_val = st.text_input(f"Nome manuale Bey {i+1} ({suffix})", f"Esterno {i+1}", key=f"ext_{suffix}_{i}")
-                            final_beys.append(manual_val)
+                            names.append(manual_val)
                         else:
-                            final_beys.append(sel)
-                    return final_beys
+                            names.append(sel)
             else:
                 p_beys = st.session_state.users[player_name]["decks"]["beys"]
-                names = []
                 for bey in p_beys:
                     n, _, _ = get_bey_name_and_comps(bey)
                     if n and n != "Nuovo Beyblade":
                         names.append(n)
-                return sorted(list(set(names))) if names else ["-"]
+            
+            # --- LOGICA DI PROTEZIONE ---
+            # Recuperiamo i valori attualmente salvati nella tabella per questo giocatore
+            # Se un valore esiste nella tabella ma non nella lista (es. un vecchio esterno), 
+            # lo aggiungiamo temporaneamente alle opzioni per evitare che Streamlit lo cancelli.
+            current_table_values = st.session_state[df_key][f"Bey {suffix}"].unique().tolist()
+            for val in current_table_values:
+                if val not in names:
+                    names.append(val)
+            
+            return sorted(list(set(names)))
 
+        # Generiamo le liste opzioni "protette"
         beys_g1 = get_bey_names(g1, "G1")
         beys_g2 = get_bey_names(g2, "G2")
         punteggi = ["-", "1-0", "2-0", "3-0", "0-1", "0-2", "0-3"]
 
-        # FIX: Salviamo il DataFrame in session_state per evitare bug di re-indicizzazione iniziale
-        df_key = f"df_init_match_{st.session_state.match_counter}"
-        if df_key not in st.session_state:
-            st.session_state[df_key] = pd.DataFrame(
-                [{"Bey G1": "-", "Bey G2": "-", "Punti": "-"} for _ in range(13)],
-                index=range(1, 14)
-            )
-        
+        # Il data_editor legge e scrive direttamente nel session_state tramite la chiave
         edited_df = st.data_editor(
             st.session_state[df_key],
             column_config={
@@ -590,47 +597,35 @@ elif menu_scelta == "Match!":
                 "Punti": st.column_config.SelectboxColumn("Punti", options=punteggi, width="small"),
             },
             use_container_width=True,
-            hide_index=True, # Nascondiamo l'indice per evitare click accidentali sull'ordinamento da mobile
-            key=f"match_editor_vFINAL_{st.session_state.match_counter}"
+            hide_index=True,
+            key=f"editor_active_{st.session_state.match_counter}" 
         )
         
-        # --- MODIFICA CRITICA ANTI-RESET ---
-        # Salviamo la tabella costantemente nel session_state. 
-        # In questo modo, se selezioni un nuovo beyblade esterno e la pagina si ricarica,
-        # la tabella ripartirà esattamente da come l'avevi lasciata e non si svuoterà.
-        st.session_state[df_key] = edited_df
+        # AGGIORNAMENTO STATO: Solo se ci sono state modifiche effettive
+        if not edited_df.equals(st.session_state[df_key]):
+            st.session_state[df_key] = edited_df
+            st.rerun()
 
+        # --- BOTTONE SALVATAGGIO (RESTA UGUALE) ---
         if st.button("🚀 SALVA MATCH NEL CLOUD", use_container_width=True, type="primary"):
             valid_rows = edited_df[edited_df["Punti"] != "-"]
-            
             if valid_rows.empty:
                 st.warning("Compila almeno un round.")
             else:
                 now_str = datetime.now().strftime("%d/%m/%Y")
                 new_records = []
-                
                 for _, row in valid_rows.iterrows():
                     p1_raw, p2_raw = map(int, row["Punti"].split("-"))
-                    
-                    if p1_raw > p2_raw:
-                        val_g1, val_g2 = p1_raw, -p1_raw
-                    else:
-                        val_g1, val_g2 = -p2_raw, p2_raw
-                    
+                    val_g1, val_g2 = (p1_raw, -p1_raw) if p1_raw > p2_raw else (-p2_raw, p2_raw)
                     new_records.append({
-                        "Data": now_str,
-                        "NomeGiocatore1": g1,
-                        "BeyG1": row["Bey G1"],
-                        "NomeGiocatore2": g2,
-                        "BeyG2": row["Bey G2"],
-                        "PunteggioBeyG1": val_g1,
-                        "PunteggioBeyG2": val_g2
+                        "Data": now_str, "NomeGiocatore1": g1, "BeyG1": row["Bey G1"],
+                        "NomeGiocatore2": g2, "BeyG2": row["Bey G2"],
+                        "PunteggioBeyG1": val_g1, "PunteggioBeyG2": val_g2
                     })
                 
                 with st.spinner("Aggiornamento archivio..."):
                     full_archive = github_action("stats", method="GET") or []
                     full_archive.extend(new_records)
-                    
                     if github_action("stats", full_archive, "PUT"):
                         st.success("Scontri archiviati con successo!")
                         st.session_state.match_counter += 1
