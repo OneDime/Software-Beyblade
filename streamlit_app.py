@@ -530,10 +530,37 @@ elif menu_scelta == "Match!":
         with col_p1: g1 = st.selectbox("Giocatore 1", p_options, index=p_options.index(user_sel) if user_sel in p_options else 0)
         with col_p2: g2 = st.selectbox("Giocatore 2", p_options, index=1 if user_sel != "Andrea" else 0)
 
+        def get_meta_beys():
+            beys = []
+            if os.path.exists("meta.txt"):
+                try:
+                    with open("meta.txt", "r", encoding="utf-8") as f:
+                        lines = f.readlines()
+                    if len(lines) > 1:
+                        for line in lines[1:]:
+                            parts = line.split(',')
+                            if len(parts) >= 6:
+                                # Prende solo i primi 6 campi, ignora i vuoti e li unisce con uno spazio
+                                comps = [p.strip() for p in parts[:6] if p.strip()]
+                                if comps:
+                                    beys.append(" ".join(comps))
+                except Exception:
+                    pass
+            return sorted(list(set(beys)))
+
         def get_bey_names(player_name, suffix):
             if player_name == "Esterno":
                 with st.expander(f"⚙️ Configura Bey Esterni ({suffix})"):
-                    return [st.text_input(f"Bey {i+1} ({suffix})", f"Esterno {i+1}", key=f"ext_{suffix}_{i}") for i in range(3)]
+                    meta_list = ["Inserisci manualmente"] + get_meta_beys()
+                    final_beys = []
+                    for i in range(3):
+                        sel = st.selectbox(f"Seleziona Bey {i+1} ({suffix})", meta_list, key=f"ext_sel_{suffix}_{i}")
+                        if sel == "Inserisci manualmente":
+                            manual_val = st.text_input(f"Nome manuale Bey {i+1} ({suffix})", f"Esterno {i+1}", key=f"ext_{suffix}_{i}")
+                            final_beys.append(manual_val)
+                        else:
+                            final_beys.append(sel)
+                    return final_beys
             else:
                 p_beys = st.session_state.users[player_name]["decks"]["beys"]
                 names = []
@@ -675,7 +702,9 @@ elif menu_scelta == "Match!":
                 type="primary"
             )
 
-# --- TAB 6: CLASSIFICA BEYBLADE ---
+
+    # --- TAB 6: CLASSIFICA BEYBLADE ---
+
     with tab6:
         st.markdown("### 🏆 Classifica Globale Beyblade")
         
