@@ -12,8 +12,8 @@
                 "id": "e13264c8",
                 "tipo": "CX",
                 "b": "-",
-                "r": "4-50",
-                "bi": "Low Rush",
+                "r": "9-60",
+                "bi": "Level",
                 "lc": "Emperor",
                 "mb": "Brave",
                 "ab": "Heavy"
@@ -66,6 +66,11 @@
                 "b": "WyvernHover",
                 "r": "9-60",
                 "bi": "Kick"
+            },
+            {
+                "id": "751d4e79",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": [
