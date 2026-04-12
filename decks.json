@@ -2,6 +2,13 @@
     "Antonio": {
         "beys": [
             {
+                "id": "751d4e79",
+                "tipo": "BX/UX",
+                "b": "WizardRod",
+                "r": "1-60",
+                "bi": "Rush"
+            },
+            {
                 "id": "ant_0003",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -12,8 +19,8 @@
                 "id": "e13264c8",
                 "tipo": "CX",
                 "b": "-",
-                "r": "4-50",
-                "bi": "Low Rush",
+                "r": "9-60",
+                "bi": "Level",
                 "lc": "Emperor",
                 "mb": "Brave",
                 "ab": "Heavy"
