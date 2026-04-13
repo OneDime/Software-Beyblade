@@ -853,5 +853,41 @@
         "BeyG2": "SilverWolf 9-60 LowOrb",
         "PunteggioBeyG1": 3,
         "PunteggioBeyG2": -3
+    },
+    {
+        "Data": "13/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Emperor Blast Heavy 9-60 Taper",
+        "NomeGiocatore2": "Esterno",
+        "BeyG2": "WizardRod 9-60 LowOrb",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "13/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "WizardRod 1-60 Hexa",
+        "NomeGiocatore2": "Esterno",
+        "BeyG2": "SharkScale 1-50 Rush",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "13/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Emperor Blast Heavy 9-60 Taper",
+        "NomeGiocatore2": "Esterno",
+        "BeyG2": "SharkScale 1-50 Rush",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "13/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "WizardRod 1-60 Hexa",
+        "NomeGiocatore2": "Esterno",
+        "BeyG2": "WizardRod 9-60 LowOrb",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
     }
 ]
