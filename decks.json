@@ -105,13 +105,6 @@
     "Andrea": {
         "beys": [
             {
-                "id": "42546f3b",
-                "tipo": "BX/UX",
-                "b": "WizardRod",
-                "r": "9-60",
-                "bi": "Ball"
-            },
-            {
                 "id": "69ec8c43",
                 "tipo": "BX/UX",
                 "b": "GolemRock",
@@ -145,13 +138,20 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
+            },
+            {
+                "id": "42546f3b",
+                "tipo": "BX/UX",
+                "b": "WizardRod",
+                "r": "9-60",
+                "bi": "Ball"
             }
         ],
         "deck_list": [
             {
                 "name": "DECK 1",
                 "slots": {
-                    "0": "and_0001",
+                    "0": "42546f3b",
                     "1": "69ec8c43",
                     "2": "54a2b293"
                 }
