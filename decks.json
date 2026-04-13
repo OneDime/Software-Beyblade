@@ -2,13 +2,6 @@
     "Antonio": {
         "beys": [
             {
-                "id": "7d92faaa",
-                "tipo": "BX/UX",
-                "b": "SharkScale",
-                "r": "1-70",
-                "bi": "Low Rush"
-            },
-            {
                 "id": "b6d8c73a",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -35,6 +28,13 @@
                 "b": "PhoenixWing",
                 "r": "3-60",
                 "bi": "Rush"
+            },
+            {
+                "id": "7d92faaa",
+                "tipo": "BX/UX",
+                "b": "SharkScale",
+                "r": "1-70",
+                "bi": "Low Rush"
             },
             {
                 "id": "84ddd0aa",
@@ -80,14 +80,6 @@
                     "0": "ant_0004",
                     "1": "ant_0002",
                     "2": "ant_0003"
-                }
-            },
-            {
-                "name": "I Paxissimi",
-                "slots": {
-                    "0": "08b3e3cc",
-                    "1": "-",
-                    "2": "-"
                 }
             }
         ]
