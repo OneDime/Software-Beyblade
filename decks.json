@@ -2,28 +2,11 @@
     "Antonio": {
         "beys": [
             {
-                "id": "751d4e79",
-                "tipo": "BX/UX",
-                "b": "WizardRod",
-                "r": "1-60",
-                "bi": "Rush"
-            },
-            {
                 "id": "ant_0003",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
                 "r": "9-60",
                 "bi": "Elevate"
-            },
-            {
-                "id": "e13264c8",
-                "tipo": "CX",
-                "b": "-",
-                "r": "9-60",
-                "bi": "Level",
-                "lc": "Emperor",
-                "mb": "Brave",
-                "ab": "Heavy"
             },
             {
                 "id": "df59e95b",
@@ -66,6 +49,13 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
+            },
+            {
+                "id": "751d4e79",
+                "tipo": "BX/UX",
+                "b": "WizardRod",
+                "r": "1-60",
+                "bi": "Rush"
             },
             {
                 "id": "fdde1f53",
