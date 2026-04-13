@@ -2,6 +2,13 @@
     "Antonio": {
         "beys": [
             {
+                "id": "b6d8c73a",
+                "tipo": "BX/UX",
+                "b": "CobaltDragoon",
+                "r": "5-60",
+                "bi": "Elevate"
+            },
+            {
                 "id": "ant_0003",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -49,11 +56,6 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
-            },
-            {
-                "id": "b6d8c73a",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
