@@ -907,5 +907,14 @@
         "BeyG2": "HoverWyvern 9-60 Kick",
         "PunteggioBeyG1": -1,
         "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "13/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Emperor Blast Heavy 9-60 Taper",
+        "NomeGiocatore2": "Esterno",
+        "BeyG2": "AeroPegasus 9-60 Kick",
+        "PunteggioBeyG1": -3,
+        "PunteggioBeyG2": 3
     }
 ]
