@@ -2,13 +2,6 @@
     "Antonio": {
         "beys": [
             {
-                "id": "84ddd0aa",
-                "tipo": "BX/UX",
-                "b": "SharkScale",
-                "r": "3-60",
-                "bi": "Low Orb"
-            },
-            {
                 "id": "ant_0003",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -30,6 +23,13 @@
                 "bi": "Rush"
             },
             {
+                "id": "84ddd0aa",
+                "tipo": "BX/UX",
+                "b": "SharkScale",
+                "r": "3-60",
+                "bi": "Low Orb"
+            },
+            {
                 "id": "ant_0002",
                 "tipo": "BX/UX",
                 "b": "SharkScale",
@@ -49,6 +49,11 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
+            },
+            {
+                "id": "b6d8c73a",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": [
