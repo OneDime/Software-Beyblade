@@ -2,17 +2,6 @@
     "Antonio": {
         "beys": [
             {
-                "id": "b655f38f",
-                "tipo": "CX Infinity Theory",
-                "b": "-",
-                "r": "1-50",
-                "bi": "Kick",
-                "lc": "Emperor",
-                "ob": "Break",
-                "meb": "Blitz",
-                "ab": "Heavy"
-            },
-            {
                 "id": "b6d8c73a",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -27,10 +16,21 @@
                 "bi": "Elevate"
             },
             {
+                "id": "b655f38f",
+                "tipo": "CX Infinity Theory",
+                "b": "-",
+                "r": "1-50",
+                "bi": "Kick",
+                "lc": "Emperor",
+                "ob": "Break",
+                "meb": "Blitz",
+                "ab": "Heavy"
+            },
+            {
                 "id": "08b3e3cc",
                 "tipo": "BX/UX",
                 "b": "ImpactDrake",
-                "r": "1-60",
+                "r": "1-70",
                 "bi": "Under Flat"
             },
             {
