@@ -9,13 +9,6 @@
                 "bi": "Elevate"
             },
             {
-                "id": "df59e95b",
-                "tipo": "BX/UX",
-                "b": "GolemRock",
-                "r": "3-60",
-                "bi": "Rush"
-            },
-            {
                 "id": "08b3e3cc",
                 "tipo": "BX/UX",
                 "b": "ImpactDrake",
@@ -87,7 +80,7 @@
                 "slots": {
                     "0": "08b3e3cc",
                     "1": "-",
-                    "2": "df59e95b"
+                    "2": "-"
                 }
             }
         ]
