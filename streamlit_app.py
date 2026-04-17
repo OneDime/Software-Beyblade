@@ -844,7 +844,7 @@ elif menu_scelta == "Meta":
                 df_rank["Combo Rank"] = pd.to_numeric(df_rank["Combo Rank"], errors='coerce')
                 
             # Riordiniamo visivamente l'ordine delle colonne rimanenti
-            col_ordine = ["Combo Rank", "Rank Change", "Combo", "Points"]
+            col_ordine = ["Combo", "Points", "Combo Rank", "Rank Change"]
             col_ordine_presenti = [c for c in col_ordine if c in df_rank.columns]
             df_rank = df_rank[col_ordine_presenti]
                 
