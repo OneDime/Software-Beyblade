@@ -267,7 +267,7 @@ if st.sidebar.button("Esci / Cambia Utente"):
 # =========================
 # MENU DI NAVIGAZIONE
 # =========================
-menu_scelta = st.selectbox("🧭 Menu di Navigazione", ["Inventario", "Builder", "Match!", "AI Advisor"])
+menu_scelta = st.selectbox("🧭 Menu di Navigazione", ["Inventario", "Builder", "Match!", "Meta"])
 
 if menu_scelta == "Inventario":
     tab1, tab2 = st.tabs(["🔍 Aggiungi", "📦 Inventario"])
