@@ -797,10 +797,8 @@ elif menu_scelta == "Meta":
     def load_meta_data():
         if os.path.exists("meta.csv"):
             try:
-                # Prova a leggere il file specificando l'encoding utf-8
                 return pd.read_csv("meta.csv", encoding="utf-8")
             except Exception:
-                # Fallback in caso di problemi di formattazione
                 return pd.read_csv("meta.csv", encoding="latin-1")
         return pd.DataFrame()
 
@@ -811,40 +809,54 @@ elif menu_scelta == "Meta":
         st.markdown("### 🏆 Ranking Meta WBO")
         
         if not df_meta.empty:
-            # Identifichiamo le colonne richieste (da Lock Chip a Rank Change)
-            colonne_ranking = [
+            # Identifichiamo le colonne dei pezzi da unire
+            colonne_componenti = [
                 "Lock Chip", "Over Blade", "Main/Metal Blade (CX) / Blade (UX/BX)", 
-                "Assist Blade", "Ratchet", "Bit", "Points", 
-                "Sample Size (Win Count)", "Combo Rank", "Rank Change"
+                "Assist Blade", "Ratchet", "Bit"
             ]
+            # Identifichiamo le colonne extra (rimosso Sample Size)
+            colonne_extra = ["Points", "Combo Rank", "Rank Change"]
             
-            # Filtriamo solo le colonne che esistono realmente nel CSV per evitare errori
-            colonne_presenti = [c for c in colonne_ranking if c in df_meta.columns]
-            df_rank = df_meta[colonne_presenti].copy()
+            colonne_presenti_comp = [c for c in colonne_componenti if c in df_meta.columns]
+            colonne_presenti_extra = [c for c in colonne_extra if c in df_meta.columns]
             
-            # Sistemiamo i caratteri "rotti" nella colonna Rank Change per far apparire le frecce
+            df_rank = df_meta[colonne_presenti_comp + colonne_presenti_extra].copy()
+            
+            # 1. Unione delle colonne dei pezzi in un'unica stringa
+            def unisci_combo(row):
+                # Estrae il valore solo se non è vuoto o NaN
+                parti = [str(row[c]).strip() for c in colonne_presenti_comp if pd.notna(row[c]) and str(row[c]).strip() != ""]
+                return " ".join(parti)
+            
+            # Creiamo la nuova colonna 'Combo' e rimuoviamo quelle singole dei pezzi
+            df_rank.insert(0, "Combo", df_rank.apply(unisci_combo, axis=1))
+            df_rank = df_rank.drop(columns=colonne_presenti_comp)
+            
+            # Sistemiamo i caratteri rotti per mostrare le frecce grafiche
             if "Rank Change" in df_rank.columns:
                 df_rank["Rank Change"] = df_rank["Rank Change"].astype(str)
-                # Sostituiamo i glitch di decodifica più comuni con le relative icone
                 df_rank["Rank Change"] = df_rank["Rank Change"].replace(
                     {r'.*â¬†.*': '⬆️', r'.*â¬‡.*': '⬇️', r'.*â€”.*': '—'}, regex=True
                 )
                 df_rank["Rank Change"] = df_rank["Rank Change"].replace({'nan': '-'})
             
-            # Convertiamo Combo Rank in numero per ordinarlo correttamente
             if "Combo Rank" in df_rank.columns:
                 df_rank["Combo Rank"] = pd.to_numeric(df_rank["Combo Rank"], errors='coerce')
                 
-            # --- BARRA DI RICERCA ---
-            ricerca_rank = st.text_input("🔍 Cerca combo, pezzi o rank...", placeholder="Es. 60, WizardRod, 1...").lower()
+            # Riordiniamo visivamente l'ordine delle colonne rimanenti
+            col_ordine = ["Combo Rank", "Rank Change", "Combo", "Points"]
+            col_ordine_presenti = [c for c in col_ordine if c in df_rank.columns]
+            df_rank = df_rank[col_ordine_presenti]
+                
+            # 4. Barra di ricerca pulita
+            ricerca_rank = st.text_input("🔍 Ricerca", key="search_rank").lower()
             
-            # --- ORDINAMENTO DEFAULT ---
+            # Ordinamento base crescente per Combo Rank
             if "Combo Rank" in df_rank.columns:
                 df_rank = df_rank.sort_values(by="Combo Rank", ascending=True)
                 
-            # --- APPLICAZIONE FILTRO RICERCA ---
+            # Applica filtro di ricerca (su tutte le colonne)
             if ricerca_rank:
-                # Cerca la stringa all'interno di QUALSIASI colonna della tabella
                 mask = df_rank.astype(str).apply(lambda x: x.str.lower().str.contains(ricerca_rank, regex=False)).any(axis=1)
                 df_rank = df_rank[mask]
                 
@@ -862,22 +874,17 @@ elif menu_scelta == "Meta":
             col_punti_blade = "Main/Metal Blade (CX) / Blade (UX/BX) Points"
             
             if col_nome_blade in df_meta.columns and col_punti_blade in df_meta.columns:
-                # Estraiamo solo le due colonne utili e creiamo una copia pulita
                 df_blades = df_meta[[col_nome_blade, col_punti_blade]].copy()
-                
-                # Rimuoviamo eventuali righe vuote (NaN) che potrebbero esserci a fine colonna
                 df_blades = df_blades.dropna(subset=[col_nome_blade])
-                
-                # Assicuriamoci che i punti siano numeri
                 df_blades[col_punti_blade] = pd.to_numeric(df_blades[col_punti_blade], errors='coerce')
                 
-                # --- BARRA DI RICERCA ---
-                ricerca_blade = st.text_input("🔍 Cerca Blade specifica...", placeholder="Es. Phoenix, Rod...").lower()
+                # 4. Barra di ricerca pulita
+                ricerca_blade = st.text_input("🔍 Ricerca", key="search_blade").lower()
                 
-                # --- ORDINAMENTO DEFAULT (Crescente come richiesto) ---
-                df_blades = df_blades.sort_values(by=col_punti_blade, ascending=True)
+                # 3. Ordinamento di default DEcrescente per i punti
+                df_blades = df_blades.sort_values(by=col_punti_blade, ascending=False)
                 
-                # --- APPLICAZIONE FILTRO RICERCA ---
+                # Applica filtro di ricerca
                 if ricerca_blade:
                     df_blades = df_blades[df_blades[col_nome_blade].astype(str).str.lower().str.contains(ricerca_blade, regex=False)]
                     
