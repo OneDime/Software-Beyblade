@@ -789,165 +789,100 @@ elif menu_scelta == "Match!":
                     }
                 )
 
-elif menu_scelta == "AI Advisor":
-    tab4, = st.tabs(["🤖 AI Advisor"])
+elif menu_scelta == "Meta":
+    tab_rank, tab_blades = st.tabs(["🏆 Ranking", "🗡️ Blades"])
 
-# --- TAB 4: AI ADVISOR ---
-    with tab4:
-        st.markdown("### 🤖 Strategia Meta-Analitica WBO")
+    # --- FUNZIONE DI CARICAMENTO DATI ---
+    @st.cache_data
+    def load_meta_data():
+        if os.path.exists("meta.csv"):
+            try:
+                # Prova a leggere il file specificando l'encoding utf-8
+                return pd.read_csv("meta.csv", encoding="utf-8")
+            except Exception:
+                # Fallback in caso di problemi di formattazione
+                return pd.read_csv("meta.csv", encoding="latin-1")
+        return pd.DataFrame()
+
+    df_meta = load_meta_data()
+
+    # --- TAB RANKING ---
+    with tab_rank:
+        st.markdown("### 🏆 Ranking Meta WBO")
         
-        API_KEY = st.secrets.get("gemini_api_key")
-        if not API_KEY:
-            st.error("⚠️ Chiave API mancante.")
+        if not df_meta.empty:
+            # Identifichiamo le colonne richieste (da Lock Chip a Rank Change)
+            colonne_ranking = [
+                "Lock Chip", "Over Blade", "Main/Metal Blade (CX) / Blade (UX/BX)", 
+                "Assist Blade", "Ratchet", "Bit", "Points", 
+                "Sample Size (Win Count)", "Combo Rank", "Rank Change"
+            ]
+            
+            # Filtriamo solo le colonne che esistono realmente nel CSV per evitare errori
+            colonne_presenti = [c for c in colonne_ranking if c in df_meta.columns]
+            df_rank = df_meta[colonne_presenti].copy()
+            
+            # Sistemiamo i caratteri "rotti" nella colonna Rank Change per far apparire le frecce
+            if "Rank Change" in df_rank.columns:
+                df_rank["Rank Change"] = df_rank["Rank Change"].astype(str)
+                # Sostituiamo i glitch di decodifica più comuni con le relative icone
+                df_rank["Rank Change"] = df_rank["Rank Change"].replace(
+                    {r'.*â¬†.*': '⬆️', r'.*â¬‡.*': '⬇️', r'.*â€”.*': '—'}, regex=True
+                )
+                df_rank["Rank Change"] = df_rank["Rank Change"].replace({'nan': '-'})
+            
+            # Convertiamo Combo Rank in numero per ordinarlo correttamente
+            if "Combo Rank" in df_rank.columns:
+                df_rank["Combo Rank"] = pd.to_numeric(df_rank["Combo Rank"], errors='coerce')
+                
+            # --- BARRA DI RICERCA ---
+            ricerca_rank = st.text_input("🔍 Cerca combo, pezzi o rank...", placeholder="Es. 60, WizardRod, 1...").lower()
+            
+            # --- ORDINAMENTO DEFAULT ---
+            if "Combo Rank" in df_rank.columns:
+                df_rank = df_rank.sort_values(by="Combo Rank", ascending=True)
+                
+            # --- APPLICAZIONE FILTRO RICERCA ---
+            if ricerca_rank:
+                # Cerca la stringa all'interno di QUALSIASI colonna della tabella
+                mask = df_rank.astype(str).apply(lambda x: x.str.lower().str.contains(ricerca_rank, regex=False)).any(axis=1)
+                df_rank = df_rank[mask]
+                
+            st.dataframe(df_rank, use_container_width=True, hide_index=True)
+            
         else:
-            with st.container(border=True):
-                tutti_pezzi = []
-                for cat in user_data["inv"]:
-                    tutti_pezzi.extend(sorted(user_data["inv"][cat].keys()))
-                tutti_pezzi = sorted(list(set(tutti_pezzi)))
+            st.warning("⚠️ File 'meta.csv' non trovato. Assicurati che sia presente nella directory.")
 
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    approcci = ["Aggro puro", "Anti-meta", "Stamina dominante", "Difensivo/Counter", "Top Meta ottimizzato", "Equilibrato", "High-risk High-reward", "Tech specialist"]
-                    tipo_deck_ai = st.selectbox("🎯 Approccio", approcci)
-                    lancio_ai = st.select_slider("🎯 Capacità di lancio (1-10)", options=list(range(1, 11)), value=5)
-                    torneo_ai = st.selectbox("🎯 Tipo di Torneo", ["Locale / Amichevole", "Regionale", "Nazionale", "WBO Competitivo"])
+    # --- TAB BLADES ---
+    with tab_blades:
+        st.markdown("### 🗡️ Classifica Punti Blades")
+        
+        if not df_meta.empty:
+            col_nome_blade = "Main/Metal Blade (CX) / Blade (UX/BX) Name"
+            col_punti_blade = "Main/Metal Blade (CX) / Blade (UX/BX) Points"
+            
+            if col_nome_blade in df_meta.columns and col_punti_blade in df_meta.columns:
+                # Estraiamo solo le due colonne utili e creiamo una copia pulita
+                df_blades = df_meta[[col_nome_blade, col_punti_blade]].copy()
                 
-                with col_b:
-                    comp_obbl = st.multiselect("✅ Componenti Obbligatorie", tutti_pezzi)
-                    comp_escl = st.multiselect("❌ Componenti da evitare", tutti_pezzi)
+                # Rimuoviamo eventuali righe vuote (NaN) che potrebbero esserci a fine colonna
+                df_blades = df_blades.dropna(subset=[col_nome_blade])
                 
-                if st.button("🚀 GENERA ANALISI COMPETITIVA", use_container_width=True):
-                    with st.spinner("Inizializzazione AI e lettura file..."):
-                        try:
-                            # 1. Configurazione API
-                            genai.configure(api_key=API_KEY)
-                            
-                            # Logica di selezione modello ultra-robusta
-                            valid_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-                            
-                            target_model = None
-                            # Priorità 1: Flash (più veloce ed economico)
-                            for m in valid_models:
-                                if "gemini-1.5-flash" in m:
-                                    target_model = m
-                                    break
-                            
-                            # Priorità 2: Pro (se Flash non esiste)
-                            if not target_model:
-                                for m in valid_models:
-                                    if "gemini-1.5-pro" in m:
-                                        target_model = m
-                                        break
-                            
-                            # Fallback estremo: il primo modello valido della lista
-                            if not target_model and valid_models:
-                                target_model = valid_models[0]
-                            
-                            if not target_model:
-                                st.error("Nessun modello compatibile trovato per questa API Key.")
-                                st.stop()
-
-                            model = genai.GenerativeModel(target_model)
-
-                            # 2. Funzione di lettura robusta
-                            def read_local_file(filename):
-                                if os.path.exists(filename):
-                                    try:
-                                        with open(filename, "r", encoding="utf-8") as f:
-                                            return f.read()
-                                    except Exception:
-                                        try:
-                                            with open(filename, "r", encoding="latin-1") as f:
-                                                return f.read()
-                                        except:
-                                            return f"[ERRORE CRITICO: Impossibile leggere {filename}]"
-                                return f"[ATTENZIONE: File {filename} non trovato]"
-
-                            # 3. Caricamento file (meta.txt aggiornato)
-                            base_prompt = read_local_file("promptIA.txt")
-                            regolamento = read_local_file("Regolamenti IBNA.txt")
-                            wbo_guide = read_local_file("WBO Winning Combinations.txt")
-                            meta_data = read_local_file("meta.txt") 
-
-                            if "[ERRORE" in base_prompt or "[ATTENZIONE" in base_prompt:
-                                st.error("File 'promptIA.txt' mancante o illeggibile.")
-                                st.stop()
-
-                            # 4. Preparazione dati utente
-                            inv_json = json.dumps(user_data["inv"], indent=2, ensure_ascii=False)
-                            obbl_str = ", ".join(comp_obbl) if comp_obbl else "Nessuna"
-                            escl_str = ", ".join(comp_escl) if comp_escl else "Nessuna"
-
-                            # 5. Costruzione del Prompt
-                            prompt_completo = f"""
-{base_prompt}
-
-### DOCUMENTAZIONE TECNICA DI RIFERIMENTO:
-<REGOLAMENTO_IBNA>
-{regolamento}
-</REGOLAMENTO_IBNA>
-
-<GUIDA_METAGAME_WBO>
-{wbo_guide}
-</GUIDA_METAGAME_WBO>
-
-<DATI_STATISTICI_META>
-{meta_data}
-</DATI_STATISTICI_META>
-
-<INVENTARIO_GIOCATORE>
-{inv_json}
-</INVENTARIO_GIOCATORE>
-
-### INPUT SPECIFICI UTENTE:
-- STRATEGIA DESIDERATA: {tipo_deck_ai}
-- LIVELLO DI LANCIO: {lancio_ai}/10
-- CONTESTO TORNEO: {torneo_ai}
-- PEZZI RICHIESTI: {obbl_str}
-- PEZZI BANDITI: {escl_str}
-
-Esegui l'analisi e proponi la combinazione migliore basandoti sui dati statistici del file meta.txt e la disponibilità dei pezzi.
-"""
-                            # 6. Generazione
-                            response = model.generate_content(prompt_completo)
-                            st.session_state.ai_report = response.text
-                            
-                        except Exception as e:
-                            st.error(f"Errore tecnico: {str(e)}")
-
-            # --- Visualizzazione Risultati ---
-            if 'ai_report' in st.session_state:
-                st.markdown(f"<div class='ai-response-area'>{st.session_state.ai_report}</div>", unsafe_allow_html=True)
+                # Assicuriamoci che i punti siano numeri
+                df_blades[col_punti_blade] = pd.to_numeric(df_blades[col_punti_blade], errors='coerce')
                 
-                extracted_json = None
-                match = re.search(r'\{[\s\n]*"slots"[\s\n]*:[\s\S]*\}', st.session_state.ai_report, re.DOTALL)
-                if match:
-                    try:
-                        raw_json = match.group(0)
-                        raw_json = raw_json[:raw_json.rfind('}')+1]
-                        extracted_json = json.loads(raw_json)
-                    except: pass
+                # --- BARRA DI RICERCA ---
+                ricerca_blade = st.text_input("🔍 Cerca Blade specifica...", placeholder="Es. Phoenix, Rod...").lower()
                 
-                col_dl, col_imp = st.columns(2)
-                with col_dl:
-                    st.download_button(
-                        label="📥 Scarica Report (.txt)",
-                        data=st.session_state.ai_report,
-                        file_name=f"Report_WBO_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
-                        mime="text/plain",
-                        use_container_width=True
-                    )
+                # --- ORDINAMENTO DEFAULT (Crescente come richiesto) ---
+                df_blades = df_blades.sort_values(by=col_punti_blade, ascending=True)
                 
-                with col_imp:
-                    if extracted_json and "slots" in extracted_json:
-                        if st.button("🚀 Importa Deck nel Builder", type="primary", use_container_width=True):
-                            nome_deck = f"{tipo_deck_ai}_{datetime.now().strftime('%d/%m/%Y')}"
-                            nuovo_deck = {"name": nome_deck, "slots": extracted_json["slots"]}
-                            user_data["decks"]["deck_list"].append(nuovo_deck)
-                            save_cloud()
-                            st.success(f"Deck '{nome_deck}' importato!")
-                            time.sleep(1.5)
-                            st.rerun()
-                    else:
-                        st.info("ℹ️ Nessun deck pronto per l'importazione automatica.")
+                # --- APPLICAZIONE FILTRO RICERCA ---
+                if ricerca_blade:
+                    df_blades = df_blades[df_blades[col_nome_blade].astype(str).str.lower().str.contains(ricerca_blade, regex=False)]
+                    
+                st.dataframe(df_blades, use_container_width=True, hide_index=True)
+            else:
+                st.error("⚠️ Colonne delle Blades non trovate nel file meta.csv. Verifica l'intestazione.")
+        else:
+            st.warning("⚠️ File 'meta.csv' non trovato. Assicurati che sia presente nella directory.")
