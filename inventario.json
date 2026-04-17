@@ -31,7 +31,8 @@
             "Slash": 1,
             "Turn": 1,
             "Jaggy": 2,
-            "Heavy": 1
+            "Heavy": 1,
+            "Knuckle": 1
         },
         "ratchet": {
             "4-55": 1,
@@ -50,7 +51,8 @@
             "9-70": 1,
             "4-50": 1,
             "1-70": 1,
-            "M-85": 1
+            "M-85": 1,
+            "1-50": 1
         },
         "bit": {
             "Low Orb": 1,
@@ -71,17 +73,23 @@
             "Level": 2,
             "Gear Rush": 1,
             "Under Flat": 1,
-            "High Needle": 1
+            "High Needle": 1,
+            "Ignition": 1
         },
         "lock_chip": {
             "Wizard": 1,
             "Kraken": 1,
             "Hells": 2,
             "Fox": 1,
-            "Emperor": 1
+            "Emperor": 1,
+            "Bahamut": 1
         },
-        "over_blade": {},
-        "metal_blade": {},
+        "over_blade": {
+            "Break": 1
+        },
+        "metal_blade": {
+            "Blitz": 1
+        },
         "r_i_blade": {},
         "r_i_bit": {
             "Operate": 1

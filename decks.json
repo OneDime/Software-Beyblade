@@ -2,11 +2,11 @@
     "Antonio": {
         "beys": [
             {
-                "id": "751d4e79",
+                "id": "b6d8c73a",
                 "tipo": "BX/UX",
-                "b": "WizardRod",
-                "r": "1-60",
-                "bi": "Rush"
+                "b": "CobaltDragoon",
+                "r": "5-60",
+                "bi": "Elevate"
             },
             {
                 "id": "ant_0003",
@@ -16,27 +16,21 @@
                 "bi": "Elevate"
             },
             {
-                "id": "e13264c8",
-                "tipo": "CX",
+                "id": "b655f38f",
+                "tipo": "CX Infinity",
                 "b": "-",
-                "r": "9-60",
-                "bi": "Level",
+                "r": "1-50",
+                "bi": "Kick",
                 "lc": "Emperor",
-                "mb": "Brave",
+                "ob": "Break",
+                "meb": "Blitz",
                 "ab": "Heavy"
-            },
-            {
-                "id": "df59e95b",
-                "tipo": "BX/UX",
-                "b": "GolemRock",
-                "r": "3-60",
-                "bi": "Rush"
             },
             {
                 "id": "08b3e3cc",
                 "tipo": "BX/UX",
                 "b": "ImpactDrake",
-                "r": "1-60",
+                "r": "1-70",
                 "bi": "Under Flat"
             },
             {
@@ -45,6 +39,20 @@
                 "b": "PhoenixWing",
                 "r": "3-60",
                 "bi": "Rush"
+            },
+            {
+                "id": "7d92faaa",
+                "tipo": "BX/UX",
+                "b": "SharkScale",
+                "r": "1-70",
+                "bi": "Low Rush"
+            },
+            {
+                "id": "84ddd0aa",
+                "tipo": "BX/UX",
+                "b": "SharkScale",
+                "r": "3-60",
+                "bi": "Low Orb"
             },
             {
                 "id": "ant_0002",
@@ -66,13 +74,6 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
-            },
-            {
-                "id": "fdde1f53",
-                "tipo": "BX/UX",
-                "b": "WyvernHover",
-                "r": "9-60",
-                "bi": "Kick"
             }
         ],
         "deck_list": [
@@ -93,11 +94,11 @@
                 }
             },
             {
-                "name": "I Paxissimi",
+                "name": "The crazy ones",
                 "slots": {
-                    "0": "08b3e3cc",
-                    "1": "-",
-                    "2": "df59e95b"
+                    "0": "84ddd0aa",
+                    "1": "b655f38f",
+                    "2": "b6d8c73a"
                 }
             }
         ]
@@ -108,8 +109,8 @@
                 "id": "69ec8c43",
                 "tipo": "BX/UX",
                 "b": "GolemRock",
-                "r": "3-60",
-                "bi": "Taper"
+                "r": "1-60",
+                "bi": "Hexa"
             },
             {
                 "id": "54a2b293",
@@ -123,13 +124,6 @@
                 "tipo": "BX/UX",
                 "b": "PhoenixWing",
                 "r": "3-60",
-                "bi": "Rush"
-            },
-            {
-                "id": "a4e79d10",
-                "tipo": "BX/UX",
-                "b": "TyrannoBeat",
-                "r": "7-60",
                 "bi": "Rush"
             },
             {
@@ -147,20 +141,20 @@
                 "bi": "Hexa"
             },
             {
-                "id": "f89448e3",
+                "id": "42546f3b",
                 "tipo": "BX/UX",
                 "b": "WizardRod",
                 "r": "9-60",
-                "bi": "Hexa"
+                "bi": "Ball"
             }
         ],
         "deck_list": [
             {
                 "name": "DECK 1",
                 "slots": {
-                    "0": "and_0001",
-                    "1": "and_0002",
-                    "2": "and_0003"
+                    "0": "42546f3b",
+                    "1": "69ec8c43",
+                    "2": "54a2b293"
                 }
             }
         ]
@@ -196,7 +190,7 @@
                 "tipo": "BX/UX",
                 "b": "Hover Wyvern",
                 "r": "9-60",
-                "bi": "Kick"
+                "bi": "Low Rush"
             },
             {
                 "id": "f2b64fdb",
