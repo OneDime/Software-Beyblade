@@ -530,7 +530,7 @@ elif menu_scelta == "Match!":
         with col_p1: g1 = st.selectbox("Giocatore 1", p_options, index=p_options.index(user_sel) if user_sel in p_options else 0)
         with col_p2: g2 = st.selectbox("Giocatore 2", p_options, index=1 if user_sel != "Andrea" else 0)
 
-        # Inizializzazione DataFrame (RESTA UGUALE)
+        # Inizializzazione DataFrame
         df_key = f"df_init_match_{st.session_state.match_counter}"
         if df_key not in st.session_state:
             st.session_state[df_key] = pd.DataFrame(
@@ -542,7 +542,6 @@ elif menu_scelta == "Match!":
             beys = []
             if os.path.exists("meta.csv"):
                 import csv
-                # Prova prima con codifica utf-8, poi con latin-1 in caso di caratteri speciali
                 for encoding in ['utf-8', 'latin-1']:
                     try:
                         with open("meta.csv", "r", encoding=encoding) as f:
@@ -550,10 +549,9 @@ elif menu_scelta == "Match!":
                             next(reader, None) # Salta l'intestazione
                             for parts in reader:
                                 if len(parts) >= 6:
-                                    # Prende i primi 6 campi (da Lock Chip a Bit), ignora i vuoti e li unisce con uno spazio
                                     comps = [p.strip() for p in parts[:6] if p.strip()]
                                     if comps: beys.append(" ".join(comps))
-                        break # Se la lettura ha successo, esci dal ciclo dei tentativi
+                        break
                     except Exception:
                         pass
             return sorted(list(set(beys)))
@@ -578,9 +576,6 @@ elif menu_scelta == "Match!":
                         names.append(n)
             
             # --- LOGICA DI PROTEZIONE ---
-            # Recuperiamo i valori attualmente salvati nella tabella per questo giocatore
-            # Se un valore esiste nella tabella ma non nella lista (es. un vecchio esterno), 
-            # lo aggiungiamo temporaneamente alle opzioni per evitare che Streamlit lo cancelli.
             current_table_values = st.session_state[df_key][f"Bey {suffix}"].unique().tolist()
             for val in current_table_values:
                 if val not in names:
@@ -593,7 +588,6 @@ elif menu_scelta == "Match!":
         beys_g2 = get_bey_names(g2, "G2")
         punteggi = ["-", "1-0", "2-0", "3-0", "0-1", "0-2", "0-3"]
 
-        # Il data_editor legge e scrive direttamente nel session_state tramite la chiave
         edited_df = st.data_editor(
             st.session_state[df_key],
             column_config={
@@ -606,14 +600,40 @@ elif menu_scelta == "Match!":
             key=f"editor_active_{st.session_state.match_counter}" 
         )
         
-        # AGGIORNAMENTO STATO: Solo se ci sono state modifiche effettive
+        # AGGIORNAMENTO STATO
         if not edited_df.equals(st.session_state[df_key]):
             st.session_state[df_key] = edited_df
             st.rerun()
 
-        # --- BOTTONE SALVATAGGIO (RESTA UGUALE) ---
+        # --- CALCOLO PUNTEGGIO TOTALE ---
+        tot_g1 = 0
+        tot_g2 = 0
+        valid_rows = edited_df[edited_df["Punti"] != "-"]
+        for _, row in valid_rows.iterrows():
+            p1_val, p2_val = map(int, row["Punti"].split("-"))
+            tot_g1 += p1_val
+            tot_g2 += p2_val
+
+        # --- VISUALIZZAZIONE TABELLA PUNTEGGIO (HTML/CSS per layout centrato) ---
+        st.markdown(f"""
+            <div style="display: flex; justify-content: space-between; align-items: center; 
+                        background-color: #1e293b; border: 1px solid #334155; 
+                        border-radius: 8px; padding: 15px 20px; margin: 15px 0px;">
+                <div style="flex: 1; text-align: left; font-size: 20px; font-weight: bold; color: #f1f5f9;">
+                    {g1}
+                </div>
+                <div style="flex: 1; text-align: center; font-size: 28px; font-weight: 900; color: #3b82f6;">
+                    {tot_g1} - {tot_g2}
+                </div>
+                <div style="flex: 1; text-align: right; font-size: 20px; font-weight: bold; color: #f1f5f9;">
+                    {g2}
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+
+        # --- BOTTONE SALVATAGGIO ---
         if st.button("🚀 SALVA MATCH NEL CLOUD", use_container_width=True, type="primary"):
-            valid_rows = edited_df[edited_df["Punti"] != "-"]
             if valid_rows.empty:
                 st.warning("Compila almeno un round.")
             else:
@@ -621,6 +641,7 @@ elif menu_scelta == "Match!":
                 new_records = []
                 for _, row in valid_rows.iterrows():
                     p1_raw, p2_raw = map(int, row["Punti"].split("-"))
+                    # Calcolo i valori per i singoli record salvati
                     val_g1, val_g2 = (p1_raw, -p1_raw) if p1_raw > p2_raw else (-p2_raw, p2_raw)
                     new_records.append({
                         "Data": now_str, "NomeGiocatore1": g1, "BeyG1": row["Bey G1"],
@@ -638,75 +659,6 @@ elif menu_scelta == "Match!":
                         st.rerun()
                     else:
                         st.error("Errore salvataggio statistiche.")
-
-        st.markdown("---")
-        st.markdown("### 📥 Esporta Statistiche in Excel")
-        
-        start_date = st.date_input("Esporta dati a partire da:", value=datetime.today().date())
-        
-        if st.button("⚙️ Prepara File Excel", use_container_width=True):
-            with st.spinner("Recupero dati e generazione Excel..."):
-                stats_data = github_action("stats", method="GET") or []
-                if not stats_data:
-                    st.warning("Nessun dato presente nel registro.")
-                else:
-                    filtered_data = []
-                    for row in stats_data:
-                        d_str = row.get("Data", "")
-                        try:
-                            row_date = datetime.strptime(d_str, "%d/%m/%Y").date()
-                        except ValueError:
-                            try:
-                                row_date = datetime.strptime(d_str, "%Y-%m-%d %H:%M:%S").date()
-                            except ValueError:
-                                row_date = datetime.min.date()
-                                
-                        if row_date >= start_date:
-                            filtered_data.append(row)
-                            
-                    if not filtered_data:
-                        st.warning("Nessun dato trovato a partire da questa data.")
-                    else:
-                        df_history = pd.DataFrame(filtered_data)
-                        
-                        df1 = df_history[['BeyG1', 'PunteggioBeyG1']].rename(columns={'BeyG1': 'Bey', 'PunteggioBeyG1': 'Score'})
-                        df2 = df_history[['BeyG2', 'PunteggioBeyG2']].rename(columns={'BeyG2': 'Bey', 'PunteggioBeyG2': 'Score'})
-                        
-                        df_concat = pd.concat([df1, df2])
-                        df_concat['Score'] = pd.to_numeric(df_concat['Score'], errors='coerce').fillna(0)
-                        df_scores = df_concat.groupby('Bey')['Score'].sum().reset_index().sort_values(by='Score', ascending=False)
-                        
-                        output = io.BytesIO()
-                        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                            df_history.to_excel(writer, sheet_name='match history', index=False)
-                            worksheet_history = writer.sheets['match history']
-                            worksheet_history.autofilter(0, 0, len(df_history), len(df_history.columns) - 1)
-                            
-                            df_scores.to_excel(writer, sheet_name='Punteggi Beyblade', index=False)
-                            
-                            for u in ["Antonio", "Andrea", "Fabio"]:
-                                if 'NomeGiocatore1' in df_history.columns and 'NomeGiocatore2' in df_history.columns:
-                                    df_u = df_history[(df_history['NomeGiocatore1'] == u) | (df_history['NomeGiocatore2'] == u)]
-                                else:
-                                    df_u = pd.DataFrame() 
-                                    
-                                df_u.to_excel(writer, sheet_name=u, index=False)
-                                worksheet_u = writer.sheets[u]
-                                if not df_u.empty:
-                                    worksheet_u.autofilter(0, 0, len(df_u), len(df_u.columns) - 1)
-                                    
-                        st.session_state.excel_bytes = output.getvalue()
-                        st.success("✅ File Excel pronto!")
-
-        if 'excel_bytes' in st.session_state:
-            st.download_button(
-                label="📥 SCARICA EXCEL (.xlsx)",
-                data=st.session_state.excel_bytes,
-                file_name=f"Beyblade_Match_History_{datetime.now().strftime('%d_%m_%Y')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
-                type="primary"
-            )
 
     # --- TAB 6: CLASSIFICA BEYBLADE ---
 
@@ -808,6 +760,75 @@ elif menu_scelta == "Meta":
         return pd.DataFrame()
 
     df_meta = load_meta_data()
+
+st.markdown("---")
+        st.markdown("### 📥 Esporta Statistiche in Excel")
+        
+        start_date = st.date_input("Esporta dati a partire da:", value=datetime.today().date())
+        
+        if st.button("⚙️ Prepara File Excel", use_container_width=True):
+            with st.spinner("Recupero dati e generazione Excel..."):
+                stats_data = github_action("stats", method="GET") or []
+                if not stats_data:
+                    st.warning("Nessun dato presente nel registro.")
+                else:
+                    filtered_data = []
+                    for row in stats_data:
+                        d_str = row.get("Data", "")
+                        try:
+                            row_date = datetime.strptime(d_str, "%d/%m/%Y").date()
+                        except ValueError:
+                            try:
+                                row_date = datetime.strptime(d_str, "%Y-%m-%d %H:%M:%S").date()
+                            except ValueError:
+                                row_date = datetime.min.date()
+                                
+                        if row_date >= start_date:
+                            filtered_data.append(row)
+                            
+                    if not filtered_data:
+                        st.warning("Nessun dato trovato a partire da questa data.")
+                    else:
+                        df_history = pd.DataFrame(filtered_data)
+                        
+                        df1 = df_history[['BeyG1', 'PunteggioBeyG1']].rename(columns={'BeyG1': 'Bey', 'PunteggioBeyG1': 'Score'})
+                        df2 = df_history[['BeyG2', 'PunteggioBeyG2']].rename(columns={'BeyG2': 'Bey', 'PunteggioBeyG2': 'Score'})
+                        
+                        df_concat = pd.concat([df1, df2])
+                        df_concat['Score'] = pd.to_numeric(df_concat['Score'], errors='coerce').fillna(0)
+                        df_scores = df_concat.groupby('Bey')['Score'].sum().reset_index().sort_values(by='Score', ascending=False)
+                        
+                        output = io.BytesIO()
+                        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                            df_history.to_excel(writer, sheet_name='match history', index=False)
+                            worksheet_history = writer.sheets['match history']
+                            worksheet_history.autofilter(0, 0, len(df_history), len(df_history.columns) - 1)
+                            
+                            df_scores.to_excel(writer, sheet_name='Punteggi Beyblade', index=False)
+                            
+                            for u in ["Antonio", "Andrea", "Fabio"]:
+                                if 'NomeGiocatore1' in df_history.columns and 'NomeGiocatore2' in df_history.columns:
+                                    df_u = df_history[(df_history['NomeGiocatore1'] == u) | (df_history['NomeGiocatore2'] == u)]
+                                else:
+                                    df_u = pd.DataFrame() 
+                                    
+                                df_u.to_excel(writer, sheet_name=u, index=False)
+                                worksheet_u = writer.sheets[u]
+                                if not df_u.empty:
+                                    worksheet_u.autofilter(0, 0, len(df_u), len(df_u.columns) - 1)
+                                    
+                        st.session_state.excel_bytes = output.getvalue()
+                        st.success("✅ File Excel pronto!")
+
+        if 'excel_bytes' in st.session_state:
+            st.download_button(
+                label="📥 SCARICA EXCEL (.xlsx)",
+                data=st.session_state.excel_bytes,
+                file_name=f"Beyblade_Match_History_{datetime.now().strftime('%d_%m_%Y')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+                type="primary"
+            )
 
     # --- TAB RANKING ---
     with tab_rank:
