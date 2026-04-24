@@ -24,10 +24,11 @@
             "Reaper": 1,
             "Brush": 1,
             "Brave": 1,
-            "Might": 1
+            "Might": 1,
+            "Fort": 1
         },
         "assist_blade": {
-            "Round": 1,
+            "Round": 2,
             "Slash": 1,
             "Turn": 1,
             "Jaggy": 2,
@@ -52,7 +53,8 @@
             "4-50": 1,
             "1-70": 1,
             "M-85": 1,
-            "1-50": 1
+            "1-50": 1,
+            "7-60": 1
         },
         "bit": {
             "Low Orb": 1,
@@ -74,7 +76,8 @@
             "Gear Rush": 1,
             "Under Flat": 1,
             "High Needle": 1,
-            "Ignition": 1
+            "Ignition": 1,
+            "Taper": 1
         },
         "lock_chip": {
             "Wizard": 1,
@@ -82,7 +85,8 @@
             "Hells": 2,
             "Fox": 1,
             "Emperor": 1,
-            "Bahamut": 1
+            "Bahamut": 1,
+            "Hornet": 1
         },
         "over_blade": {
             "Break": 1
