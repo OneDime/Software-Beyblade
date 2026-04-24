@@ -540,17 +540,22 @@ elif menu_scelta == "Match!":
 
         def get_meta_beys():
             beys = []
-            if os.path.exists("meta.txt"):
-                try:
-                    with open("meta.txt", "r", encoding="utf-8") as f:
-                        lines = f.readlines()
-                    if len(lines) > 1:
-                        for line in lines[1:]:
-                            parts = line.split(',')
-                            if len(parts) >= 6:
-                                comps = [p.strip() for p in parts[:6] if p.strip()]
-                                if comps: beys.append(" ".join(comps))
-                except Exception: pass
+            if os.path.exists("meta.csv"):
+                import csv
+                # Prova prima con codifica utf-8, poi con latin-1 in caso di caratteri speciali
+                for encoding in ['utf-8', 'latin-1']:
+                    try:
+                        with open("meta.csv", "r", encoding=encoding) as f:
+                            reader = csv.reader(f)
+                            next(reader, None) # Salta l'intestazione
+                            for parts in reader:
+                                if len(parts) >= 6:
+                                    # Prende i primi 6 campi (da Lock Chip a Bit), ignora i vuoti e li unisce con uno spazio
+                                    comps = [p.strip() for p in parts[:6] if p.strip()]
+                                    if comps: beys.append(" ".join(comps))
+                        break # Se la lettura ha successo, esci dal ciclo dei tentativi
+                    except Exception:
+                        pass
             return sorted(list(set(beys)))
 
         def get_bey_names(player_name, suffix):
