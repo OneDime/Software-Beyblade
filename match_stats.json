@@ -1033,5 +1033,32 @@
         "BeyG2": "PhoenixWing 3-60 Kick",
         "PunteggioBeyG1": -2,
         "PunteggioBeyG2": 2
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "-",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SharkScale 3-60 Low Orb",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "-",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "CobaltDragoon 9-60 Elevate",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "PhoenixWing 3-60 Rush",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "Emperor Break Blitz Heavy 1-50 Taper",
+        "PunteggioBeyG1": 3,
+        "PunteggioBeyG2": -3
     }
 ]
