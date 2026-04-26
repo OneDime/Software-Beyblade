@@ -1672,5 +1672,32 @@
         "BeyG2": "CobaltDragoon 9-60 Elevate",
         "PunteggioBeyG1": -2,
         "PunteggioBeyG2": 2
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "PhoenixWing 3-60 Rush",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SharkScale 3-60 Low Orb",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "TyrannoBeat 9-70 Ball",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "CobaltDragoon 9-60 Elevate",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Hover Wyvern 9-60 Low Rush",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "WyvernHover 1-50 Low Rush",
+        "PunteggioBeyG1": -2,
+        "PunteggioBeyG2": 2
     }
 ]
