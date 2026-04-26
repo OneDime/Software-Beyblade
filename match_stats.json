@@ -1537,5 +1537,41 @@
         "BeyG2": "GolemRock 9-60 Free Ball",
         "PunteggioBeyG1": 3,
         "PunteggioBeyG2": -3
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Antonio",
+        "BeyG1": "SharkScale 3-60 Low Orb",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "GolemRock 9-60 Free Ball",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Antonio",
+        "BeyG1": "CobaltDragoon 9-60 Elevate",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "WizardRod 1-60 Hexa",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Antonio",
+        "BeyG1": "Emperor Break Blitz Heavy 1-50 Kick",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "PhoenixWing 3-60 Kick",
+        "PunteggioBeyG1": -2,
+        "PunteggioBeyG2": 2
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Antonio",
+        "BeyG1": "SharkScale 3-60 Low Orb",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "WizardRod 1-60 Hexa",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
     }
 ]
