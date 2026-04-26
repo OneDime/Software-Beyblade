@@ -840,7 +840,6 @@ elif menu_scelta == "Meta":
                 "Lock Chip", "Over Blade", "Main/Metal Blade (CX) / Blade (UX/BX)", 
                 "Assist Blade", "Ratchet", "Bit"
             ]
-            # Identifichiamo le colonne extra (rimosso Sample Size)
             colonne_extra = ["Points", "Combo Rank", "Rank Change"]
             
             colonne_presenti_comp = [c for c in colonne_componenti if c in df_meta.columns]
@@ -850,15 +849,56 @@ elif menu_scelta == "Meta":
             
             # 1. Unione delle colonne dei pezzi in un'unica stringa
             def unisci_combo(row):
-                # Estrae il valore solo se non è vuoto o NaN
                 parti = [str(row[c]).strip() for c in colonne_presenti_comp if pd.notna(row[c]) and str(row[c]).strip() != ""]
                 return " ".join(parti)
             
-            # Creiamo la nuova colonna 'Combo' e rimuoviamo quelle singole dei pezzi
             df_rank.insert(0, "Combo", df_rank.apply(unisci_combo, axis=1))
+            
+            # --- LOGICA FILTRO PER POSSEDUTI ---
+            filtra_posseduti = st.checkbox("✅ Filtra per posseduti", value=False, help="Mostra solo i Beyblade di cui hai tutte le componenti nell'inventario.")
+            
+            if filtra_posseduti:
+                # Estraiamo tutti i pezzi posseduti dall'utente (chiavi dell'inventario con valore > 0)
+                inv_utente = user_data.get("inv", {})
+                pezzi_posseduti = set()
+                lock_chips_posseduti = set()
+                
+                for cat, items in inv_utente.items():
+                    for nome, qta in items.items():
+                        if qta > 0:
+                            pezzi_posseduti.add(nome)
+                            if cat == "lock_chip":
+                                lock_chips_posseduti.add(nome)
+                
+                lock_chips_metal = {"Emperor", "Valkyrie"}
+                # Ha almeno un lock chip Metal?
+                ha_metal = any(lc in lock_chips_metal for lc in lock_chips_posseduti)
+                # Ha almeno un lock chip Plastic? (Qualsiasi lock chip che non è in lock_chips_metal)
+                ha_plastic = any(lc not in lock_chips_metal for lc in lock_chips_posseduti)
+                
+                def possiede_tutte_componenti(row):
+                    for col in colonne_presenti_comp:
+                        pezzo_richiesto = str(row[col]).strip()
+                        if not pezzo_richiesto or pezzo_richiesto == "nan":
+                            continue # Componente non richiesta
+                            
+                        if col == "Lock Chip":
+                            if pezzo_richiesto == "Metal" and not ha_metal:
+                                return False
+                            elif pezzo_richiesto == "Plastic" and not ha_plastic:
+                                return False
+                        else:
+                            if pezzo_richiesto not in pezzi_posseduti:
+                                return False
+                    return True
+
+                # Applichiamo il filtro riga per riga e manteniamo solo quelle valide
+                mask_posseduti = df_rank.apply(possiede_tutte_componenti, axis=1)
+                df_rank = df_rank[mask_posseduti]
+
+            # Rimuoviamo le colonne singole dopo aver filtrato
             df_rank = df_rank.drop(columns=colonne_presenti_comp)
             
-            # Sistemiamo i caratteri rotti per mostrare le frecce grafiche
             if "Rank Change" in df_rank.columns:
                 df_rank["Rank Change"] = df_rank["Rank Change"].astype(str)
                 df_rank["Rank Change"] = df_rank["Rank Change"].replace(
@@ -869,19 +909,15 @@ elif menu_scelta == "Meta":
             if "Combo Rank" in df_rank.columns:
                 df_rank["Combo Rank"] = pd.to_numeric(df_rank["Combo Rank"], errors='coerce')
                 
-            # Riordiniamo visivamente l'ordine delle colonne rimanenti
             col_ordine = ["Combo", "Points", "Combo Rank", "Rank Change"]
             col_ordine_presenti = [c for c in col_ordine if c in df_rank.columns]
             df_rank = df_rank[col_ordine_presenti]
                 
-            # 4. Barra di ricerca pulita
             ricerca_rank = st.text_input("🔍 Ricerca", key="search_rank").lower()
             
-            # Ordinamento base crescente per Combo Rank
             if "Combo Rank" in df_rank.columns:
                 df_rank = df_rank.sort_values(by="Combo Rank", ascending=True)
                 
-            # Applica filtro di ricerca (su tutte le colonne)
             if ricerca_rank:
                 mask = df_rank.astype(str).apply(lambda x: x.str.lower().str.contains(ricerca_rank, regex=False)).any(axis=1)
                 df_rank = df_rank[mask]
@@ -904,13 +940,10 @@ elif menu_scelta == "Meta":
                 df_blades = df_blades.dropna(subset=[col_nome_blade])
                 df_blades[col_punti_blade] = pd.to_numeric(df_blades[col_punti_blade], errors='coerce')
                 
-                # 4. Barra di ricerca pulita
                 ricerca_blade = st.text_input("🔍 Ricerca", key="search_blade").lower()
                 
-                # 3. Ordinamento di default DEcrescente per i punti
                 df_blades = df_blades.sort_values(by=col_punti_blade, ascending=False)
                 
-                # Applica filtro di ricerca
                 if ricerca_blade:
                     df_blades = df_blades[df_blades[col_nome_blade].astype(str).str.lower().str.contains(ricerca_blade, regex=False)]
                     
