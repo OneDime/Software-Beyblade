@@ -1843,5 +1843,41 @@
         "BeyG2": "MeteorDragoon 5-60 Level",
         "PunteggioBeyG1": -1,
         "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "Hells Might Heavy 9-60 Free Ball",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SharkScale 3-60 Low Orb",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "Hells Might Heavy 9-60 Free Ball",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "CobaltDragoon 9-60 Elevate",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "Hells Might Heavy 9-60 Free Ball",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "WyvernHover 1-50 Low Rush",
+        "PunteggioBeyG1": 3,
+        "PunteggioBeyG2": -3
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "Hells Might Heavy 9-60 Free Ball",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "WyvernHover 1-50 Low Rush",
+        "PunteggioBeyG1": -2,
+        "PunteggioBeyG2": 2
     }
 ]
