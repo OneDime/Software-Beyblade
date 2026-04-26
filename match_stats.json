@@ -1798,5 +1798,50 @@
         "BeyG2": "WyvernHover 1-50 Low Rush",
         "PunteggioBeyG1": -1,
         "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "Hells Might Heavy 9-60 Free Ball",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "Emperor Blast Heavy 9-60 Taper",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "Hells Might Heavy 9-60 Free Ball",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "WizardRod 1-60 Hexa",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "Hells Might Heavy 9-60 Free Ball",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "MeteorDragoon 5-60 Level",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "Hells Might Heavy 9-60 Free Ball",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "Emperor Blast Heavy 9-60 Taper",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "Hells Might Heavy 9-60 Free Ball",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "MeteorDragoon 5-60 Level",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
     }
 ]
