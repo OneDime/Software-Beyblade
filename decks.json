@@ -2,17 +2,6 @@
     "Antonio": {
         "beys": [
             {
-                "id": "29c38219",
-                "tipo": "CX Infinity",
-                "b": "-",
-                "r": "1-50",
-                "bi": "Low Rush",
-                "lc": "Emperor",
-                "ob": "Break",
-                "meb": "Blitz",
-                "ab": "Heavy"
-            },
-            {
                 "id": "b6d8c73a",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -31,7 +20,18 @@
                 "tipo": "CX Infinity",
                 "b": "-",
                 "r": "1-50",
-                "bi": "Taper",
+                "bi": "Level",
+                "lc": "Emperor",
+                "ob": "Break",
+                "meb": "Blitz",
+                "ab": "Heavy"
+            },
+            {
+                "id": "29c38219",
+                "tipo": "CX Infinity",
+                "b": "-",
+                "r": "1-50",
+                "bi": "Low Rush",
                 "lc": "Emperor",
                 "ob": "Break",
                 "meb": "Blitz",
