@@ -916,5 +916,32 @@
         "BeyG2": "AeroPegasus 9-60 Kick",
         "PunteggioBeyG1": -3,
         "PunteggioBeyG2": 3
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "PhoenixWing 3-60 Kick",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "-",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "Hornet Might Heavy 5-70 Free Ball",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "Emperor Blast Heavy 9-60 Taper",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "GolemRock 9-60 Ball",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "-",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
     }
 ]
