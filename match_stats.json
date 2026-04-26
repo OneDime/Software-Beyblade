@@ -1726,5 +1726,41 @@
         "BeyG2": "GolemRock 9-60 Free Ball",
         "PunteggioBeyG1": 2,
         "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "Hells Might Heavy 9-60 Point",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "PhoenixWing 3-60 Rush",
+        "PunteggioBeyG1": -3,
+        "PunteggioBeyG2": 3
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "Hells Might Heavy 9-60 Point",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "TyrannoBeat 1-60 Jolt",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "Hells Might Heavy 9-60 Point",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "Hover Wyvern 9-60 Low Rush",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "Hells Might Heavy 9-60 Point",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "TyrannoBeat 1-60 Jolt",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
     }
 ]
