@@ -1393,5 +1393,50 @@
         "BeyG2": "Emperor Break Blitz Heavy 1-50 Level",
         "PunteggioBeyG1": 2,
         "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "-",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "PhoenixWing 3-60 Kick",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "-",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "Hornet Might Heavy 5-70 Free Ball",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "-",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "GolemRock 1-60 Hexa",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "-",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "PhoenixWing 3-60 Kick",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "-",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "GolemRock 1-60 Hexa",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
     }
 ]
