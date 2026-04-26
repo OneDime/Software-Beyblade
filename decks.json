@@ -176,13 +176,6 @@
     "Fabio": {
         "beys": [
             {
-                "id": "e7f611fd",
-                "tipo": "BX/UX",
-                "b": "TyrannoBeat",
-                "r": "1-60",
-                "bi": "Jolt"
-            },
-            {
                 "id": "d4cbbbea",
                 "tipo": "BX/UX",
                 "b": "DranBuster",
@@ -242,6 +235,13 @@
                 "bi": "Ball"
             },
             {
+                "id": "e7f611fd",
+                "tipo": "BX/UX",
+                "b": "TyrannoBeat",
+                "r": "1-60",
+                "bi": "Jolt"
+            },
+            {
                 "id": "8ae92bd3",
                 "tipo": "BX/UX",
                 "b": "TyrannoBeat",
@@ -254,6 +254,11 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
+            },
+            {
+                "id": "026a3fd5",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": [
