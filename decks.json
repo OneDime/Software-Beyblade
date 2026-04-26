@@ -176,6 +176,13 @@
     "Fabio": {
         "beys": [
             {
+                "id": "026a3fd5",
+                "tipo": "BX/UX",
+                "b": "TyrannoBeat",
+                "r": "9-70",
+                "bi": "Wedge"
+            },
+            {
                 "id": "d4cbbbea",
                 "tipo": "BX/UX",
                 "b": "DranBuster",
@@ -254,11 +261,6 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
-            },
-            {
-                "id": "026a3fd5",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
