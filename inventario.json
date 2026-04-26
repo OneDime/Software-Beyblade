@@ -207,7 +207,8 @@
             "Assault": 1,
             "Bumper": 1,
             "Heavy": 1,
-            "Round": 1
+            "Round": 1,
+            "Erase": 1
         },
         "ratchet": {
             "9-60": 3,
@@ -225,7 +226,8 @@
             "4-60": 1,
             "4-80": 2,
             "7-60": 1,
-            "3-80": 1
+            "3-80": 1,
+            "4-55": 1
         },
         "bit": {
             "Gear Flat": 2,
@@ -248,7 +250,8 @@
             "Taper": 2,
             "Point": 1,
             "Low Flat": 1,
-            "Jolt": 1
+            "Jolt": 1,
+            "Yielding": 1
         },
         "lock_chip": {
             "Hells": 1,
@@ -257,10 +260,15 @@
             "Pegasus": 1,
             "Perseus": 1,
             "Emperor": 1,
-            "Hornet": 1
+            "Hornet": 1,
+            "Ragna": 1
         },
-        "over_blade": {},
-        "metal_blade": {},
+        "over_blade": {
+            "Flow": 1
+        },
+        "metal_blade": {
+            "Rage": 1
+        },
         "r_i_blade": {},
         "r_i_bit": {
             "Turbo": 1,
