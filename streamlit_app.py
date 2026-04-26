@@ -835,7 +835,7 @@ elif menu_scelta == "Meta":
 
     df_meta = load_meta_data()
 
-    # --- TAB RANKING ---
+# --- TAB RANKING ---
     with tab_rank:
         st.markdown("### 🏆 Ranking Meta WBO")
         
@@ -863,37 +863,48 @@ elif menu_scelta == "Meta":
             filtra_posseduti = st.checkbox("✅ Filtra per posseduti", value=False, help="Mostra solo i Beyblade di cui hai tutte le componenti nell'inventario.")
             
             if filtra_posseduti:
-                # Estraiamo tutti i pezzi posseduti dall'utente (chiavi dell'inventario con valore > 0)
+                # Estraiamo tutti i pezzi posseduti dall'utente
                 inv_utente = user_data.get("inv", {})
-                pezzi_posseduti = set()
-                lock_chips_posseduti = set()
+                pezzi_posseduti_norm = set()
+                lock_chips_posseduti_norm = set()
+                
+                # Funzione per rimuovere spazi e maiuscole per un confronto infallibile
+                def normalizza_nome(nome):
+                    return str(nome).replace(" ", "").lower()
                 
                 for cat, items in inv_utente.items():
                     for nome, qta in items.items():
                         if qta > 0:
-                            pezzi_posseduti.add(nome)
+                            nome_norm = normalizza_nome(nome)
+                            pezzi_posseduti_norm.add(nome_norm)
                             if cat == "lock_chip":
-                                lock_chips_posseduti.add(nome)
+                                lock_chips_posseduti_norm.add(nome_norm)
                 
-                lock_chips_metal = {"Emperor", "Valkyrie"}
+                lock_chips_metal = {"emperor", "valkyrie"}
+                
                 # Ha almeno un lock chip Metal?
-                ha_metal = any(lc in lock_chips_metal for lc in lock_chips_posseduti)
+                ha_metal = any(lc in lock_chips_metal for lc in lock_chips_posseduti_norm)
                 # Ha almeno un lock chip Plastic? (Qualsiasi lock chip che non è in lock_chips_metal)
-                ha_plastic = any(lc not in lock_chips_metal for lc in lock_chips_posseduti)
+                ha_plastic = any(lc not in lock_chips_metal for lc in lock_chips_posseduti_norm)
                 
                 def possiede_tutte_componenti(row):
                     for col in colonne_presenti_comp:
                         pezzo_richiesto = str(row[col]).strip()
-                        if not pezzo_richiesto or pezzo_richiesto == "nan":
+                        if not pezzo_richiesto or pezzo_richiesto.lower() == "nan":
                             continue # Componente non richiesta
                             
+                        pezzo_norm = normalizza_nome(pezzo_richiesto)
+                        
                         if col == "Lock Chip":
                             if pezzo_richiesto == "Metal" and not ha_metal:
                                 return False
                             elif pezzo_richiesto == "Plastic" and not ha_plastic:
                                 return False
+                            # Se in futuro il meta indicherà un lock chip per nome invece che per categoria
+                            elif pezzo_richiesto not in ["Metal", "Plastic"] and pezzo_norm not in pezzi_posseduti_norm:
+                                return False
                         else:
-                            if pezzo_richiesto not in pezzi_posseduti:
+                            if pezzo_norm not in pezzi_posseduti_norm:
                                 return False
                     return True
 
