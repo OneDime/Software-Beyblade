@@ -117,16 +117,6 @@
     "Andrea": {
         "beys": [
             {
-                "id": "64fb525b",
-                "tipo": "CX",
-                "b": "-",
-                "r": "5-70",
-                "bi": "Free Ball",
-                "lc": "Hornet",
-                "mb": "Might",
-                "ab": "Heavy"
-            },
-            {
                 "id": "69ec8c43",
                 "tipo": "BX/UX",
                 "b": "GolemRock",
@@ -138,7 +128,17 @@
                 "tipo": "BX/UX",
                 "b": "GolemRock",
                 "r": "9-60",
-                "bi": "Ball"
+                "bi": "Free Ball"
+            },
+            {
+                "id": "64fb525b",
+                "tipo": "CX",
+                "b": "-",
+                "r": "5-70",
+                "bi": "Free Ball",
+                "lc": "Hornet",
+                "mb": "Might",
+                "ab": "Heavy"
             },
             {
                 "id": "54a2b293",
