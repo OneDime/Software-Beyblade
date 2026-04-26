@@ -199,7 +199,8 @@
             "Dark": 1,
             "Might": 1,
             "Fort": 1,
-            "Hunt": 1
+            "Hunt": 1,
+            "Flare": 1
         },
         "assist_blade": {
             "Turn": 1,
@@ -210,7 +211,8 @@
             "Heavy": 1,
             "Round": 1,
             "Erase": 1,
-            "Free": 1
+            "Free": 1,
+            "Zillion": 1
         },
         "ratchet": {
             "9-60": 3,
@@ -230,7 +232,8 @@
             "7-60": 1,
             "3-80": 1,
             "4-55": 1,
-            "0-60": 1
+            "0-60": 1,
+            "9-80": 1
         },
         "bit": {
             "Gear Flat": 2,
@@ -255,7 +258,8 @@
             "Low Flat": 1,
             "Jolt": 1,
             "Yielding": 1,
-            "Disk Ball": 1
+            "Disk Ball": 1,
+            "Wall Wedge": 1
         },
         "lock_chip": {
             "Hells": 1,
@@ -266,7 +270,8 @@
             "Emperor": 1,
             "Hornet": 1,
             "Ragna": 1,
-            "Wolf": 1
+            "Wolf": 1,
+            "Phoenix": 1
         },
         "over_blade": {
             "Flow": 1
