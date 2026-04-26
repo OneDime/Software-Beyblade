@@ -190,6 +190,13 @@
     "Fabio": {
         "beys": [
             {
+                "id": "fa057d12",
+                "tipo": "BX/UX",
+                "b": "MeteorDragoon",
+                "r": "5-60",
+                "bi": "Level"
+            },
+            {
                 "id": "d4cbbbea",
                 "tipo": "BX/UX",
                 "b": "DranBuster",
@@ -254,11 +261,6 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
-            },
-            {
-                "id": "fa057d12",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
