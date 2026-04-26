@@ -303,7 +303,12 @@ if menu_scelta == "Inventario":
 
     # --- TAB 2: INVENTARIO ---
     with tab2:
-        modo = st.radio("Azione", ["Aggiungi (+1)", "Rimuovi (-1)"], horizontal=True)
+        modo = st.radio(
+            "Azione", 
+            ["Aggiungi (+1)", "Rimuovi (-1)"], 
+            horizontal=True,
+            help="Cliccare su una componente, ne aggiunge/rimuove 1 dalla quantità totale posseduta"
+        )
         op = 1 if "Aggiungi" in modo else -1
         order = ["lock_chip", "blade", "over_blade", "metal_blade", "main_blade", "assist_blade", "r_i_blade", "ratchet", "bit", "r_i_bit"]
         display_names = {
