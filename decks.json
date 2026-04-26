@@ -167,6 +167,11 @@
                 "b": "WizardRod",
                 "r": "9-60",
                 "bi": "Ball"
+            },
+            {
+                "id": "518ccb60",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": [
