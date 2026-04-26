@@ -1699,5 +1699,32 @@
         "BeyG2": "WyvernHover 1-50 Low Rush",
         "PunteggioBeyG1": -2,
         "PunteggioBeyG2": 2
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Emperor Blast Heavy 9-60 Taper",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "PhoenixWing 3-60 Kick",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "WizardRod 1-60 Hexa",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "WizardRod 1-60 Hexa",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "26/04/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "MeteorDragoon 5-60 Level",
+        "NomeGiocatore2": "Andrea",
+        "BeyG2": "GolemRock 9-60 Free Ball",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
     }
 ]
