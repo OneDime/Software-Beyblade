@@ -106,6 +106,16 @@
     "Andrea": {
         "beys": [
             {
+                "id": "64fb525b",
+                "tipo": "CX",
+                "b": "-",
+                "r": "5-70",
+                "bi": "Free Ball",
+                "lc": "Hornet",
+                "mb": "Might",
+                "ab": "Heavy"
+            },
+            {
                 "id": "69ec8c43",
                 "tipo": "BX/UX",
                 "b": "GolemRock",
@@ -153,11 +163,6 @@
                 "b": "WizardRod",
                 "r": "9-60",
                 "bi": "Ball"
-            },
-            {
-                "id": "64fb525b",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
