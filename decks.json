@@ -2,6 +2,13 @@
     "Antonio": {
         "beys": [
             {
+                "id": "f3cfc91b",
+                "tipo": "BX/UX",
+                "b": "WyvernHover",
+                "r": "1-50",
+                "bi": "Low Rush"
+            },
+            {
                 "id": "b6d8c73a",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -16,11 +23,22 @@
                 "bi": "Elevate"
             },
             {
+                "id": "29c38219",
+                "tipo": "CX Infinity",
+                "b": "-",
+                "r": "1-50",
+                "bi": "Kick",
+                "lc": "Emperor",
+                "ob": "Break",
+                "meb": "Blitz",
+                "ab": "Heavy"
+            },
+            {
                 "id": "b655f38f",
                 "tipo": "CX Infinity",
                 "b": "-",
                 "r": "1-50",
-                "bi": "Taper",
+                "bi": "Level",
                 "lc": "Emperor",
                 "ob": "Break",
                 "meb": "Blitz",
@@ -106,18 +124,38 @@
     "Andrea": {
         "beys": [
             {
+                "id": "1c8c3caa",
+                "tipo": "BX/UX",
+                "b": "TyrannoBeat",
+                "r": "9-60",
+                "bi": "Level"
+            },
+            {
                 "id": "44c2984b",
                 "tipo": "BX/UX",
                 "b": "GolemRock",
                 "r": "9-60",
-                "bi": "Ball"
+                "bi": "Free Ball"
             },
             {
-                "id": "69ec8c43",
-                "tipo": "BX/UX",
-                "b": "GolemRock",
-                "r": "1-60",
-                "bi": "Hexa"
+                "id": "518ccb60",
+                "tipo": "CX",
+                "b": "-",
+                "r": "9-60",
+                "bi": "Free Ball",
+                "lc": "Hells",
+                "mb": "Might",
+                "ab": "Heavy"
+            },
+            {
+                "id": "64fb525b",
+                "tipo": "CX",
+                "b": "-",
+                "r": "5-70",
+                "bi": "Free Ball",
+                "lc": "Hornet",
+                "mb": "Might",
+                "ab": "Heavy"
             },
             {
                 "id": "54a2b293",
@@ -125,13 +163,6 @@
                 "b": "PhoenixWing",
                 "r": "3-60",
                 "bi": "Kick"
-            },
-            {
-                "id": "and_0003",
-                "tipo": "BX/UX",
-                "b": "PhoenixWing",
-                "r": "3-60",
-                "bi": "Rush"
             },
             {
                 "id": "and_0002",
@@ -160,7 +191,7 @@
                 "name": "DECK 1",
                 "slots": {
                     "0": "42546f3b",
-                    "1": "69ec8c43",
+                    "1": "-",
                     "2": "54a2b293"
                 }
             }
@@ -168,6 +199,13 @@
     },
     "Fabio": {
         "beys": [
+            {
+                "id": "18f3cb60",
+                "tipo": "BX/UX",
+                "b": "TyrannoBeat",
+                "r": "9-70",
+                "bi": "Ball"
+            },
             {
                 "id": "d4cbbbea",
                 "tipo": "BX/UX",
@@ -200,6 +238,13 @@
                 "bi": "Low Rush"
             },
             {
+                "id": "fa057d12",
+                "tipo": "BX/UX",
+                "b": "MeteorDragoon",
+                "r": "5-60",
+                "bi": "Level"
+            },
+            {
                 "id": "f2b64fdb",
                 "tipo": "BX/UX",
                 "b": "MeteorDragoon",
@@ -221,11 +266,25 @@
                 "bi": "Ball"
             },
             {
+                "id": "e7f611fd",
+                "tipo": "BX/UX",
+                "b": "TyrannoBeat",
+                "r": "1-60",
+                "bi": "Jolt"
+            },
+            {
                 "id": "8ae92bd3",
                 "tipo": "BX/UX",
                 "b": "TyrannoBeat",
                 "r": "7-60",
                 "bi": "Rush"
+            },
+            {
+                "id": "026a3fd5",
+                "tipo": "BX/UX",
+                "b": "TyrannoBeat",
+                "r": "9-70",
+                "bi": "Wedge"
             },
             {
                 "id": "bd0fd93b",
