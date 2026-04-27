@@ -734,8 +734,7 @@ elif menu_scelta == "Match!":
                 type="primary"
             )
 
-    # --- TAB 6: CLASSIFICA BEYBLADE ---
-
+# --- TAB 6: CLASSIFICA BEYBLADE ---
     with tab6:
         st.markdown("### 🏆 Classifica Globale Beyblade")
         
@@ -744,7 +743,9 @@ elif menu_scelta == "Match!":
         if not stats_data:
             st.info("Nessun match registrato finora nel cloud.")
         else:
-            col_f1, col_f2 = st.columns(2)
+            # Layout filtri: tre colonne
+            col_f1, col_f2, col_f3 = st.columns(3)
+            
             with col_f1:
                 oggi = datetime.today().date()
                 inizio_default = oggi - timedelta(days=30)
@@ -754,7 +755,11 @@ elif menu_scelta == "Match!":
                 opzioni_filtro = ["Tutti", "Antonio", "Andrea", "Fabio"]
                 idx_default = opzioni_filtro.index(user_sel) if user_sel in opzioni_filtro else 0
                 filtro_utente = st.selectbox("👤 Filtra per Utente", opzioni_filtro, index=idx_default)
+            
+            with col_f3:
+                min_partite = st.number_input("🎮 Min. Partite", min_value=0, value=0, step=1)
 
+            # Gestione range temporale
             if isinstance(date_range, tuple) and len(date_range) == 2:
                 start_d, end_d = date_range
             elif isinstance(date_range, tuple) and len(date_range) == 1:
@@ -781,42 +786,76 @@ elif menu_scelta == "Match!":
             else:
                 df_storico = pd.DataFrame(filtered_data)
                 
-                df_g1 = df_storico[['NomeGiocatore1', 'BeyG1', 'PunteggioBeyG1']].rename(columns={'NomeGiocatore1': 'Giocatore', 'BeyG1': 'Bey', 'PunteggioBeyG1': 'Punteggio'})
-                df_g2 = df_storico[['NomeGiocatore2', 'BeyG2', 'PunteggioBeyG2']].rename(columns={'NomeGiocatore2': 'Giocatore', 'BeyG2': 'Bey', 'PunteggioBeyG2': 'Punteggio'})
+                # Conversione punti in numerico per i calcoli
+                df_storico['PunteggioBeyG1'] = pd.to_numeric(df_storico['PunteggioBeyG1'], errors='coerce').fillna(0)
+                df_storico['PunteggioBeyG2'] = pd.to_numeric(df_storico['PunteggioBeyG2'], errors='coerce').fillna(0)
+
+                # Determiniamo chi ha vinto il match per il calcolo del Winrate
+                df_storico['VittoriaG1'] = df_storico['PunteggioBeyG1'] > df_storico['PunteggioBeyG2']
+                df_storico['VittoriaG2'] = df_storico['PunteggioBeyG2'] > df_storico['PunteggioBeyG1']
+
+                # Prepariamo i due dataframe da unire
+                df_g1 = df_storico[['NomeGiocatore1', 'BeyG1', 'PunteggioBeyG1', 'VittoriaG1']].rename(
+                    columns={'NomeGiocatore1': 'Giocatore', 'BeyG1': 'Bey', 'PunteggioBeyG1': 'Punteggio', 'VittoriaG1': 'Vittoria'}
+                )
+                df_g2 = df_storico[['NomeGiocatore2', 'BeyG2', 'PunteggioBeyG2', 'VittoriaG2']].rename(
+                    columns={'NomeGiocatore2': 'Giocatore', 'BeyG2': 'Bey', 'PunteggioBeyG2': 'Punteggio', 'VittoriaG2': 'Vittoria'}
+                )
                 
                 df_totale = pd.concat([df_g1, df_g2])
+                
+                # 1. Ignoriamo i beyblade con nome "-"
+                df_totale = df_totale[df_totale['Bey'] != "-"]
                 
                 if filtro_utente != "Tutti":
                     df_totale = df_totale[df_totale['Giocatore'] == filtro_utente]
                 
-                df_totale['Punteggio'] = pd.to_numeric(df_totale['Punteggio'], errors='coerce').fillna(0)
-                
-                # --- NUOVA LOGICA DI CALCOLO CLASSIFICA ---
-                # Raggruppiamo contando le partite e sommando i punti
+                # --- CALCOLO AGGREGATO ---
+                # Raggruppiamo per Beyblade
                 df_classifica = df_totale.groupby('Bey').agg(
                     Partite=('Punteggio', 'count'),
-                    Bilancio_Punti=('Punteggio', 'sum')
+                    Vittorie_Totali=('Vittoria', 'sum'),
+                    Somma_Punti=('Punteggio', 'sum')
                 ).reset_index()
+
+                # 3. Calcolo Winrate (Vittorie / Partite * 100)
+                df_classifica['Winrate'] = (df_classifica['Vittorie_Totali'] / df_classifica['Partite'] * 100).round(1)
+
+                # Calcolo Media Punti (totale)
+                df_classifica['Media Punti'] = (df_classifica['Somma_Punti'] / df_classifica['Partite']).round(1)
+
+                # 4. Calcolo Media Punti Positivi (solo match vinti)
+                df_vinti = df_totale[df_totale['Vittoria'] == True]
+                df_media_pos = df_vinti.groupby('Bey')['Punteggio'].mean().round(1).reset_index()
+                df_media_pos = df_media_pos.rename(columns={'Punteggio': 'Media Punti Positivi'})
+
+                # Uniamo la media positiva alla classifica principale
+                df_classifica = pd.merge(df_classifica, df_media_pos, on='Bey', how='left').fillna(0)
+
+                # 5. Filtro minimo partite
+                df_classifica = df_classifica[df_classifica['Partite'] >= min_partite]
+
+                # Rinominiamo la colonna Bey per estetica
+                df_classifica = df_classifica.rename(columns={'Bey': 'Nome Beyblade'})
+
+                # Ordine delle colonne richiesto
+                col_finali = ['Nome Beyblade', 'Partite', 'Winrate', 'Media Punti', 'Media Punti Positivi']
+                df_classifica = df_classifica[col_finali]
+
+                # Ordinamento di default: Partite decrescente
+                df_classifica = df_classifica.sort_values(by='Partite', ascending=False)
                 
-                # Calcoliamo la media arrotondata al primo decimale
-                df_classifica['Media_Punti'] = (df_classifica['Bilancio_Punti'] / df_classifica['Partite']).round(1)
-                
-                # Rinominiamo le colonne per chiarezza visiva
-                df_classifica = df_classifica.rename(columns={
-                    'Bilancio_Punti': 'Punti Totali',
-                    'Media_Punti': 'Media Punti'
-                })
-                
-                # Ordiniamo per Punti Totali (decrescente) e sistemiamo l'indice
-                df_classifica = df_classifica.sort_values(by='Punti Totali', ascending=False)
+                # Sistemazione indice (Rank)
                 df_classifica.index = range(1, len(df_classifica) + 1)
                 
-                # Mostriamo la tabella forzando la formattazione a 1 decimale per la colonna media
+                # Visualizzazione
                 st.dataframe(
                     df_classifica, 
                     use_container_width=True,
                     column_config={
-                        "Media Punti": st.column_config.NumberColumn("Media Punti", format="%.1f")
+                        "Winrate": st.column_config.NumberColumn("Winrate", format="%.1f%%"),
+                        "Media Punti": st.column_config.NumberColumn("Media Punti", format="%.1f"),
+                        "Media Punti Positivi": st.column_config.NumberColumn("Media Punti Positivi", format="%.1f")
                     }
                 )
 
