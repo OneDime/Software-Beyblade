@@ -2,13 +2,6 @@
     "Antonio": {
         "beys": [
             {
-                "id": "f3cfc91b",
-                "tipo": "BX/UX",
-                "b": "WyvernHover",
-                "r": "1-50",
-                "bi": "Low Rush"
-            },
-            {
                 "id": "b6d8c73a",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -92,17 +85,16 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
+            },
+            {
+                "id": "f3cfc91b",
+                "tipo": "BX/UX",
+                "b": "WyvernHover",
+                "r": "1-50",
+                "bi": "Low Rush"
             }
         ],
         "deck_list": [
-            {
-                "name": "Anti wizard",
-                "slots": {
-                    "0": "ant_0001",
-                    "1": "ant_0002",
-                    "2": "ant_0003"
-                }
-            },
             {
                 "name": "top meta",
                 "slots": {
