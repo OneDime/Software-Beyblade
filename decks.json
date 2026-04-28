@@ -96,14 +96,6 @@
         ],
         "deck_list": [
             {
-                "name": "top meta",
-                "slots": {
-                    "0": "ant_0004",
-                    "1": "ant_0002",
-                    "2": "ant_0003"
-                }
-            },
-            {
                 "name": "The crazy ones",
                 "slots": {
                     "0": "84ddd0aa",
