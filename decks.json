@@ -293,14 +293,6 @@
         ],
         "deck_list": [
             {
-                "name": "ALTERNATIVI",
-                "slots": {
-                    "0": "-",
-                    "1": "-",
-                    "2": "-"
-                }
-            },
-            {
                 "name": "PAXERELLI",
                 "slots": {
                     "0": "-",
