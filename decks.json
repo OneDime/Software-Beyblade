@@ -184,6 +184,19 @@
     "Fabio": {
         "beys": [
             {
+                "id": "6e4e4337",
+                "tipo": "CX",
+                "b": "-",
+                "r": "9-70",
+                "bi": "Hexa",
+                "lc": "Cerberus",
+                "ob": "-",
+                "meb": "-",
+                "ab": "Free",
+                "mb": "Flare",
+                "rib": "-"
+            },
+            {
                 "id": "d4cbbbea",
                 "tipo": "BX/UX",
                 "b": "DranBuster",
@@ -276,11 +289,6 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
-            },
-            {
-                "id": "6e4e4337",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
