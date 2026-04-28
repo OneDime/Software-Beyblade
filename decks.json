@@ -96,14 +96,6 @@
         ],
         "deck_list": [
             {
-                "name": "The crazy ones",
-                "slots": {
-                    "0": "ant_0001",
-                    "1": "ant_0002",
-                    "2": "ant_0003"
-                }
-            },
-            {
                 "name": "DECK 2",
                 "slots": {
                     "0": "-",
