@@ -291,15 +291,6 @@
                 "bi": "Hexa"
             }
         ],
-        "deck_list": [
-            {
-                "name": "UNDERRATED",
-                "slots": {
-                    "0": "-",
-                    "1": "-",
-                    "2": "-"
-                }
-            }
-        ]
+        "deck_list": []
     }
 }
