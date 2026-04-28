@@ -293,14 +293,6 @@
         ],
         "deck_list": [
             {
-                "name": "Meta",
-                "slots": {
-                    "0": "-",
-                    "1": "-",
-                    "2": "-"
-                }
-            },
-            {
                 "name": "ALTERNATIVI",
                 "slots": {
                     "0": "-",
