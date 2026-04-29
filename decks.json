@@ -240,6 +240,11 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
+            },
+            {
+                "id": "ff81b1d2",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": []
