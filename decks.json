@@ -153,6 +153,11 @@
                 "id": "18613e92",
                 "tipo": "BX/UX",
                 "is_new": true
+            },
+            {
+                "id": "101cf74d",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": [
