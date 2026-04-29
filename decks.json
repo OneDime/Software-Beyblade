@@ -184,6 +184,17 @@
     "Fabio": {
         "beys": [
             {
+                "id": "2bbcd667",
+                "tipo": "CX Infinity",
+                "b": "-",
+                "r": "9-70",
+                "bi": "Free Ball",
+                "lc": "Phoenix",
+                "ob": "Flow",
+                "meb": "Rage",
+                "ab": "Free"
+            },
+            {
                 "id": "6e4e4337",
                 "tipo": "CX",
                 "b": "-",
@@ -250,11 +261,6 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
-            },
-            {
-                "id": "2bbcd667",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": []
