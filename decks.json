@@ -108,13 +108,6 @@
     "Andrea": {
         "beys": [
             {
-                "id": "1c8c3caa",
-                "tipo": "BX/UX",
-                "b": "TyrannoBeat",
-                "r": "9-60",
-                "bi": "Level"
-            },
-            {
                 "id": "44c2984b",
                 "tipo": "BX/UX",
                 "b": "GolemRock",
@@ -147,6 +140,13 @@
                 "b": "PhoenixWing",
                 "r": "3-60",
                 "bi": "Kick"
+            },
+            {
+                "id": "1c8c3caa",
+                "tipo": "BX/UX",
+                "b": "TyrannoBeat",
+                "r": "5-60",
+                "bi": "Point"
             },
             {
                 "id": "and_0002",
