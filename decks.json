@@ -184,13 +184,6 @@
     "Fabio": {
         "beys": [
             {
-                "id": "25f2cdb9",
-                "tipo": "BX/UX",
-                "b": "WizardRod",
-                "r": "0-60",
-                "bi": "Yielding"
-            },
-            {
                 "id": "6e4e4337",
                 "tipo": "CX",
                 "b": "-",
@@ -291,11 +284,23 @@
                 "bi": "Wedge"
             },
             {
+                "id": "25f2cdb9",
+                "tipo": "BX/UX",
+                "b": "WizardRod",
+                "r": "0-60",
+                "bi": "Yielding"
+            },
+            {
                 "id": "bd0fd93b",
                 "tipo": "BX/UX",
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
+            },
+            {
+                "id": "1f9ea4e3",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": []
