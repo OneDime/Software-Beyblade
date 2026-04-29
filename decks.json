@@ -184,16 +184,6 @@
     "Fabio": {
         "beys": [
             {
-                "id": "ff81b1d2",
-                "tipo": "CX",
-                "b": "-",
-                "r": "0-60",
-                "bi": "Yielding",
-                "lc": "Hells",
-                "mb": "Hunt",
-                "ab": "Jaggy"
-            },
-            {
                 "id": "6e4e4337",
                 "tipo": "CX",
                 "b": "-",
@@ -224,6 +214,16 @@
                 "ab": "Heavy"
             },
             {
+                "id": "ff81b1d2",
+                "tipo": "CX",
+                "b": "-",
+                "r": "0-60",
+                "bi": "Yielding",
+                "lc": "Hells",
+                "mb": "Hunt",
+                "ab": "Jaggy"
+            },
+            {
                 "id": "ce1647d9",
                 "tipo": "BX/UX",
                 "b": "Hover Wyvern",
@@ -250,6 +250,11 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
+            },
+            {
+                "id": "2bbcd667",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": []
