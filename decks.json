@@ -2,13 +2,6 @@
     "Antonio": {
         "beys": [
             {
-                "id": "96ad3e28",
-                "tipo": "BX/UX",
-                "b": "SharkScale",
-                "r": "3-60",
-                "bi": "Free Ball"
-            },
-            {
                 "id": "b6d8c73a",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -55,6 +48,13 @@
                 "bi": "Low Rush"
             },
             {
+                "id": "96ad3e28",
+                "tipo": "BX/UX",
+                "b": "SharkScale",
+                "r": "3-60",
+                "bi": "Free Ball"
+            },
+            {
                 "id": "84ddd0aa",
                 "tipo": "BX/UX",
                 "b": "SharkScale",
@@ -94,7 +94,7 @@
             {
                 "name": "I cattivi",
                 "slots": {
-                    "0": "84ddd0aa",
+                    "0": "96ad3e28",
                     "1": "ant_0003",
                     "2": "f3cfc91b"
                 }
