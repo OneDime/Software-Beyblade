@@ -1987,5 +1987,32 @@
         "BeyG2": "WizardRod 1-60 Hexa",
         "PunteggioBeyG1": -1,
         "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "03/05/2026",
+        "NomeGiocatore1": "Antonio",
+        "BeyG1": "SharkScale 3-60 Low Orb",
+        "NomeGiocatore2": "Esterno",
+        "BeyG2": "TyrannoBeat 1-70 Rush",
+        "PunteggioBeyG1": 3,
+        "PunteggioBeyG2": -3
+    },
+    {
+        "Data": "03/05/2026",
+        "NomeGiocatore1": "Antonio",
+        "BeyG1": "CobaltDragoon 9-60 Elevate",
+        "NomeGiocatore2": "Esterno",
+        "BeyG2": "WizardRod 1-60 Hexa",
+        "PunteggioBeyG1": -2,
+        "PunteggioBeyG2": 2
+    },
+    {
+        "Data": "03/05/2026",
+        "NomeGiocatore1": "Antonio",
+        "BeyG1": "WyvernHover 1-50 Low Rush",
+        "NomeGiocatore2": "Esterno",
+        "BeyG2": "WyvernHover 1-60 Kick",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
     }
 ]
