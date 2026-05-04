@@ -2,6 +2,13 @@
     "Antonio": {
         "beys": [
             {
+                "id": "d067f6ff",
+                "tipo": "BX/UX",
+                "b": "SharkScale",
+                "r": "3-60",
+                "bi": "Jolt"
+            },
+            {
                 "id": "b6d8c73a",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -81,11 +88,6 @@
                 "b": "WyvernHover",
                 "r": "1-50",
                 "bi": "Low Rush"
-            },
-            {
-                "id": "d067f6ff",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
