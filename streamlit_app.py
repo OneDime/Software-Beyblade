@@ -973,11 +973,35 @@ elif menu_scelta == "Meta":
             if "Combo Rank" in df_rank.columns:
                 df_rank = df_rank.sort_values(by="Combo Rank", ascending=True)
                 
-            if ricerca_rank:
+if ricerca_rank:
                 mask = df_rank.astype(str).apply(lambda x: x.str.lower().str.contains(ricerca_rank, regex=False)).any(axis=1)
                 df_rank = df_rank[mask]
                 
-            st.dataframe(df_rank, use_container_width=True, hide_index=True)
+            # 1. Calcoliamo la lunghezza della stringa più lunga nella colonna Combo
+            if not df_rank.empty:
+                max_chars = df_rank["Combo"].astype(str).map(len).max()
+            else:
+                max_chars = 20 # Valore di riserva se la tabella è vuota
+                
+            # 2. Convertiamo i caratteri in pixel (circa 9 pixel per carattere + 20px di margine)
+            larghezza_pixel_combo = int(max_chars * 9) + 20
+
+            # 3. Forziamo la larghezza esatta
+            st.dataframe(
+                df_rank, 
+                use_container_width=True, 
+                hide_index=True,
+                column_config={
+                    "Combo": st.column_config.TextColumn(
+                        "Combo",
+                        width=larghezza_pixel_combo # Usiamo il calcolo esatto in pixel
+                    ),
+                    "Rank Change": st.column_config.TextColumn(
+                        "Rank Change",
+                        width="small" 
+                    )
+                }
+            )
             
         else:
             st.warning("⚠️ File 'meta.csv' non trovato. Assicurati che sia presente nella directory.")
