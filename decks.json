@@ -81,6 +81,11 @@
                 "b": "WyvernHover",
                 "r": "1-50",
                 "bi": "Low Rush"
+            },
+            {
+                "id": "d067f6ff",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": [
