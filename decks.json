@@ -175,22 +175,11 @@
     "Fabio": {
         "beys": [
             {
-                "id": "2bbcd667",
-                "tipo": "CX Infinity",
-                "b": "-",
-                "r": "9-70",
-                "bi": "Free Ball",
-                "lc": "Phoenix",
-                "ob": "Flow",
-                "meb": "Rage",
-                "ab": "Free"
-            },
-            {
                 "id": "6e4e4337",
                 "tipo": "CX",
                 "b": "-",
-                "r": "6-60",
-                "bi": "Kick",
+                "r": "9-70",
+                "bi": "Point",
                 "lc": "Cerberus",
                 "ob": "-",
                 "meb": "-",
@@ -238,6 +227,17 @@
                 "b": "MeteorDragoon",
                 "r": "5-60",
                 "bi": "Level"
+            },
+            {
+                "id": "2bbcd667",
+                "tipo": "CX Infinity",
+                "b": "-",
+                "r": "9-70",
+                "bi": "Free Ball",
+                "lc": "Phoenix",
+                "ob": "Flow",
+                "meb": "Rage",
+                "ab": "Free"
             },
             {
                 "id": "c6498490",
