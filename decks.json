@@ -2,13 +2,6 @@
     "Antonio": {
         "beys": [
             {
-                "id": "d067f6ff",
-                "tipo": "BX/UX",
-                "b": "SharkScale",
-                "r": "3-60",
-                "bi": "Jolt"
-            },
-            {
                 "id": "b6d8c73a",
                 "tipo": "BX/UX",
                 "b": "CobaltDragoon",
@@ -55,6 +48,13 @@
                 "bi": "Free Ball"
             },
             {
+                "id": "d067f6ff",
+                "tipo": "BX/UX",
+                "b": "SharkScale",
+                "r": "3-60",
+                "bi": "Jolt"
+            },
+            {
                 "id": "84ddd0aa",
                 "tipo": "BX/UX",
                 "b": "SharkScale",
@@ -81,13 +81,6 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
-            },
-            {
-                "id": "f3cfc91b",
-                "tipo": "BX/UX",
-                "b": "WyvernHover",
-                "r": "1-50",
-                "bi": "Low Rush"
             }
         ],
         "deck_list": [
@@ -96,7 +89,7 @@
                 "slots": {
                     "0": "96ad3e28",
                     "1": "ant_0003",
-                    "2": "f3cfc91b"
+                    "2": "-"
                 }
             }
         ]
