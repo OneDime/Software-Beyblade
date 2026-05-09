@@ -2,11 +2,11 @@
     "Antonio": {
         "beys": [
             {
-                "id": "313d84a3",
+                "id": "87adb526",
                 "tipo": "BX/UX",
-                "b": "GolemRock",
-                "r": "3-60",
-                "bi": "Jolt"
+                "b": "MeteorDragoon",
+                "r": "7-60",
+                "bi": "Level"
             },
             {
                 "id": "b6d8c73a",
@@ -21,6 +21,13 @@
                 "b": "CobaltDragoon",
                 "r": "9-60",
                 "bi": "Elevate"
+            },
+            {
+                "id": "313d84a3",
+                "tipo": "BX/UX",
+                "b": "GolemRock",
+                "r": "3-60",
+                "bi": "Jolt"
             },
             {
                 "id": "08b3e3cc",
@@ -84,11 +91,6 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
-            },
-            {
-                "id": "87adb526",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": [
