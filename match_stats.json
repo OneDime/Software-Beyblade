@@ -2635,5 +2635,95 @@
         "BeyG2": "SharkScale 1-50 Level",
         "PunteggioBeyG1": -1,
         "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 9-60 Taper",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "Cerberus Flare Wheel 9-70 Point",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 9-60 Taper",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "Emperor Blast Heavy 9-60 Taper",
+        "PunteggioBeyG1": -2,
+        "PunteggioBeyG2": 2
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 9-60 Taper",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "Phoenix Flow Rage Free 1-60 Jolt",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 9-60 Taper",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "Hover Wyvern 1-60 Rush",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 9-60 Taper",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "MeteorDragoon 9-60 Level",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 9-60 Taper",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "Cerberus Flare Wheel 9-70 Point",
+        "PunteggioBeyG1": -2,
+        "PunteggioBeyG2": 2
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 9-60 Taper",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "Emperor Blast Heavy 9-60 Taper",
+        "PunteggioBeyG1": 1,
+        "PunteggioBeyG2": -1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 9-60 Taper",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "Phoenix Flow Rage Free 1-60 Jolt",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 9-60 Taper",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "Hover Wyvern 1-60 Rush",
+        "PunteggioBeyG1": -2,
+        "PunteggioBeyG2": 2
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 9-60 Taper",
+        "NomeGiocatore2": "Fabio",
+        "BeyG2": "MeteorDragoon 9-60 Level",
+        "PunteggioBeyG1": -2,
+        "PunteggioBeyG2": 2
     }
 ]
