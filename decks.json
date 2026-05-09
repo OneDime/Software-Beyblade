@@ -41,6 +41,13 @@
                 "bi": "Rush"
             },
             {
+                "id": "ant_0002",
+                "tipo": "BX/UX",
+                "b": "SharkScale",
+                "r": "1-70",
+                "bi": "Low Rush"
+            },
+            {
                 "id": "96ad3e28",
                 "tipo": "BX/UX",
                 "b": "SharkScale",
@@ -60,13 +67,6 @@
                 "b": "SharkScale",
                 "r": "3-60",
                 "bi": "Low Orb"
-            },
-            {
-                "id": "ant_0002",
-                "tipo": "BX/UX",
-                "b": "SharkScale",
-                "r": "4-50",
-                "bi": "Low Rush"
             },
             {
                 "id": "ant_0001",
