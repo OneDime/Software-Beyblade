@@ -2815,5 +2815,95 @@
         "BeyG2": "SharkScale 3-60 Jolt",
         "PunteggioBeyG1": -1,
         "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Cerberus Flare Wheel 9-70 Point",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "CobaltDragoon 9-60 Elevate",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Cerberus Flare Wheel 9-70 Point",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SharkScale 3-60 Low Orb",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Cerberus Flare Wheel 9-70 Point",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "WizardRod 1-60 Hexa",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Cerberus Flare Wheel 9-70 Point",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "CobaltDragoon 9-60 Elevate",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Cerberus Flare Wheel 9-70 Point",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SharkScale 3-60 Low Orb",
+        "PunteggioBeyG1": -3,
+        "PunteggioBeyG2": 3
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Cerberus Flare Wheel 9-70 Point",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "WizardRod 1-60 Hexa",
+        "PunteggioBeyG1": 3,
+        "PunteggioBeyG2": -3
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Cerberus Flare Wheel 9-70 Point",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "CobaltDragoon 9-60 Elevate",
+        "PunteggioBeyG1": -3,
+        "PunteggioBeyG2": 3
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Cerberus Flare Wheel 9-70 Point",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SharkScale 3-60 Low Orb",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Cerberus Flare Wheel 9-70 Point",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "WizardRod 1-60 Hexa",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Fabio",
+        "BeyG1": "Cerberus Flare Wheel 9-70 Point",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SharkScale 3-60 Low Orb",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
     }
 ]
