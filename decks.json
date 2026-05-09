@@ -93,21 +93,6 @@
     "Andrea": {
         "beys": [
             {
-                "id": "18613e92",
-                "tipo": "BX/UX",
-                "is_new": true,
-                "b": "-",
-                "r": "-",
-                "bi": "-"
-            },
-            {
-                "id": "101cf74d",
-                "tipo": "BX/UX",
-                "b": "TyrannoBeat",
-                "r": "2-70",
-                "bi": "Rush"
-            },
-            {
                 "id": "44c2984b",
                 "tipo": "BX/UX",
                 "b": "GolemRock",
@@ -120,6 +105,20 @@
                 "b": "PhoenixWing",
                 "r": "3-60",
                 "bi": "Kick"
+            },
+            {
+                "id": "101cf74d",
+                "tipo": "BX/UX",
+                "b": "TyrannoBeat",
+                "r": "2-70",
+                "bi": "Rush"
+            },
+            {
+                "id": "18613e92",
+                "tipo": "BX/UX",
+                "b": "TyrannoBeat",
+                "r": "3-70",
+                "bi": "Level"
             },
             {
                 "id": "1c8c3caa",
