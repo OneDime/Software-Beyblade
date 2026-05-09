@@ -182,6 +182,13 @@
     "Fabio": {
         "beys": [
             {
+                "id": "450f7099",
+                "tipo": "BX/UX",
+                "b": "PhoenixWing",
+                "r": "3-60",
+                "bi": "Kick"
+            },
+            {
                 "id": "6e4e4337",
                 "tipo": "CX",
                 "b": "-",
@@ -242,11 +249,6 @@
                 "b": "WizardRod",
                 "r": "1-60",
                 "bi": "Hexa"
-            },
-            {
-                "id": "450f7099",
-                "tipo": "BX/UX",
-                "is_new": true
             }
         ],
         "deck_list": []
