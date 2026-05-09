@@ -161,6 +161,11 @@
                 "b": "WizardRod",
                 "r": "9-60",
                 "bi": "Ball"
+            },
+            {
+                "id": "9398d1d2",
+                "tipo": "BX/UX",
+                "is_new": true
             }
         ],
         "deck_list": [
