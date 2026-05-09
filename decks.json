@@ -177,17 +177,6 @@
     "Fabio": {
         "beys": [
             {
-                "id": "499a0556",
-                "tipo": "CX Infinity",
-                "b": "-",
-                "r": "1-60",
-                "bi": "Jolt",
-                "lc": "Phoenix",
-                "ob": "Flow",
-                "meb": "Rage",
-                "ab": "Free"
-            },
-            {
                 "id": "6e4e4337",
                 "tipo": "CX",
                 "b": "-",
@@ -214,8 +203,8 @@
                 "id": "ce1647d9",
                 "tipo": "BX/UX",
                 "b": "Hover Wyvern",
-                "r": "0-60",
-                "bi": "Low Rush"
+                "r": "1-60",
+                "bi": "Rush"
             },
             {
                 "id": "fa057d12",
@@ -223,6 +212,17 @@
                 "b": "MeteorDragoon",
                 "r": "9-60",
                 "bi": "Level"
+            },
+            {
+                "id": "499a0556",
+                "tipo": "CX Infinity",
+                "b": "-",
+                "r": "1-60",
+                "bi": "Jolt",
+                "lc": "Phoenix",
+                "ob": "Flow",
+                "meb": "Rage",
+                "ab": "Free"
             },
             {
                 "id": "c6498490",
