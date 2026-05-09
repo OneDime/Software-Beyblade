@@ -2725,5 +2725,95 @@
         "BeyG2": "MeteorDragoon 9-60 Level",
         "PunteggioBeyG1": -2,
         "PunteggioBeyG2": 2
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 1-60 Rush",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SharkScale 3-60 Jolt",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 1-60 Rush",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SilverWolf 9-70 Free Ball",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 1-60 Rush",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "CobaltDragoon 9-60 Elevate",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 1-60 Rush",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SharkScale 3-60 Jolt",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 1-60 Rush",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SilverWolf 9-70 Free Ball",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 1-60 Rush",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "CobaltDragoon 9-60 Elevate",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 1-60 Rush",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SharkScale 3-60 Jolt",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 1-60 Rush",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SilverWolf 9-70 Free Ball",
+        "PunteggioBeyG1": 2,
+        "PunteggioBeyG2": -2
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 1-60 Rush",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "CobaltDragoon 9-60 Elevate",
+        "PunteggioBeyG1": -2,
+        "PunteggioBeyG2": 2
+    },
+    {
+        "Data": "09/05/2026",
+        "NomeGiocatore1": "Andrea",
+        "BeyG1": "TyrannoBeat 1-60 Rush",
+        "NomeGiocatore2": "Antonio",
+        "BeyG2": "SharkScale 3-60 Jolt",
+        "PunteggioBeyG1": -1,
+        "PunteggioBeyG2": 1
     }
 ]
