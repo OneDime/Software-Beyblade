@@ -973,7 +973,7 @@ elif menu_scelta == "Meta":
             if "Combo Rank" in df_rank.columns:
                 df_rank = df_rank.sort_values(by="Combo Rank", ascending=True)
                 
-if ricerca_rank:
+            if ricerca_rank:
                 mask = df_rank.astype(str).apply(lambda x: x.str.lower().str.contains(ricerca_rank, regex=False)).any(axis=1)
                 df_rank = df_rank[mask]
                 
